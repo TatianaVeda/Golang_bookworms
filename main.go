@@ -18,8 +18,8 @@ func main() {
 	log.Println("Database initialized successfully!")
 
 	// Start your web server or application logic
-	log.Println("Starting server on port 8080...")
-	fmt.Println("Server starting on port 8080...")
+	log.Println("Starting server on http://localhost:8080/")
+	//fmt.Println("Server starting on port 8080...")
 
 	// Add some dummy HTTP handler for testing
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
