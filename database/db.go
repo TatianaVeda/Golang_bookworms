@@ -10,28 +10,30 @@ import (
 var DB *sql.DB
 
 // InitDB initializes the SQLite database connection and runs schema creation queries.
-func InitDB() {
+func InitDB() error { // Changed the return type to error
 	var err error
 
 	log.Println("Connecting to the SQLite database...")
 
-	// Connect to the SQLite database (creates the file if it doesn't exist)
+	// Assign to the global DB variable, not a local one
 	DB, err = sql.Open("sqlite3", "./forum.db")
 	if err != nil {
-		log.Fatalf("Error connecting to the database: %v", err)
+		return err // Return error instead of using log.Fatalf to let caller handle it
 	}
 
 	// Check if the connection is valid
 	log.Println("Pinging the database...")
 	err = DB.Ping()
 	if err != nil {
-		log.Fatalf("Cannot connect to the database: %v", err)
+		return err
 	}
 
 	// Call schema creation function to create all necessary tables
 	log.Println("Creating database schema...")
 	createSchema()
 	log.Println("Database schema created successfully!")
+
+	return nil // Return nil to indicate success
 }
 
 // createSchema defines and executes the SQL schema to create the necessary tables

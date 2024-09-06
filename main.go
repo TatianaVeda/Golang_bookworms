@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"literary-lions/controllers"
 	"literary-lions/database"
 	"log"
 	"net/http"
@@ -12,23 +13,33 @@ func main() {
 	log.Println("Starting database initialization...")
 
 	// Initialize the database (this will create tables if they don't exist)
-	database.InitDB()
+	if err := database.InitDB(); err != nil {
+		log.Fatalf("Database initialization failed: %v", err)
+	}
 
 	// Log after DB initialization
 	log.Println("Database initialized successfully!")
 
-	// Start your web server or application logic
-	log.Println("Starting server on http://localhost:8080/")
-	//fmt.Println("Server starting on port 8080...")
-
-	// Add some dummy HTTP handler for testing
+	// Set up the routes for the server
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, Literary Lions!")
 	})
+	http.HandleFunc("/register", controllers.RegisterUser)
+	http.HandleFunc("/login", controllers.LoginUser)
+	http.HandleFunc("/home", HomeHandler) // Example of a protected route
 
-	// Run the HTTP server (if your project has any)
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
+	// Serve static files (like CSS or images)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	// Start the HTTP server
+	log.Println("Starting server on http://localhost:8080/")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
+}
+
+// HomeHandler is an example of a protected route
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	// Logic for checking if the user is logged in can go here
+	w.Write([]byte("Welcome to the home page!"))
 }
