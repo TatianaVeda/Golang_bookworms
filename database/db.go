@@ -38,17 +38,7 @@ func InitDB() error { // Changed the return type to error
 
 // createSchema defines and executes the SQL schema to create the necessary tables
 func createSchema() {
-	// Schema for creating Users table
-	usersTable := `
-	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		email TEXT UNIQUE NOT NULL,
-		username TEXT UNIQUE NOT NULL,
-		password TEXT NOT NULL
-	);`
-	log.Println("Creating Users table...")
-	execSchemaQuery(usersTable)
-	log.Println("Users table created successfully!")
+	// Users table already exists
 
 	// Schema for creating Posts table
 	postsTable := `
@@ -56,15 +46,11 @@ func createSchema() {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT NOT NULL,
 		body TEXT NOT NULL,
-		category_id INTEGER,
 		user_id INTEGER,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY(user_id) REFERENCES users(id),
-		FOREIGN KEY(category_id) REFERENCES categories(id)
+		FOREIGN KEY(user_id) REFERENCES users(id)
 	);`
-	log.Println("Creating Posts table...")
 	execSchemaQuery(postsTable)
-	log.Println("Posts table created successfully!")
 
 	// Schema for creating Comments table
 	commentsTable := `
@@ -77,35 +63,18 @@ func createSchema() {
 		FOREIGN KEY(post_id) REFERENCES posts(id),
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);`
-	log.Println("Creating Comments table...")
 	execSchemaQuery(commentsTable)
-	log.Println("Comments table created successfully!")
 
-	// Schema for creating Categories table
-	categoriesTable := `
-	CREATE TABLE IF NOT EXISTS categories (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL
-	);`
-	log.Println("Creating Categories table...")
-	execSchemaQuery(categoriesTable)
-	log.Println("Categories table created successfully!")
-
-	// Schema for creating Likes/Dislikes table
 	likesDislikesTable := `
 	CREATE TABLE IF NOT EXISTS likes_dislikes (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER NOT NULL,
 		post_id INTEGER,
-		comment_id INTEGER,
 		like_type INTEGER CHECK(like_type IN (1, -1)),
 		FOREIGN KEY(user_id) REFERENCES users(id),
-		FOREIGN KEY(post_id) REFERENCES posts(id),
-		FOREIGN KEY(comment_id) REFERENCES comments(id)
+		FOREIGN KEY(post_id) REFERENCES posts(id)
 	);`
-	log.Println("Creating Likes/Dislikes table...")
 	execSchemaQuery(likesDislikesTable)
-	log.Println("Likes/Dislikes table created successfully!")
 }
 
 // execSchemaQuery executes a single schema creation query

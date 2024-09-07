@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Posts</title>
+</head>
+<body>
+    <h1>My Posts</h1>
+    {{range .}}
+        <div>
+            <h2>{{.title}}</h2>
+            <p>{{.body}}</p>
+        </div>
+    {{end}}
+    <a href="/posts/create">Create New Post</a><br>
+    <a href="/posts">View All Posts</a>
+</body>
+</html>
