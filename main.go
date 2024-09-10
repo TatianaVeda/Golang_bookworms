@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"literary-lions/controllers"
 	"literary-lions/database"
 	"log"
@@ -38,5 +39,19 @@ func main() {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Welcome to the home page!"))
+	tmpl, err := template.ParseFiles("views/home.html")
+	if err != nil {
+		http.Error(w, "Error loading home page", http.StatusInternalServerError)
+		return
+	}
+
+	data := map[string]interface{}{
+		"Title":   "Welcome to Literary Lions Forum",
+		"Message": "This is a welcoming message for the forum.",
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
 }

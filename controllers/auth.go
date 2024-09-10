@@ -178,5 +178,16 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
+	} else if r.Method == http.MethodGet {
+		// Generate a new CSRF token for the form
+		csrfToken := generateCSRFToken()
+		log.Printf("Generated CSRF token for login: %s", csrfToken)
+		csrfTokens[csrfToken] = true
+
+		// Parse and render the login.html template
+		tmpl := template.Must(template.ParseFiles("views/login.html"))
+		tmpl.Execute(w, map[string]interface{}{
+			"CsrfToken": csrfToken,
+		})
 	}
 }

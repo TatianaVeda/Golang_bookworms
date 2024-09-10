@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum</title>
+    <link rel="stylesheet" href="static/home.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <img src="logo.png" alt="Logo" class="logo">
+            <p class="welcome-message">Welcome to Literary Lions Forum</p>
+        </div>
+
+        <!-- User Registration/Login Section -->
+        <div class="auth-section">
+            <h1>Login</h1>
+    <form action="/login" method="POST">
+        <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" required><br><br>
+    
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+    
+        <input type="submit" value="Login">
+    </form>
+    
+    <h1>Register</h1>
+    {{if .Error}}
+        <p style="color: red;">{{.Error}}</p>
+    {{end}}
+    <form action="/register" method="POST">
+        <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br>
+
+        <input type="submit" value="Register">
+    </form>
+        </div>
+
+        <!-- Categories Section -->
+        <div class="categories">
+            <h2>Choose a Category</h2>
+            <ul>
+                <li>Literature</li>
+                <li>Poetry</li>
+                <li>Non-fiction</li>
+                <li>Short Stories</li>
+            </ul>
+        </div>
+
+        <!-- Published Posts Section -->
+        <div class="posts-section">
+            <h2>Published Posts</h2>
+            <div class="post">
+                <p class="post-title">Bookcrossing shelves at trains stations</p>
+                <p class="post-content">I once found and incredible book there</p>
+            </div>
+            <div class="post">
+                <p class="post-title">Understanding Modern Poetry</p>
+                <p class="post-content">Nope...</p>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer">
+            <p>&copy; 2024 Literary Lions Forum</p>
+        </div>
+    </div>
+</body>
+</html>
