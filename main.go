@@ -9,12 +9,13 @@ import (
 
 func main() {
 	log.Println("Starting database initialization...")
-	err := database.InitDB()
+	err := database.InitDB() // Declare 'err' using ':='
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
 	log.Println("Database initialized successfully!")
 
+	// Set up routes
 	http.HandleFunc("/", HomeHandler)
 	http.HandleFunc("/register", controllers.RegisterUser)
 	http.HandleFunc("/login", controllers.LoginUser)
@@ -30,7 +31,8 @@ func main() {
 
 	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	err = http.ListenAndServe(":8080", nil) // Use '=' here instead of ':='
+	if err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }

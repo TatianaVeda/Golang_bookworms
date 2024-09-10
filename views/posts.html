@@ -9,19 +9,22 @@
     <h1>All Posts</h1>
     <a href="/posts/create">Create New Post</a>
     {{range .}}
-        <div>
-            <h2>{{.title}}</h2>
-            <p>{{.body}}</p>
-            <form action="/posts/like" method="POST">
-                <input type="hidden" name="post_id" value="{{.id}}">
-                <input type="submit" value="Like">
-            </form>
-            <form action="/posts/dislike" method="POST">
-                <input type="hidden" name="post_id" value="{{.id}}">
-                <input type="submit" value="Dislike">
-            </form>
-            <p>Posted by User ID: {{.userID}}</p>
-        </div>
-    {{end}}
+    <h2>{{.Title}}</h2>
+    <p>{{.Body}}</p>
+
+    <!-- Like form -->
+    <form action="/posts/like" method="POST">
+        <input type="hidden" name="post_id" value="{{.ID}}">
+        <button type="submit">Like</button>
+    </form>
+
+    <!-- Dislike form -->
+    <form action="/posts/dislike" method="POST">
+        <input type="hidden" name="post_id" value="{{.ID}}">
+        <button type="submit">Dislike</button>
+    </form>
+
+    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+{{end}}
 </body>
 </html>
