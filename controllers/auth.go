@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
-	"log"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -21,58 +21,66 @@ import (
 var sessionStore = make(map[string]int) // In-memory store: sessionID -> userID
 var sessionMutex sync.Mutex             // Mutex to prevent race conditions on session store
 
-// Generate a CSRF token for forms
-func generateCSRFToken() string {
-	token := make([]byte, 32)
-	rand.Read(token)
-	return base64.URLEncoding.EncodeToString(token)
+const csrfCookieName = "csrf_token"
+
+// GenerateCSRFToken generates a new random CSRF token
+func GenerateCSRFToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-// Store CSRF tokens in memory (for simplicity)
-var csrfTokens = map[string]bool{}
+// SetCSRFCookie sets the CSRF token as an HTTP-only cookie
+func SetCSRFCookie(w http.ResponseWriter, token string) {
+	cookie := http.Cookie{
+		Name:     csrfCookieName,
+		Value:    token,
+		HttpOnly: true,
+		Expires:  time.Now().Add(24 * time.Hour), // Set an expiration time
+	}
+	http.SetCookie(w, &cookie)
+}
 
-// Add this logic when generating the CSRF token in the GET request:
+// GetCSRFCookie retrieves the CSRF token from the request's cookies
+func GetCSRFCookie(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(csrfCookieName)
+	if err != nil {
+		return "", err
+	}
+	return cookie.Value, nil
+}
+
+// RegisterUser handles user registration and CSRF token validation
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
+	if r.Method == "POST" {
 		r.ParseForm()
+		if err := r.ParseForm(); err != nil {
+			fmt.Println("Error parsing form:", err)
+		}
 
-		csrfToken := r.FormValue("csrf_token")
-		if !csrfTokens[csrfToken] {
-			log.Printf("Invalid CSRF token: %s", csrfToken)
+		// Retrieve CSRF token from form and cookie
+		formToken := r.FormValue("csrf_token")
+		fmt.Printf("Form submitted with CSRF token: %s\n", formToken)
+
+		cookieToken, err := GetCSRFCookie(r)
+		if err != nil || formToken != cookieToken {
+			fmt.Printf("Invalid CSRF token. Form token: %s, Cookie token: %s\n", formToken, cookieToken) // Debugging line
 			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 			return
 		}
-		delete(csrfTokens, csrfToken)
 
+		// Extract form data
 		username := r.FormValue("username")
 		email := r.FormValue("email")
-		password := r.FormValue("password") // <-- Correctly fetching the user-supplied password
-
-		// Check if the username or email already exists
-		var exists bool
-		err := database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = ? OR username = ?)", email, username).Scan(&exists)
-		if err != nil {
-			log.Printf("Database query error: %v", err)
-			http.Error(w, "Database query error", http.StatusInternalServerError)
-			return
-		}
-
-		if exists {
-			// If user already exists, return an error message
-			log.Printf("Email or username already in use: %s, %s", email, username)
-			http.Error(w, "Email or username already in use", http.StatusConflict)
-			return
-		}
+		password := r.FormValue("password")
 
 		// Hash the password using bcrypt
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if err != nil {
-			http.Error(w, "Error hashing password", http.StatusInternalServerError)
-			return
-		}
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 		// Insert user into the database
-		_, err = database.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
+		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
 			fmt.Fprintf(w, "Error registering user: %v", err)
 			return
@@ -80,11 +88,14 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 		// Redirect to login page after successful registration
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
-	} else if r.Method == http.MethodGet {
-		csrfToken := generateCSRFToken()
-		log.Printf("Generated CSRF token: %s", csrfToken)
-		csrfTokens[csrfToken] = true
 
+	} else {
+		// Generate and set a CSRF token in a cookie
+		csrfToken, _ := GenerateCSRFToken()
+		fmt.Printf("Generated CSRF token for form: %s\n", csrfToken) // Debugging line
+		SetCSRFCookie(w, csrfToken)
+
+		// Render the registration template with the CSRF token
 		tmpl := template.Must(template.ParseFiles("views/register.html"))
 		tmpl.Execute(w, map[string]interface{}{
 			"CsrfToken": csrfToken,
@@ -124,67 +135,71 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 	return nil
 }
 
-// GetUserIDFromSession retrieves the user ID associated with the session cookie
-
+// LoginUser handles user login and CSRF token validation
 func LoginUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		r.ParseForm()
+	if r.Method == "POST" {
+		if err := r.ParseForm(); err != nil {
+			fmt.Println("Error parsing form:", err) // Debugging line
+			http.Error(w, "Error parsing form", http.StatusInternalServerError)
+			return
+		}
 
-		// CSRF token validation
-		csrfToken := r.FormValue("csrf_token")
-		log.Printf("Submitted CSRF token: %s", csrfToken)
-		if !csrfTokens[csrfToken] {
+		// Debug: Print all form values
+		for key, values := range r.Form {
+			fmt.Printf("Form field: %s, values: %v\n", key, values)
+		}
+
+		// Retrieve CSRF token from form and cookie
+		formToken := r.FormValue("csrf_token")
+		fmt.Printf("Form submitted with CSRF token: %s\n", formToken) // Debugging line
+
+		cookieToken, err := GetCSRFCookie(r)
+		if err != nil || formToken != cookieToken {
+			fmt.Printf("Invalid CSRF token. Form token: %s, Cookie token: %s\n", formToken, cookieToken) // Debugging line
 			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 			return
 		}
-		delete(csrfTokens, csrfToken)
 
+		// Extract form data
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		// Query for user in the database by email
+		// Query for user by email
 		row := database.DB.QueryRow(`SELECT id, password FROM users WHERE email = ?`, email)
 
-		var userID int
-		var storedHash string
-		err := row.Scan(&userID, &storedHash)
+		var id int
+		var hashedPassword string
+		err = row.Scan(&id, &hashedPassword)
 		if err == sql.ErrNoRows {
-			log.Printf("No user found with email: %s", email)
-			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-			return
-		} else if err != nil {
-			log.Printf("Database query error: %v", err)
-			http.Error(w, "Database query error", http.StatusInternalServerError)
+			fmt.Fprintf(w, "Invalid email or password")
 			return
 		}
 
-		// Print stored hash and provided password for debugging
-		log.Printf("Stored hashed password: %s", storedHash)
-		log.Printf("Provided password: %s", password)
-
-		// Compare the stored hashed password with the provided password
-		err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password))
+		// Compare the hashed password
+		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 		if err != nil {
-			log.Printf("Password comparison failed for email: %s", email)
-			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			fmt.Fprintf(w, "Invalid email or password")
 			return
 		}
 
-		// If successful, set session cookie and log in the user
-		err = SetSessionCookie(w, userID)
+		// Set session or login cookie here (omitted for brevity)
+		// Example: http.SetCookie(w, &http.Cookie{Name: "session_token", Value: "some_value"})
+		err = SetSessionCookie(w, id)
 		if err != nil {
-			http.Error(w, "Error setting session cookie", http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error setting session: %v", err)
 			return
 		}
 
+		// Redirect to home page after successful login
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
-	} else if r.Method == http.MethodGet {
-		// Generate a new CSRF token for the form
-		csrfToken := generateCSRFToken()
-		log.Printf("Generated CSRF token for login: %s", csrfToken)
-		csrfTokens[csrfToken] = true
 
-		// Parse and render the login.html template
+	} else {
+		// Generate and set a CSRF token in a cookie
+		csrfToken, _ := GenerateCSRFToken()
+		fmt.Printf("Generated CSRF token for form: %s\n", csrfToken)
+		SetCSRFCookie(w, csrfToken)
+
+		// Render the login template with the CSRF token
 		tmpl := template.Must(template.ParseFiles("views/login.html"))
 		tmpl.Execute(w, map[string]interface{}{
 			"CsrfToken": csrfToken,
