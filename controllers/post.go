@@ -65,9 +65,9 @@ func GetUserIDFromSession(r *http.Request) (int, error) {
 	sessionID := cookie.Value
 	log.Printf("Session ID from cookie: %s", sessionID)
 
-	sessionMutex.Lock()
-	userID, ok := sessionStore[sessionID]
-	sessionMutex.Unlock()
+	SessionMutex.Lock()
+	userID, ok := SessionStore[sessionID]
+	SessionMutex.Unlock()
 
 	if !ok {
 		log.Println("Invalid session ID")

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"literary-lions/controllers"
 	"literary-lions/database"
@@ -39,19 +40,28 @@ func main() {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("views/home.html")
-	if err != nil {
-		http.Error(w, "Error loading home page", http.StatusInternalServerError)
-		return
+	// Check if user is logged in
+	cookie, err := r.Cookie("session_id")
+	isLoggedIn := false
+	if err == nil {
+		controllers.SessionMutex.Lock()
+		_, sessionExists := controllers.SessionStore[cookie.Value]
+		controllers.SessionMutex.Unlock()
+
+		if sessionExists {
+			isLoggedIn = true
+		}
 	}
 
+	// Render the homepage template
+	tmpl := template.Must(template.ParseFiles("views/home.html"))
+
+	// Pass the login status to the template
 	data := map[string]interface{}{
-		"Title":   "Welcome to Literary Lions Forum",
-		"Message": "This is a welcoming message for the forum.",
+		"IsLoggedIn": isLoggedIn,
 	}
 
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	if err := tmpl.Execute(w, data); err != nil {
+		fmt.Fprintf(w, "Error rendering template: %v", err)
 	}
 }

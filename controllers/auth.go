@@ -18,8 +18,8 @@ import (
 )
 
 // SessionStore stores session data (sessionID -> userID)
-var sessionStore = make(map[string]int) // In-memory store: sessionID -> userID
-var sessionMutex sync.Mutex             // Mutex to prevent race conditions on session store
+var SessionStore = make(map[string]int) // In-memory store: sessionID -> userID
+var SessionMutex sync.Mutex             // Mutex to prevent race conditions on session store
 
 const csrfCookieName = "csrf_token"
 
@@ -119,9 +119,9 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 	}
 
 	// Store the session ID with the userID
-	sessionMutex.Lock()
-	sessionStore[sessionID] = userID
-	sessionMutex.Unlock()
+	SessionMutex.Lock()
+	SessionStore[sessionID] = userID
+	SessionMutex.Unlock()
 
 	// Set the session ID in a cookie
 	cookie := &http.Cookie{

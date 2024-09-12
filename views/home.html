@@ -13,40 +13,47 @@
             <img src="logo.png" alt="Logo" class="logo">
             <p class="welcome-message">Welcome to Literary Lions Forum</p>
         </div>
-
+        {{if not .IsLoggedIn}}
         <!-- User Registration/Login Section -->
         <div class="auth-section">
             <h1>Login</h1>
-    <form action="/login" method="POST">
-        <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
-        <label for="email">Email:</label><br>
-        <input type="email" id="email" name="email" required><br><br>
+            <form action="/home" method="POST">
+                <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                <input type="hidden" name="action" value="login">
+                <label for="login-email">Email:</label><br>
+                <input type="email" id="login-email" name="email" required><br><br>
+            
+                <label for="login-password">Password:</label><br>
+                <input type="password" id="login-password" name="password" required><br><br>
+            
+                <input type="submit" value="Login">
+            </form>
+            
+            <h1>Register</h1>
+            {{if .Error}}
+                <p style="color: red;">{{.Error}}</p>
+            {{end}}
+            <form action="/home" method="POST">
+                <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                <input type="hidden" name="action" value="register">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required><br>
     
-        <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required><br><br>
+                <label for="register-email">Email:</label>
+                <input type="email" id="register-email" name="email" required><br>
     
-        <input type="submit" value="Login">
-    </form>
+                <label for="register-password">Password:</label>
+                <input type="password" id="register-password" name="password" required><br>
     
-    <h1>Register</h1>
-    {{if .Error}}
-        <p style="color: red;">{{.Error}}</p>
-    {{end}}
-    <form action="/register" method="POST">
-        <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br>
-
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br>
-
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
-
-        <input type="submit" value="Register">
-    </form>
+                <input type="submit" value="Register">
+            </form>
         </div>
-
+        {{else}}
+        <p>You are logged in! Feel free to comment, like, or <a href="/create">create a post</a>.</p>
+        <form action="/logout" method="POST">
+            <button type="submit">Log Out</button>
+        </form>
+        {{end}}
         <!-- Categories Section -->
         <div class="categories">
             <h2>Choose a Category</h2>
