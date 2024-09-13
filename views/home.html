@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forum</title>
     <link rel="stylesheet" href="static/home.css">
+    <link rel="stylesheet" href="static/modal.css">
 </head>
 <body>
     <div class="container">
@@ -15,39 +16,11 @@
         </div>
         {{if not .IsLoggedIn}}
         <!-- User Registration/Login Section -->
-        <div class="auth-section">
-            <h1>Login</h1>
-            <form action="/home" method="POST">
-                <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
-                <input type="hidden" name="action" value="login">
-                <label for="login-email">Email:</label><br>
-                <input type="email" id="login-email" name="email" required><br><br>
-            
-                <label for="login-password">Password:</label><br>
-                <input type="password" id="login-password" name="password" required><br><br>
-            
-                <input type="submit" value="Login">
-            </form>
-            
-            <h1>Register</h1>
-            {{if .Error}}
-                <p style="color: red;">{{.Error}}</p>
-            {{end}}
-            <form action="/home" method="POST">
-                <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
-                <input type="hidden" name="action" value="register">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required><br>
-    
-                <label for="register-email">Email:</label>
-                <input type="email" id="register-email" name="email" required><br>
-    
-                <label for="register-password">Password:</label>
-                <input type="password" id="register-password" name="password" required><br>
-    
-                <input type="submit" value="Register">
-            </form>
-        </div>
+        <input type="checkbox" id="modal-toggle">
+        <label for="modal-toggle" class="modal-open">Login or register</label>
+
+        {{template "auth" .}} <!-- Include the auth template here -->
+
         {{else}}
         <p>You are logged in! Feel free to comment, like, or <a href="/posts/create">create a post</a>.</p>
         <form action="/logout" method="POST">

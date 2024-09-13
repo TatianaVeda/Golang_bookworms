@@ -1,0 +1,68 @@
+
+/* Modal button styling */
+.modal-open {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* Hidden checkbox input */
+input[type="checkbox"] {
+    display: none;
+}
+
+/* Modal styling */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Show the modal when the checkbox is checked */
+input[type="checkbox"]:checked ~ .modal {
+    display: flex;
+}
+
+/* Modal content */
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 4px;
+    text-align: center;
+    max-width: 500px;
+    width: 80%;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+
+ /* Close the modal when the Close button is clicked */
+.modal-close {
+    margin: 15px;
+    padding: 10px 20px;
+    background-color: rgb(46, 162, 157);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* OR Clickable modal background */
+.modal-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 1; /* Modal content should be above this */
+}

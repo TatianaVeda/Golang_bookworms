@@ -1,0 +1,45 @@
+{{define "auth"}}
+
+<!-- The Modal -->
+<div class="modal">
+    <!-- Background clickable area -->
+    <label for="modal-toggle" class="modal-label"></label>
+    <div class="modal-content">
+
+        <h2>Dear visitor</h2>
+        <p>Please proceed by logging in or registering at the forum</p>
+
+        <h1>Login</h1>
+        <form action="/home" method="POST">
+            <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+            <input type="hidden" name="action" value="login">
+            <label for="login-email">Email:</label><br>
+            <input type="email" id="login-email" name="email" required><br><br>
+        
+            <label for="login-password">Password:</label><br>
+            <input type="password" id="login-password" name="password" required><br><br>
+        
+            <input type="submit" value="Login">
+        </form>
+        
+        <h1>Register</h1>
+        {{if .Error}}
+            <p style="color: red;">{{.Error}}</p>
+        {{end}}
+        <form action="/home" method="POST">
+            <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+            <input type="hidden" name="action" value="register">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br>
+
+            <label for="register-email">Email:</label>
+            <input type="email" id="register-email" name="email" required><br>
+
+            <label for="register-password">Password:</label>
+            <input type="password" id="register-password" name="password" required><br>
+
+            <input type="submit" value="Register">
+        </form>
+    </div>
+</div>
+{{end}}
