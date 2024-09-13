@@ -206,3 +206,31 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 }
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	// Get session cookie
+	cookie, err := r.Cookie("session_id")
+
+	if err == nil {
+		fmt.Println("Found session cookie:", cookie.Value)
+
+		SessionMutex.Lock()
+		delete(SessionStore, cookie.Value) // Remove session from store
+		SessionMutex.Unlock()
+		fmt.Println("Session deleted from store:", cookie.Value)
+
+		// Clear the cookie by setting it to expire immediately
+		http.SetCookie(w, &http.Cookie{
+			Name:   "session_id",
+			Value:  "",
+			MaxAge: -1,  // Immediate expiration
+			Path:   "/", // Ensure the path matches
+		})
+		fmt.Println("Session cookie cleared, user logged out.")
+	} else {
+		fmt.Println("No session cookie found.")
+	}
+
+	// Redirect to home page after logout
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
