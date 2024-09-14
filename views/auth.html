@@ -1,0 +1,61 @@
+{{define "auth"}}
+    <!-- Checkbox to trigger the modal -->
+<input type="checkbox" id="modal-toggle">
+
+<!-- Modal Trigger Button -->
+<label for="modal-toggle" class="modal-open">Login or Register</label>
+
+<!-- The Modal -->
+<div class="modal">
+    <!-- Background clickable area -->
+    <label for="modal-toggle" class="modal-label"></label>
+
+    <div class="modal-content">
+        <h2>Welcome</h2>
+        <p>Select a tab to login or register</p>
+
+        <!-- Tab Radio Buttons -->
+        <input type="radio" id="login-tab" name="auth-tab" checked>
+        <input type="radio" id="register-tab" name="auth-tab">
+
+        <!-- Tab Labels -->
+        <div class="tab-container">
+            <label for="login-tab" class="tab">Login</label>
+            <label for="register-tab" class="tab">Register</label>
+        </div>
+
+        <div class="tab-content">
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form">
+                <h3>Login</h3>
+                <form action="/home" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                    <input type="hidden" name="action" value="login">
+                    <label for="login-email">Email:</label><br>
+                    <input type="email" id="login-email" name="email" required><br><br>
+                    <label for="login-password">Password:</label><br>
+                    <input type="password" id="login-password" name="password" required><br><br>
+                    <input type="submit" value="Login">
+                </form>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form">
+                <h3>Register</h3>
+                <form action="/home" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                    <input type="hidden" name="action" value="register">
+                    <label for="username">Username:</label><br>
+                    <input type="text" id="username" name="username" required><br>
+                    <label for="register-email">Email:</label><br>
+                    <input type="email" id="register-email" name="email" required><br>
+                    <label for="register-password">Password:</label><br>
+                    <input type="password" id="register-password" name="password" required><br>
+                    <input type="submit" value="Register">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{end}}
