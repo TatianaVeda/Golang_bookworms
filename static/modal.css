@@ -1,4 +1,4 @@
-/* Modal button styling */
+/* Modal Button Styling */
 .modal-open {
     padding: 10px 20px;
     background-color: #007bff;
@@ -12,7 +12,13 @@ input[type="checkbox"] {
     display: none;
 }
 
-/* Modal styling */
+
+/* Hidden Radio Buttons */
+input[type="radio"] {
+    display: none;
+}
+
+/* Modal Styling */
 .modal {
     display: none; /* Hidden by default */
     position: fixed;
@@ -25,12 +31,12 @@ input[type="checkbox"] {
     align-items: center;
 }
 
-/* Show the modal when the checkbox is checked */
+/* Show the Modal when Checked */
 input[type="checkbox"]:checked ~ .modal {
     display: flex;
 }
 
-/* Modal content */
+/* Modal Content Styling */
 .modal-content {
     background-color: white;
     padding: 20px;
@@ -38,31 +44,49 @@ input[type="checkbox"]:checked ~ .modal {
     text-align: center;
     max-width: 500px;
     width: 80%;
-    position: relative; /* Added relative positioning */
-    z-index: 2; /* Bring the content above the modal background */
+    position: relative;
 }
 
-.modal-content h2 {
-    margin-top: 0;
-}
-
-/* Close the modal when the Close button is clicked */
-.modal-close {
-    margin: 15px;
-    padding: 10px 20px;
-    background-color: rgb(46, 162, 157);
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
-/* Clickable modal background */
-.modal-label {
+/* Close Button Styling */
+.close {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    z-index: 1; /* Make sure the label is below modal content */
+    top: 10px;
+    right: 10px;
 }
+
+/* Tab styles */
+.tab-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.tab {
+    cursor: pointer;
+    padding: 10px 20px;
+    background-color: #ddd;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+input[type="radio"]:checked + label {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Hide both forms by default */
+.auth-form {
+    display: none;
+}
+
+/* Only show the login form when the login tab is active */
+#login-tab:checked ~ .tab-content #login-form {
+    display: block;
+}
+
+/* Only show the register form when the register tab is active */
+#register-tab:checked ~ .tab-content #register-form {
+    display: block;
+}
+
+
