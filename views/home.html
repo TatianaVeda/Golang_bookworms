@@ -15,9 +15,6 @@
             <p class="welcome-message">Welcome to Literary Lions Forum</p>
         </div>
         {{if not .IsLoggedIn}}
-        <!-- User Registration/Login Section -->
-        <input type="checkbox" id="modal-toggle">
-        <label for="modal-toggle" class="modal-open">Login or register</label>
 
         {{template "auth" .}} <!-- Include the auth template here -->
 
