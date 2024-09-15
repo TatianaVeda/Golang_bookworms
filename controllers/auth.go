@@ -179,11 +179,13 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		var hashedPassword string
 		err = row.Scan(&id, &hashedPassword)
 		if err == sql.ErrNoRows || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) != nil {
+			fmt.Println("Invalid login attempt, showing error message")
 			// Re-render home page with login error message
 			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 			data := map[string]interface{}{
 				"LoginError": "Invalid email or password", // Add an error message for login failure
 				"CsrfToken":  formToken,
+				"ShowModal":  true, // Set this to true to indicate the modal should stay open
 			}
 			tmpl.Execute(w, data)
 			return

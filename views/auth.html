@@ -1,9 +1,10 @@
 {{define "auth"}}
-    <!-- Checkbox to trigger the modal -->
-<input type="checkbox" id="modal-toggle">
+<!-- Checkbox to trigger the modal -->
+<input type="checkbox" id="modal-toggle" {{if .ShowModal}}checked{{end}}>
 
 <!-- Modal Trigger Button -->
-<label for="modal-toggle" class="modal-open">Login or Register</label>
+<label for="modal-toggle" class="modal-open" style="display: inline-block;">Login or Register</label>
+
 
 <!-- The Modal -->
 <div class="modal">
@@ -28,6 +29,9 @@
             <!-- Login Form -->
             <div id="login-form" class="auth-form">
                 <h3>Login</h3>
+                {{if .LoginError}}
+                <p style="color: red;">{{.LoginError}}</p>
+                {{end}}
                 <form action="/home" method="POST">
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
                     <input type="hidden" name="action" value="login">
@@ -42,6 +46,9 @@
             <!-- Register Form -->
             <div id="register-form" class="auth-form">
                 <h3>Register</h3>
+                {{if .Error}}
+                <p style="color: red;">{{.Error}}</p>
+                 {{end}}
                 <form action="/home" method="POST">
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
                     <input type="hidden" name="action" value="register">
