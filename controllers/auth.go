@@ -14,6 +14,7 @@ import (
 
 	"literary-lions/database"
 
+	"github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -90,9 +91,23 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-		// Insert user into the database
+		// Insert user into the database, handle unique constraint errors
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
+			if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.Code == sqlite3.ErrConstraint {
+				// If unique constraint fails, rerender the registration modal with a friendly error
+				tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+				data := map[string]interface{}{
+					"RegistrationError": "The email or username already exists. Please try again.", // Friendly error message
+					"CsrfToken":         formToken,
+					"ShowModal":         true, // Keep the modal open
+					"IsRegistering":     true, // Ensure the Register tab is active
+				}
+				tmpl.Execute(w, data)
+				return
+			}
+
+			// Handle other database errors
 			fmt.Fprintf(w, "Error registering user: %v", err)
 			return
 		}
