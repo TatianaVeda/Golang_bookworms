@@ -94,20 +94,22 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		// Insert user into the database, handle unique constraint errors
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
+			// Handle unique constraint errors (e.g., duplicate email or username)
 			if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.Code == sqlite3.ErrConstraint {
-				// If unique constraint fails, rerender the registration modal with a friendly error
+				// Re-render home page with registration error
 				tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 				data := map[string]interface{}{
-					"RegistrationError": "The email or username already exists. Please try again.", // Friendly error message
+					"RegistrationError": "The email or username already exists. Please try again.",
 					"CsrfToken":         formToken,
 					"ShowModal":         true, // Keep the modal open
 					"IsRegistering":     true, // Ensure the Register tab is active
 				}
+				fmt.Printf("Template Data: %+v\n", data)
 				tmpl.Execute(w, data)
 				return
 			}
 
-			// Handle other database errors
+			// General error handling
 			fmt.Fprintf(w, "Error registering user: %v", err)
 			return
 		}
@@ -115,8 +117,10 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		// Re-render home page with success message
 		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 		data := map[string]interface{}{
-			"RegistrationSuccess": true, // Add a flag for registration success
+			"RegistrationSuccess": true,
 			"CsrfToken":           formToken,
+			"ShowModal":           true,
+			"IsRegistering":       false, // After successful registration, go back to login tab
 		}
 		tmpl.Execute(w, data)
 
@@ -193,13 +197,13 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		var hashedPassword string
 		err = row.Scan(&id, &hashedPassword)
 		if err == sql.ErrNoRows || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) != nil {
-			fmt.Println("Invalid login attempt, showing error message")
-			// Re-render home page with login error message
+			// Invalid login attempt, re-render the home page with error message
 			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 			data := map[string]interface{}{
-				"LoginError": "Invalid email or password", // Add an error message for login failure
-				"CsrfToken":  formToken,
-				"ShowModal":  true, // Set this to true to indicate the modal should stay open
+				"LoginError":    "Invalid email or password.",
+				"CsrfToken":     formToken,
+				"ShowModal":     true,  // Keep the modal open
+				"IsRegistering": false, // Ensure the Login tab is active
 			}
 			tmpl.Execute(w, data)
 			return
@@ -215,9 +219,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		// Re-render home page with login success message
 		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 		data := map[string]interface{}{
-			"LoginSuccess": true, // Add a flag for login success
+			"LoginSuccess": true,
 			"IsLoggedIn":   true,
 			"CsrfToken":    formToken,
+			"ShowModal":    false, // Close the modal upon successful login
 		}
 		tmpl.Execute(w, data)
 

@@ -16,9 +16,9 @@
         <h2>Welcome</h2>
         <p>Select a tab to login or register</p>
 
-        <!-- Tab Radio Buttons -->
-        <input type="radio" id="login-tab" name="auth-tab" checked>
-        <input type="radio" id="register-tab" name="auth-tab">
+       <!-- Tab Radio Buttons -->
+       <input type="radio" id="login-tab" name="auth-tab" {{if not .RegistrationError}}checked{{else}}class="hidden"{{end}} {{if .LoginError}}checked{{end}}>
+       <input type="radio" id="register-tab" name="auth-tab" {{if .RegistrationError}}checked{{else}}class="hidden"{{end}} {{if not .LoginError}}checked{{end}}>
 
         <!-- Tab Labels -->
         <div class="tab-container">
