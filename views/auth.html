@@ -1,6 +1,6 @@
 {{define "auth"}}
 <!-- Checkbox to trigger the modal -->
-<input type="checkbox" id="modal-toggle" {{if .ShowModal}}checked{{end}}>
+<input type="checkbox" id="modal-toggle" class="modal-toggle" {{if .ShowModal}}checked{{end}}>
 
 <!-- Modal Trigger Button -->
 <label for="modal-toggle" class="modal-open" style="display: inline-block;">Login or Register</label>
@@ -9,9 +9,10 @@
 <!-- The Modal -->
 <div class="modal">
     <!-- Background clickable area -->
-    <label for="modal-toggle" class="modal-label"></label>
+    <label for="modal-toggle" class="modal-overlay"></label>
 
     <div class="modal-content">
+        <label for="modal-toggle" class="modal-close">&times;</label>
         <h2>Welcome</h2>
         <p>Select a tab to login or register</p>
 
@@ -36,9 +37,9 @@
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
                     <input type="hidden" name="action" value="login">
                     <label for="login-email">Email:</label><br>
-                    <input type="email" id="login-email" name="email" required><br><br>
+                    <input type="email" id="login-email" name="email" required autocomplete="off"><br><br>
                     <label for="login-password">Password:</label><br>
-                    <input type="password" id="login-password" name="password" required><br><br>
+                    <input type="password" id="login-password" name="password" required autocomplete="off"><br><br>
                     <input type="submit" value="Login">
                 </form>
             </div>
@@ -55,9 +56,9 @@
                     <label for="username">Username:</label><br>
                     <input type="text" id="username" name="username" required><br>
                     <label for="register-email">Email:</label><br>
-                    <input type="email" id="register-email" name="email" required><br>
+                    <input type="email" id="register-email" name="email" required autocomplete="off"><br>
                     <label for="register-password">Password:</label><br>
-                    <input type="password" id="register-password" name="password" required><br>
+                    <input type="password" id="register-password" name="password" required autocomplete="off"><br>
                     <input type="submit" value="Register">
                 </form>
             </div>

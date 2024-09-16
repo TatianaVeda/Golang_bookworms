@@ -164,7 +164,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		// CSRF token validation
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
-		fmt.Println("moi: ", formToken, " keksi: ", cookieToken, err)
 		if err != nil || formToken != cookieToken {
 			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 			return
