@@ -31,7 +31,7 @@
             <div id="login-form" class="auth-form">
                 <h3>Login</h3>
                 {{if .LoginError}}
-                <div class="error-message">{{.LoginError}}</p>
+                <p style="color: red;">{{.LoginError}}</p>
                 {{end}}
                 <form action="/home" method="POST">
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
@@ -48,7 +48,7 @@
             <div id="register-form" class="auth-form">
                 <h3>Register</h3>
                 {{if .RegistrationError}}
-                <div class="error-message">{{.RegistrationError}}</div>
+                <p style="color: red;">{{.RegistrationError}}</p>
                 {{end}}
                 <form action="/home" method="POST">
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">

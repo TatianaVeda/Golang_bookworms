@@ -91,7 +91,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-		// Insert user into the database, handle unique constraint errors
+		// Insert user into the database
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
 			// Handle unique constraint errors (e.g., duplicate email or username)
