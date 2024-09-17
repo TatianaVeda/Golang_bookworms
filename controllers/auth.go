@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"literary-lions/database"
+	"literary-lions/utils"
 
 	"github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -176,15 +177,14 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "Error parsing form", http.StatusInternalServerError)
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Unable to process your request. Please try again.")
 			return
 		}
 
-		// CSRF token validation
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
-			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+			utils.RenderErrorPage(w, http.StatusForbidden, "Invalid request. Please try again.")
 			return
 		}
 
@@ -243,29 +243,23 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	// Get session cookie
 	cookie, err := r.Cookie("session_id")
-
-	if err == nil {
-		fmt.Println("Found session cookie:", cookie.Value)
-
-		SessionMutex.Lock()
-		delete(SessionStore, cookie.Value) // Remove session from store
-		SessionMutex.Unlock()
-		fmt.Println("Session deleted from store:", cookie.Value)
-
-		// Clear the cookie by setting it to expire immediately
-		http.SetCookie(w, &http.Cookie{
-			Name:   "session_id",
-			Value:  "",
-			MaxAge: -1,  // Immediate expiration
-			Path:   "/", // Ensure the path matches
-		})
-		fmt.Println("Session cookie cleared, user logged out.")
-	} else {
-		fmt.Println("No session cookie found.")
+	if err != nil {
+		utils.RenderErrorPage(w, http.StatusBadRequest, "Session not found or already expired.")
+		return
 	}
 
-	// Redirect to home page after logout
+	SessionMutex.Lock()
+	delete(SessionStore, cookie.Value) // Remove session from store
+	SessionMutex.Unlock()
+
+	// Clear the cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:   "session_id",
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
+	})
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

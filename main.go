@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"literary-lions/controllers"
 	"literary-lions/database"
+	"literary-lions/utils"
 	"log"
 	"net/http"
 	"net/url"
@@ -29,6 +30,9 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/posts/like", controllers.LikePostHandler)
 	http.HandleFunc("/posts/dislike", controllers.DislikePostHandler)
+	http.HandleFunc("/404", NotFoundHandler)
+	http.HandleFunc("/500", InternalServerErrorHandler)
+	http.HandleFunc("/test-error", CauseInternalServerError)
 
 	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
@@ -38,56 +42,67 @@ func main() {
 	}
 }
 
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	// Prevent page from being cached
-	w.Header().Set("Cache-Control", "no-store")
-
-	// Check if this is a form submission
-	if r.Method == http.MethodPost {
-		r.ParseForm()
-		action := r.FormValue("action")
-
-		if action == "login" {
-			// Handle login
-			controllers.LoginUser(w, r)
-
-		} else if action == "register" {
-			// Handle registration
-			controllers.RegisterUser(w, r)
-
+// rootHandler handles requests to the root path '/'
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/":
+		if r.Method == http.MethodGet {
+			HomeHandler(w, r) // Handle homepage requests
+		} else {
+			http.NotFoundHandler().ServeHTTP(w, r) // Handle non-GET methods
 		}
-	} else if r.Method == http.MethodGet {
+	default:
+		http.NotFoundHandler().ServeHTTP(w, r) // Handle unmatched paths
+	}
+}
 
-		// Check if user is logged in
-		cookie, err := r.Cookie("session_id")
-		isLoggedIn := false
-		if err == nil {
-			controllers.SessionMutex.Lock()
-			_, sessionExists := controllers.SessionStore[cookie.Value]
-			controllers.SessionMutex.Unlock()
-			if sessionExists {
-				isLoggedIn = true
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" {
+		// Prevent page from being cached
+		w.Header().Set("Cache-Control", "no-store")
+
+		// Handle form submission
+		if r.Method == http.MethodPost {
+			r.ParseForm()
+			action := r.FormValue("action")
+
+			if action == "login" {
+				controllers.LoginUser(w, r)
+			} else if action == "register" {
+				controllers.RegisterUser(w, r)
+			}
+		} else if r.Method == http.MethodGet {
+			// Check if user is logged in
+			cookie, err := r.Cookie("session_id")
+			isLoggedIn := false
+			if err == nil {
+				controllers.SessionMutex.Lock()
+				_, sessionExists := controllers.SessionStore[cookie.Value]
+				controllers.SessionMutex.Unlock()
+				if sessionExists {
+					isLoggedIn = true
+				}
 			}
 
-		}
+			// Generate CSRF token
+			csrfToken, err := controllers.GenerateAndSetCSRFToken(w, r)
+			if err != nil {
+				utils.RenderErrorPage(w, http.StatusInternalServerError, "Error generating CSRF token.")
+				return
+			}
 
-		// Use the function to generate and set a CSRF token if necessary
-		csrfToken, err := controllers.GenerateAndSetCSRFToken(w, r)
-		if err != nil {
-			fmt.Fprintf(w, "Error generating CSRF token: %v", err)
-			return
+			// Render the homepage
+			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+			data := map[string]interface{}{
+				"IsLoggedIn": isLoggedIn,
+				"CsrfToken":  csrfToken,
+			}
+			if err := tmpl.Execute(w, data); err != nil {
+				utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering homepage.")
+			}
 		}
-
-		// Render the homepage with modal
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
-		data := map[string]interface{}{
-			"IsLoggedIn": isLoggedIn,
-			"CsrfToken":  csrfToken,
-		}
-
-		if err := tmpl.Execute(w, data); err != nil {
-			fmt.Fprintf(w, "Error rendering template: %v", err)
-		}
+	} else {
+		http.NotFoundHandler().ServeHTTP(w, r) // Handle non-matching paths
 	}
 }
 
@@ -100,4 +115,19 @@ func newHTTPRequest(method, path string, form url.Values) *http.Request {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	return req
+}
+
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	utils.RenderErrorPage(w, http.StatusNotFound, "Page Not Found")
+}
+
+func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request) {
+	utils.RenderErrorPage(w, http.StatusInternalServerError, "Internal Server Error")
+}
+
+func CauseInternalServerError(w http.ResponseWriter, r *http.Request) {
+	// Force an error
+	err := fmt.Errorf("deliberate error for testing")
+	log.Printf("Forced error: %v", err)
+	http.Error(w, "Something went wrong. Please try again later.", http.StatusInternalServerError)
 }
