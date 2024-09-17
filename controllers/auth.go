@@ -14,6 +14,7 @@ import (
 
 	"literary-lions/database"
 
+	"github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -93,6 +94,22 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		// Insert user into the database
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
+			// Handle unique constraint errors (e.g., duplicate email or username)
+			if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.Code == sqlite3.ErrConstraint {
+				// Re-render home page with registration error
+				tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+				data := map[string]interface{}{
+					"RegistrationError": "The email or username already exists. Please try again.",
+					"CsrfToken":         formToken,
+					"ShowModal":         true, // Keep the modal open
+					"IsRegistering":     true, // Ensure the Register tab is active
+				}
+				fmt.Printf("Template Data: %+v\n", data)
+				tmpl.Execute(w, data)
+				return
+			}
+
+			// General error handling
 			fmt.Fprintf(w, "Error registering user: %v", err)
 			return
 		}
@@ -100,8 +117,10 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		// Re-render home page with success message
 		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 		data := map[string]interface{}{
-			"RegistrationSuccess": true, // Add a flag for registration success
+			"RegistrationSuccess": true,
 			"CsrfToken":           formToken,
+			"ShowModal":           true,
+			"IsRegistering":       false, // After successful registration, go back to login tab
 		}
 		tmpl.Execute(w, data)
 
@@ -164,7 +183,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		// CSRF token validation
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
-		fmt.Println("moi: ", formToken, " keksi: ", cookieToken, err)
 		if err != nil || formToken != cookieToken {
 			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 			return
@@ -179,11 +197,13 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		var hashedPassword string
 		err = row.Scan(&id, &hashedPassword)
 		if err == sql.ErrNoRows || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) != nil {
-			// Re-render home page with login error message
+			// Invalid login attempt, re-render the home page with error message
 			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 			data := map[string]interface{}{
-				"LoginError": "Invalid email or password", // Add an error message for login failure
-				"CsrfToken":  formToken,
+				"LoginError":    "Invalid email or password.",
+				"CsrfToken":     formToken,
+				"ShowModal":     true,  // Keep the modal open
+				"IsRegistering": false, // Ensure the Login tab is active
 			}
 			tmpl.Execute(w, data)
 			return
@@ -199,9 +219,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		// Re-render home page with login success message
 		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 		data := map[string]interface{}{
-			"LoginSuccess": true, // Add a flag for login success
+			"LoginSuccess": true,
 			"IsLoggedIn":   true,
 			"CsrfToken":    formToken,
+			"ShowModal":    false, // Close the modal upon successful login
 		}
 		tmpl.Execute(w, data)
 
