@@ -31,11 +31,7 @@ Posts can be associated with specific categories (Literature, Poetry, Non-fictio
 Only registered users can create, like or dislike posts and comments.
 The number of likes/dislikes is visible to users.
 
-## Technologies
-Backend: Go (Golang)
-Database: SQLite with go-sqlite3 driver
-Frontend: HTML, CSS, Go
-Containerization: Docker
+
 
 ## Project Structure
 ![pic of structure](image.png)
@@ -72,12 +68,13 @@ literary-lions-forum/
 ├── go.mod                  
 └── README.md                   # Project documentation
 
+### Technologies & Prerequisites
+- Backend: Go (Golang 1.20 or later)
+- Database: SQLite with go-sqlite3 driver
+- Frontend: HTML, CSS, Go
+- Containerization: Docker
 
 ## Getting Started
-* Prerequisites
-* Go (1.20 or later)
-* Docker
-* SQLite3
 
 ### Installation
 Clone the repository:
