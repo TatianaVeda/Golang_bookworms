@@ -33,6 +33,7 @@ Frontend: HTML, CSS, Go
 Containerization: Docker
 
 ## Project Structure
+![pic of structure](image.png)
 
 literary-lions-forum/
 │
@@ -67,18 +68,22 @@ literary-lions-forum/
 └── README.md               # Project documentation
 
 ## Getting Started
-Prerequisites
-Go (1.20 or later)
-Docker
-SQLite3
+* Prerequisites
+* Go (1.20 or later)
+* Docker
+* SQLite3
 
 ### Installation
 Clone the repository:
-```git clone https://gitea.koodsisu.fi/juliageorgieva/literary-lions
-cd literary-lions```
+```
+git clone https://gitea.koodsisu.fi/juliageorgieva/literary-lions
+cd literary-lions
+```
 
 Install Go dependencies if necessary:
-```go mod tidy```
+``` 
+go mod tidy
+```
 
 Initialize SQLite database regarding https://pkg.go.dev/github.com/mattn/go-sqlite3
 
@@ -93,40 +98,65 @@ Before you begin, ensure that Docker is installed on your machine. Download Dock
 * For Linux: Follow the official Docker installation guide for your distribution:
 
 Start the Docker service:
-```sudo systemctl start docker```
+```
+sudo systemctl start docker
+```
 
 Ensure Docker is running:
-```systemctl status docker```
+```
+systemctl status docker
+```
 
 2. Build the Docker Image
 Navigate to the project directory and build the Docker image:
-```docker build -t literary-lions-forum .```
+```
+docker build -t literary-lions-forum .
+```
 
 3. Start the container using the built image:
-```docker run -d --name literary-lions-forum -p 8080:8080 literary-lions-forum```
+```
+docker run -d --name literary-lions-forum -p 8080:8080 literary-lions-forum
+```
 
 This command runs a container named <my-container> from the <my-image>,  mapping port 8080 on the host to port 8080 on the container.
 The application will be available at http://localhost:8080.
 
 4. Verify Container Operation. To verify that the container is running:
-```docker ps``` Lists all running containers. 
-```docker images``` Shows all images.
+```
+docker ps
+``` Lists all running containers. 
+```
+docker images
+``` Shows all images.
 
 You can check the logs of the running container:
-```docker logs literary-lions-forum```
+```
+docker logs literary-lions-forum
+```
 
 5. To keep your Docker environment clean, remove unused objects:
-Remove stopped containers: ```docker container prune -f``` 
-Remove unused images: ```docker image prune -a -f``` 
-Remove unused volumes: ```docker volume prune -f```
-Remove unused networks: ```docker network prune -f```
+Remove stopped containers: 
+```docker container prune -f
+``` 
+Remove unused images: 
+```docker image prune -a -f
+``` 
+Remove unused volumes:
+```docker volume prune -f
+```
+Remove unused networks: 
+```docker network prune -f
+```
 
 Full system cleanup (optional): 
-```docker system prune -a --volumes -f```
+```
+docker system prune -a --volumes -f
+```
 This command removes all unused containers, images, volumes, and networks, providing a comprehensive cleanup.
 
 6. Check Disk Usage:
-```docker system df``` to get a general idea of ​​how much space images, containers, networks, and volumes are taking up.
+```docker system df
+``` to get a general idea of ​​how much space images, containers, networks, and volumes are taking up.
 
 Using Docker Compose can simplify managing multi-container applications. If your project scales to include additional services (e.g., Redis, Nginx), Docker Compose becomes invaluable.
 
