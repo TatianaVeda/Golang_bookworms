@@ -127,8 +127,8 @@ docker ps
 Lists all running containers. 
 ```
 docker images
-``` Shows all images.
-You can check the logs of the running container:
+```
+Shows all images. You can check the logs of the running container:
 ```
 docker logs literary-lions-forum
 ```
