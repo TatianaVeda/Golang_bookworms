@@ -34,7 +34,7 @@ The number of likes/dislikes is visible to users.
 
 
 ## Project Structure
-![pic of structure](image.png)
+![pic of structure](literary-lions/image.png "Picture of structure")
 
 literary-lions-forum/
 │
