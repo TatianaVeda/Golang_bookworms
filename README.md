@@ -17,6 +17,12 @@ Session management is handled using cookies.
 ### Database interaction:
 User registration data is stored in forum.db.
 Interaction with the database is out of using SQL queries SELECT, CREATE and INSERT.
+#### Database Schema
+consists of the following tables:
+- Users: Stores user information (email, username, password hash).
+- Posts: Contains posts made by users.
+- Comments: Stores comments on posts.
+- Categories: Defines categories for posts (Literature, Poetry, Non-fiction, Short Stories).
 
 ### Post and Comment System:
 
@@ -24,7 +30,6 @@ Registered users can create posts and comments.
 Posts can be associated with specific categories (Literature, Poetry, Non-fiction, Short Stories).
 Only registered users can create, like or dislike posts and comments.
 The number of likes/dislikes is visible to users.
-
 
 ## Technologies
 Backend: Go (Golang)
@@ -37,35 +42,36 @@ Containerization: Docker
 
 literary-lions-forum/
 │
-├── main.go                 # Application entry point
+├── main.go                      # Application entry point
 │                
-├── controllers/            # Application logic
-│   ├── auth.go/            # Authentication and session management
-│   ├── post.go/            # Post, comment and categories management
+├── controllers/                 # Application logic
+│   ├── auth.go/                 # Authentication and session management
+│   ├── post.go/                 # Post, comment and categories management
 │ 
-│── database/               # Database models (Users, Posts, Categories, Comments)
-│   ├── db.go               # SQLite interaction and schema
+│── database/                    # Database models (Users, Posts, Categories, Comments)
+│   ├── db.go                    # SQLite interaction and schema
 │
-│── forum.db                # Database storage
+│── forum.db                     # Database storage
 │
-├── static/                 # Static style files (CSS, images)
+├── static/                      # Static style files (CSS, images)
 │   ├── images/lion-icon.png 
 │   ├── home.css
 │   ├── modal.css     
 │
-├── views/                  # HTML templates
+├── views/                       # HTML templates
 │
-├── Dockerfile              # Dockerfile for containerizing the app
-├── .dockerignore           # File for ignoring while containerizing the app
+├── Dockerfile                   # Dockerfile for containerizing the app
+├── .dockerignore                # File for ignoring while containerizing the app
 │
 │
-├── cookies.txt             ???  
+├── cookies.txt                  ???  
 │
-├── .idea/                  ??? 
+├── .idea/                       ??? 
 │
-├── go.sum                  # Go modules file for dependencies
+├── go.sum                      # Go modules file for dependencies
 ├── go.mod                  
-└── README.md               # Project documentation
+└── README.md                   # Project documentation
+
 
 ## Getting Started
 * Prerequisites
@@ -101,53 +107,51 @@ Start the Docker service:
 ```
 sudo systemctl start docker
 ```
-
 Ensure Docker is running:
 ```
 systemctl status docker
 ```
-
 2. Build the Docker Image
 Navigate to the project directory and build the Docker image:
 ```
 docker build -t literary-lions-forum .
 ```
-
 3. Start the container using the built image:
 ```
 docker run -d --name literary-lions-forum -p 8080:8080 literary-lions-forum
 ```
-
 This command runs a container named <my-container> from the <my-image>,  mapping port 8080 on the host to port 8080 on the container.
 The application will be available at http://localhost:8080.
 
 4. Verify Container Operation. To verify that the container is running:
 ```
 docker ps
-``` Lists all running containers. 
+``` 
+Lists all running containers. 
 ```
 docker images
 ``` Shows all images.
-
 You can check the logs of the running container:
 ```
 docker logs literary-lions-forum
 ```
-
 5. To keep your Docker environment clean, remove unused objects:
 Remove stopped containers: 
-```docker container prune -f
+```
+docker container prune -f
 ``` 
 Remove unused images: 
-```docker image prune -a -f
+```
+docker image prune -a -f
 ``` 
 Remove unused volumes:
-```docker volume prune -f
+```
+docker volume prune -f
 ```
 Remove unused networks: 
-```docker network prune -f
 ```
-
+docker network prune -f
+```
 Full system cleanup (optional): 
 ```
 docker system prune -a --volumes -f
@@ -155,21 +159,12 @@ docker system prune -a --volumes -f
 This command removes all unused containers, images, volumes, and networks, providing a comprehensive cleanup.
 
 6. Check Disk Usage:
-```docker system df
-``` to get a general idea of ​​how much space images, containers, networks, and volumes are taking up.
+```
+docker system df
+```
+to get a general idea of ​​how much space images, containers, networks, and volumes are taking up.
 
 Using Docker Compose can simplify managing multi-container applications. If your project scales to include additional services (e.g., Redis, Nginx), Docker Compose becomes invaluable.
-
-
-## Database Schema
-
-The database schema consists of the following tables:
-
-- Users: Stores user information (email, username, password hash).
-- Posts: Contains posts made by users.
-- Comments: Stores comments on posts.
-- Categories: Defines categories for posts (Literature, Poetry, Non-fiction, Short Stories).
-- You can view and manage the database directly through SQLite or interact with it via the Go code.
 
 
 ## Usage
