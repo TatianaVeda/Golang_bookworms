@@ -9,9 +9,9 @@ The Literary Lions Forum is designed to help book club enthusiasts to engage in 
 
 ### User Registration and Authentication:
 
-Users can register with a unique email, username, and password.
-Login is based on email and password.
-Session management is handled using cookies.
+- Users can register with a unique email, username, and password.
+- Login is based on email and password.
+- Session management is handled using cookies.
 #### Passwords are stored securely using encryption.
 
 ### Database interaction:
@@ -98,7 +98,7 @@ Before you begin, ensure that Docker is installed on your machine. Download Dock
 
 * For Windows: After installation, start Docker Desktop and ensure it is running.
 * For macOS: Open the downloaded .dmg file and drag Docker to your Applications folder, launch and ensure it is running. 
-* For Linux: Follow the official Docker installation guide for your distribution:
+* For Linux: Follow the official Docker installation guide for your distribution: https://docs.docker.com/desktop/install/linux/
 
 Start the Docker service:
 ```
@@ -108,8 +108,7 @@ Ensure Docker is running:
 ```
 systemctl status docker
 ```
-2. Build the Docker Image
-Navigate to the project directory and build the Docker image:
+2. Navigate to the project directory and build the Docker image:
 ```
 docker build -t literary-lions-forum .
 ```
@@ -132,7 +131,7 @@ Shows all images. You can check the logs of the running container:
 ```
 docker logs literary-lions-forum
 ```
-5. To keep your Docker environment clean, remove unused objects:
+5. To keep your Docker environment clean, remove unused objects.
 Remove stopped containers: 
 ```
 docker container prune -f
@@ -161,8 +160,6 @@ docker system df
 ```
 to get a general idea of ​​how much space images, containers, networks, and volumes are taking up.
 
-Using Docker Compose can simplify managing multi-container applications. If your project scales to include additional services (e.g., Redis, Nginx), Docker Compose becomes invaluable.
-
 
 ## Usage
 
@@ -180,6 +177,6 @@ Once the forum is up and running:
 
 ### Contributors:
 
-Julia Georgieva Georgieva, Mariia Melnikova, Tatiana Vedishcheva
+Julia Georgieva Georgieva, Mariia Melnikova, Tatiana Vedishcheva.
 Hit us up in Discord if you have any questions!
 

@@ -1,15 +1,18 @@
 /* Modal Button Styling */
 .modal-open {
     padding: 10px 20px;
-    background-color: #007bff;
+    background-color: #046871;
     color: white;
     border: none;
     cursor: pointer;
+    margin: 10px;
+    
 }
 
 /* Hidden checkbox input */
 input[type="checkbox"] {
     display: none;
+    
 }
 
 
@@ -34,6 +37,7 @@ input[type="radio"] {
 /* Show the Modal when Checked */
 input[type="checkbox"]:checked ~ .modal {
     display: flex;
+    font-size: 16px;
 }
 
 /* Modal Content Styling */
@@ -96,11 +100,13 @@ input[type="radio"]:checked + label {
 /* Only show the login form when the login tab is active */
 #login-tab:checked ~ .tab-content #login-form {
     display: block;
+    
 }
 
 /* Only show the register form when the register tab is active */
 #register-tab:checked ~ .tab-content #register-form {
     display: block;
+    
 }
 
 .error-message {

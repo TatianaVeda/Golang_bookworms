@@ -1,11 +1,38 @@
 /* General Styles */
+ @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+/*@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&display=swap'); 
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English&display=swap');*/
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Playfair Display', serif;
+    /*color: #4B0082;  Индиго для стильного акцента */
+    /* font-family: Arial, sans-serif; 
     background-color: #f4f4f4;
+    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Libre Baskerville', serif;
+    font-family: 'Cinzel', serif; 
+    font-family: 'IM Fell English', serif;*/
+    font-size: 20px;
+    color: #8B0000; /* Dark Red for a bold, striking look */
+   /* color: #542504;  Цвет коричневой кожи, часто ассоциирующийся со старыми книгами */
+    letter-spacing: 1px;
     margin: 0;
     padding: 0;
 }
 
+.buttons {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+
+
+}
 .container {
     width: 80%;
     margin: 0 auto;
@@ -14,19 +41,23 @@ body {
 
 /* Logo and Welcoming Section */
 .header {
+    
+    color: #ff4500;
     text-align: center;
     margin-top: 20px;
 }
 
 .logo {
-    max-width: 150px;
+    max-width: 250px;
     height: auto;
 }
 
 .welcome-message {
+    font-family: 'Mountains of Christmas', cursive;
+    color: #2a0458;
     font-size: 24px;
     font-weight: bold;
-    color: #333;
+    /* color: #333; */
     margin-top: 10px;
 }
 
@@ -40,8 +71,16 @@ body {
 }
 
 .auth-section h2 {
-    color: #444;
+    color: #974904;
     text-align: center;
+/* }
+.auth-section h2::before { */
+    content: '🦁';
+    font-size: 20px;
+    position: absolute;
+    left: -50px;
+    top: 0;
+    font-size: 1.5em;
 }
 
 .auth-section form {
@@ -88,6 +127,14 @@ body {
 .categories h2 {
     color: #444;
     text-align: center;
+
+}
+.categories h2::before {
+    content: '📚'; 
+    position: absolute;
+    left: -50px;
+    top: 0;
+    font-size: 1.5em;
 }
 
 .categories ul {
