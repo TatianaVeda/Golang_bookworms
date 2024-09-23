@@ -1,16 +1,17 @@
 package controllers
 
 import (
+	"database/sql"
 	"fmt"
 	"html/template"
 	"literary-lions/database"
+	"literary-lions/utils"
 	"log"
 	"net/http"
 )
 
-// ShowPosts displays all the posts
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
-	// Query to get posts along with their like and dislike counts
+	// Modify the query to include likeCount and dislikeCount
 	query := `
         SELECT 
             posts.id, posts.title, posts.body, 
@@ -23,7 +24,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query(query)
 	if err != nil {
 		log.Printf("Error fetching posts: %v", err)
-		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
+		utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 	defer rows.Close()
@@ -36,7 +37,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 		err := rows.Scan(&id, &title, &body, &likeCount, &dislikeCount)
 		if err != nil {
 			log.Printf("Error scanning posts: %v", err)
-			http.Error(w, "Error scanning posts", http.StatusInternalServerError)
+			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
@@ -78,50 +79,57 @@ func GetUserIDFromSession(r *http.Request) (int, error) {
 	return userID, nil
 }
 
-// Pre-parsed template for better efficiency
 var createPostTemplate = template.Must(template.ParseFiles("views/create_post.html"))
 
-func CreatePost(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		// Serve the create post form
-		err := createPostTemplate.Execute(w, nil)
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-			http.Error(w, "Error rendering page", http.StatusInternalServerError)
-		}
-		return
-	}
-
+func CreatePost(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *template.Template) {
 	if r.Method == http.MethodPost {
-		// Get user ID from session
-		userID, err := GetUserIDFromSession(r)
-		if err != nil {
-			log.Printf("User session not found: %v", err)
-			http.Redirect(w, r, "/login", http.StatusSeeOther) // Redirect if no session
+		if err := r.ParseForm(); err != nil {
+			utils.HandleError(w, http.StatusBadRequest, "Unable to parse form data")
 			return
 		}
 
-		// Parse the form
-		r.ParseForm()
 		title := r.FormValue("title")
-		body := r.FormValue("body")
+		content := r.FormValue("content")
+		userID, err := GetUserIDFromSession(r)
+		if err != nil {
+			utils.HandleError(w, http.StatusUnauthorized, "Unauthorized access")
+			return
+		}
 
-		// Validate that title and body are not empty
-		if title == "" || body == "" {
-			http.Error(w, "Title and Body cannot be empty", http.StatusBadRequest)
+		// Start a transaction
+		tx, err := db.Begin()
+		if err != nil {
+			log.Printf("Error starting transaction: %v", err)
+			utils.HandleError(w, http.StatusInternalServerError, "Error starting transaction")
 			return
 		}
 
 		// Insert the post into the database
-		_, err = database.DB.Exec("INSERT INTO posts (title, body, user_id) VALUES (?, ?, ?)", title, body, userID)
+		_, err = tx.Exec("INSERT INTO posts (user_id, title, body) VALUES (?, ?, ?)", userID, title, content)
 		if err != nil {
-			log.Printf("Error inserting post into database: %v", err)
-			http.Error(w, "Error creating post", http.StatusInternalServerError)
+			tx.Rollback()
+			log.Printf("Error inserting post: %v", err) // Log the exact SQL error here
+			utils.HandleError(w, http.StatusInternalServerError, "Error inserting post")
 			return
 		}
 
-		// Redirect to posts list
+		// Commit the transaction
+		err = tx.Commit()
+		if err != nil {
+			log.Printf("Error committing transaction: %v", err)
+			utils.HandleError(w, http.StatusInternalServerError, "Error committing transaction")
+			return
+		}
+
+		// Redirect to the posts page upon successful creation
 		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+	} else {
+		// Serve the create post form (GET request)
+		err := templates.ExecuteTemplate(w, "create_post.html", nil)
+		if err != nil {
+			log.Printf("Error rendering template: %v", err)
+			utils.HandleError(w, http.StatusInternalServerError, "Error rendering page")
+		}
 	}
 }
 
@@ -140,8 +148,8 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 
 		_, err = database.DB.Exec("INSERT INTO comments (body, post_id, user_id) VALUES (?, ?, ?)", commentBody, postID, userID)
 		if err != nil {
-			http.Error(w, "Error posting comment", http.StatusInternalServerError)
 			log.Printf("Error posting comment: %v", err)
+			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
@@ -162,7 +170,7 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, title, body FROM posts WHERE user_id = ?", userID)
 	if err != nil {
 		log.Printf("Error fetching user's posts: %v", err)
-		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
+		utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 	defer rows.Close()
@@ -204,14 +212,14 @@ func LikePostHandler(w http.ResponseWriter, r *http.Request) {
 		var count int
 		err = database.DB.QueryRow("SELECT COUNT(*) FROM likes_dislikes WHERE post_id = ? AND user_id = ? AND like_type = 1", postID, userID).Scan(&count)
 		if err != nil {
-			http.Error(w, "Error checking like status", http.StatusInternalServerError)
+			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
 		if count == 0 {
 			_, err = database.DB.Exec("INSERT INTO likes_dislikes (user_id, post_id, like_type) VALUES (?, ?, 1)", userID, postID)
 			if err != nil {
-				http.Error(w, "Error liking post", http.StatusInternalServerError)
+				utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 				return
 			}
 		}
@@ -234,14 +242,14 @@ func DislikePostHandler(w http.ResponseWriter, r *http.Request) {
 		var count int
 		err = database.DB.QueryRow("SELECT COUNT(*) FROM likes_dislikes WHERE post_id = ? AND user_id = ? AND like_type = -1", postID, userID).Scan(&count)
 		if err != nil {
-			http.Error(w, "Error checking dislike status", http.StatusInternalServerError)
+			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
 		if count == 0 {
 			_, err = database.DB.Exec("INSERT INTO likes_dislikes (user_id, post_id, like_type) VALUES (?, ?, -1)", userID, postID)
 			if err != nil {
-				http.Error(w, "Error disliking post", http.StatusInternalServerError)
+				utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 				return
 			}
 		}

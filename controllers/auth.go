@@ -74,8 +74,11 @@ func GetCSRFCookie(r *http.Request) (string, error) {
 
 // RegisterUser handles user registration and CSRF token validation
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		r.ParseForm()
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			utils.HandleError(w, http.StatusBadRequest, "Unable to parse form data")
+			return
+		}
 
 		// CSRF token validation
 		formToken := r.FormValue("csrf_token")
@@ -129,7 +132,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		// Get or generate CSRF token
 		csrfToken, err := GenerateAndSetCSRFToken(w, r)
 		if err != nil {
-			http.Error(w, "Error generating CSRF token", http.StatusInternalServerError)
+			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
@@ -173,22 +176,28 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 	return nil
 }
 
-// LoginUser handles user login and CSRF token validation
 func LoginUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
+	// Ensure method is POST or GET
+	if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.Method == http.MethodPost { // POST request: Process login form submission
 		if err := r.ParseForm(); err != nil {
-			utils.RenderErrorPage(w, http.StatusInternalServerError, "Unable to process your request. Please try again.")
+			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
+		// Validate CSRF token
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
-			utils.RenderErrorPage(w, http.StatusForbidden, "Invalid request. Please try again.")
+			utils.RenderErrorPage(w, http.StatusForbidden, "Invalid CSRF token. Please try again.")
 			return
 		}
 
-		// Extract form data and authenticate
+		// Extract form data and authenticate the user
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 		row := database.DB.QueryRow(`SELECT id, password FROM users WHERE email = ?`, email)
@@ -197,7 +206,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		var hashedPassword string
 		err = row.Scan(&id, &hashedPassword)
 		if err == sql.ErrNoRows || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) != nil {
-			// Invalid login attempt, re-render the home page with error message
+			// Invalid login attempt, re-render the home page with an error message
 			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 			data := map[string]interface{}{
 				"LoginError":    "Invalid email or password.",
@@ -212,7 +221,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		// Set session cookie on successful login
 		err = SetSessionCookie(w, id)
 		if err != nil {
-			fmt.Fprintf(w, "Error setting session: %v", err)
+			utils.HandleError(w, http.StatusInternalServerError, "Error setting session cookie")
 			return
 		}
 
@@ -225,12 +234,14 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			"ShowModal":    false, // Close the modal upon successful login
 		}
 		tmpl.Execute(w, data)
+		return
+	}
 
-	} else {
+	if r.Method == http.MethodGet { // GET request: Render login page with CSRF token
 		// Get or generate CSRF token
 		csrfToken, err := GenerateAndSetCSRFToken(w, r)
 		if err != nil {
-			http.Error(w, "Error generating CSRF token", http.StatusInternalServerError)
+			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
@@ -245,21 +256,19 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		utils.RenderErrorPage(w, http.StatusBadRequest, "Session not found or already expired.")
+		utils.HandleError(w, http.StatusBadRequest, "Session not found or already expired.")
 		return
 	}
 
 	SessionMutex.Lock()
-	delete(SessionStore, cookie.Value) // Remove session from store
+	delete(SessionStore, cookie.Value)
 	SessionMutex.Unlock()
 
-	// Clear the cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:   "session_id",
 		Value:  "",
 		MaxAge: -1,
 		Path:   "/",
 	})
-
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
