@@ -6,8 +6,11 @@
     <title>Error {{.StatusCode}}</title>
 </head>
 <body>
-    <h1>Error {{.StatusCode}}</h1>
+    <h1>Oops! Something went wrong. (Error {{.StatusCode}})</h1>
+    <p>{{if eq .StatusCode 404}}The page you are looking for doesn't exist.{{else if eq .StatusCode 500}}There was a server error.{{else}}An unexpected error occurred.{{end}}</p>
     <p>{{.Message}}</p>
-    <a href="/">Go Back to Home</a>
+    
+    <!-- Helpful action -->
+    <a href="/">Go Back to Home</a> or <a href="/contact">Contact Support</a> if the issue persists.
 </body>
 </html>

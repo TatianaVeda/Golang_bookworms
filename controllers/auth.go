@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -24,6 +25,15 @@ var SessionStore = make(map[string]int) // In-memory store: sessionID -> userID
 var SessionMutex sync.Mutex             // Mutex to prevent race conditions on session store
 
 const csrfCookieName = "csrf_token"
+
+// HashPassword hashes the user's password using bcrypt
+func HashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
 
 // GenerateCSRFToken generates a new random CSRF token
 func GenerateCSRFToken() (string, error) {
@@ -71,8 +81,6 @@ func GetCSRFCookie(r *http.Request) (string, error) {
 	}
 	return cookie.Value, nil
 }
-
-// RegisterUser handles user registration and CSRF token validation
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
@@ -93,14 +101,18 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		email := r.FormValue("email")
 		password := r.FormValue("password")
-		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+		// Hash the password using the modular HashPassword function
+		hashedPassword, err := HashPassword(password)
+		if err != nil {
+			utils.HandleError(w, http.StatusInternalServerError, "Error hashing password")
+			return
+		}
 
 		// Insert user into the database
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
-			// Handle unique constraint errors (e.g., duplicate email or username)
 			if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.Code == sqlite3.ErrConstraint {
-				// Re-render home page with registration error
 				tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 				data := map[string]interface{}{
 					"RegistrationError": "The email or username already exists. Please try again.",
@@ -108,12 +120,10 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 					"ShowModal":         true, // Keep the modal open
 					"IsRegistering":     true, // Ensure the Register tab is active
 				}
-				fmt.Printf("Template Data: %+v\n", data)
 				tmpl.Execute(w, data)
 				return
 			}
 
-			// General error handling
 			fmt.Fprintf(w, "Error registering user: %v", err)
 			return
 		}
@@ -127,16 +137,13 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			"IsRegistering":       false, // After successful registration, go back to login tab
 		}
 		tmpl.Execute(w, data)
-
 	} else {
-		// Get or generate CSRF token
 		csrfToken, err := GenerateAndSetCSRFToken(w, r)
 		if err != nil {
 			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
-		// Render the registration template with the CSRF token
 		tmpl := template.Must(template.ParseFiles("views/register.html"))
 		tmpl.Execute(w, map[string]interface{}{
 			"CsrfToken": csrfToken,
@@ -176,14 +183,21 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 	return nil
 }
 
+func CheckPasswordHash(password, hashedPassword string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		return errors.New("incorrect password")
+	}
+	return nil
+}
+
 func LoginUser(w http.ResponseWriter, r *http.Request) {
-	// Ensure method is POST or GET
 	if r.Method != http.MethodPost && r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if r.Method == http.MethodPost { // POST request: Process login form submission
+	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
 			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -200,19 +214,21 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		// Extract form data and authenticate the user
 		email := r.FormValue("email")
 		password := r.FormValue("password")
-		row := database.DB.QueryRow(`SELECT id, password FROM users WHERE email = ?`, email)
 
+		// Retrieve user information from the database
+		row := database.DB.QueryRow(`SELECT id, password FROM users WHERE email = ?`, email)
 		var id int
-		var hashedPassword string
-		err = row.Scan(&id, &hashedPassword)
-		if err == sql.ErrNoRows || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) != nil {
-			// Invalid login attempt, re-render the home page with an error message
+		var storedHashedPassword string
+		err = row.Scan(&id, &storedHashedPassword)
+
+		// Handle incorrect login attempt
+		if err == sql.ErrNoRows || CheckPasswordHash(password, storedHashedPassword) != nil {
 			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 			data := map[string]interface{}{
 				"LoginError":    "Invalid email or password.",
 				"CsrfToken":     formToken,
-				"ShowModal":     true,  // Keep the modal open
-				"IsRegistering": false, // Ensure the Login tab is active
+				"ShowModal":     true,
+				"IsRegistering": false,
 			}
 			tmpl.Execute(w, data)
 			return
@@ -225,27 +241,22 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Re-render home page with login success message
+		// Render home page on successful login
 		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 		data := map[string]interface{}{
 			"LoginSuccess": true,
 			"IsLoggedIn":   true,
 			"CsrfToken":    formToken,
-			"ShowModal":    false, // Close the modal upon successful login
+			"ShowModal":    false,
 		}
 		tmpl.Execute(w, data)
-		return
-	}
-
-	if r.Method == http.MethodGet { // GET request: Render login page with CSRF token
-		// Get or generate CSRF token
+	} else if r.Method == http.MethodGet {
 		csrfToken, err := GenerateAndSetCSRFToken(w, r)
 		if err != nil {
 			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
-		// Render the login template with the CSRF token
 		tmpl := template.Must(template.ParseFiles("views/login.html"))
 		tmpl.Execute(w, map[string]interface{}{
 			"CsrfToken": csrfToken,
