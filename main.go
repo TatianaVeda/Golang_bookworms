@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func StripTrailingSlash(next http.Handler) http.Handler {
@@ -22,6 +24,10 @@ func StripTrailingSlash(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+func GenerateHash(password string) string {
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash)
 }
 
 func main() {
@@ -42,10 +48,7 @@ func main() {
 	})))
 
 	http.Handle("/posts", StripTrailingSlash(http.HandlerFunc(controllers.ShowPosts)))
-	http.Handle("/posts/create", StripTrailingSlash(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		controllers.CreatePost(w, r, cfg.DB, cfg.Templates)
-	})))
-
+	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePost)))
 	http.HandleFunc("/logout", controllers.LogoutHandler)
 	http.HandleFunc("/posts/comment", controllers.CreateComment)
 	http.HandleFunc("/myposts", controllers.MyPostsHandler)

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"database/sql"
 	"fmt"
 	"html/template"
 	"literary-lions/database"
@@ -81,56 +80,76 @@ func GetUserIDFromSession(r *http.Request) (int, error) {
 
 var createPostTemplate = template.Must(template.ParseFiles("views/create_post.html"))
 
-func CreatePost(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *template.Template) {
+func CreatePost(w http.ResponseWriter, r *http.Request) {
+	// Retrieve and validate the session
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		utils.HandleError(w, http.StatusUnauthorized, "Session not found.")
+		return
+	}
+
+	// Check if the session exists in the session store
+	SessionMutex.Lock()
+	userID, sessionExists := SessionStore[cookie.Value]
+	SessionMutex.Unlock()
+
+	if !sessionExists {
+		utils.HandleError(w, http.StatusUnauthorized, "Invalid session.")
+		return
+	}
+
+	// At this point, the user is authenticated, and you can allow them to create a post.
+	// Add the rest of your CreatePost logic here...
+
+	// For example:
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
 			utils.HandleError(w, http.StatusBadRequest, "Unable to parse form data")
 			return
 		}
 
+		// Get the form values and create the post
 		title := r.FormValue("title")
-		content := r.FormValue("content")
-		userID, err := GetUserIDFromSession(r)
+		body := r.FormValue("body")
+
+		// Insert post into the database (assuming you have a DB set up)
+		_, err := database.DB.Exec(`INSERT INTO posts (user_id, title, body) VALUES (?, ?, ?)`, userID, title, body)
 		if err != nil {
-			utils.HandleError(w, http.StatusUnauthorized, "Unauthorized access")
+			utils.HandleError(w, http.StatusInternalServerError, "Error creating post")
 			return
 		}
 
-		// Start a transaction
-		tx, err := db.Begin()
-		if err != nil {
-			log.Printf("Error starting transaction: %v", err)
-			utils.HandleError(w, http.StatusInternalServerError, "Error starting transaction")
-			return
-		}
-
-		// Insert the post into the database
-		_, err = tx.Exec("INSERT INTO posts (user_id, title, body) VALUES (?, ?, ?)", userID, title, content)
-		if err != nil {
-			tx.Rollback()
-			log.Printf("Error inserting post: %v", err) // Log the exact SQL error here
-			utils.HandleError(w, http.StatusInternalServerError, "Error inserting post")
-			return
-		}
-
-		// Commit the transaction
-		err = tx.Commit()
-		if err != nil {
-			log.Printf("Error committing transaction: %v", err)
-			utils.HandleError(w, http.StatusInternalServerError, "Error committing transaction")
-			return
-		}
-
-		// Redirect to the posts page upon successful creation
-		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+		// Success! Redirect or return success response
+		http.Redirect(w, r, "/myposts", http.StatusSeeOther)
 	} else {
-		// Serve the create post form (GET request)
-		err := templates.ExecuteTemplate(w, "create_post.html", nil)
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-			utils.HandleError(w, http.StatusInternalServerError, "Error rendering page")
-		}
+		// Render the post creation form (GET request)
+		tmpl := template.Must(template.ParseFiles("views/create_post.html"))
+		tmpl.Execute(w, nil)
 	}
+}
+
+func RequireSession(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Retrieve and validate the session
+		cookie, err := r.Cookie("session_id")
+		if err != nil {
+			utils.HandleError(w, http.StatusUnauthorized, "Session not found.")
+			return
+		}
+
+		// Check if the session exists in the session store
+		SessionMutex.Lock()
+		_, sessionExists := SessionStore[cookie.Value]
+		SessionMutex.Unlock()
+
+		if !sessionExists {
+			utils.HandleError(w, http.StatusUnauthorized, "Invalid session.")
+			return
+		}
+
+		// Proceed to the next handler if session is valid
+		next.ServeHTTP(w, r)
+	})
 }
 
 // CreateComment handles posting a comment on a post

@@ -4,11 +4,11 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -16,6 +16,7 @@ import (
 	"literary-lions/database"
 	"literary-lions/utils"
 
+	"github.com/google/uuid"
 	"github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -152,16 +153,12 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func GenerateSessionID() (string, error) {
-	bytes := make([]byte, 16) // 128-bit session ID
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
+	sessionID := uuid.New().String() // Generate a new UUID
+	return sessionID, nil
 }
 
-// SetSessionCookie sets the session cookie and stores session data
 func SetSessionCookie(w http.ResponseWriter, userID int) error {
-	sessionID, err := GenerateSessionID()
+	sessionID, err := GenerateSessionID() // Now generates a UUID
 	if err != nil {
 		return err
 	}
@@ -193,12 +190,14 @@ func CheckPasswordHash(password, hashedPassword string) error {
 
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		log.Println("LoginUser: Invalid method")
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
+			log.Println("LoginUser: Error parsing form data")
 			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
@@ -207,22 +206,42 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
+			log.Println("LoginUser: Invalid CSRF token")
 			utils.RenderErrorPage(w, http.StatusForbidden, "Invalid CSRF token. Please try again.")
 			return
 		}
 
-		// Extract form data and authenticate the user
+		// Extract form data
 		email := r.FormValue("email")
 		password := r.FormValue("password")
+		log.Printf("LoginUser: Attempting login for email: %s", email)
 
 		// Retrieve user information from the database
 		row := database.DB.QueryRow(`SELECT id, password FROM users WHERE email = ?`, email)
 		var id int
 		var storedHashedPassword string
 		err = row.Scan(&id, &storedHashedPassword)
+		if err == sql.ErrNoRows {
+			log.Println("LoginUser: No such user")
+			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+			data := map[string]interface{}{
+				"LoginError":    "Invalid email or password.",
+				"CsrfToken":     formToken,
+				"ShowModal":     true,
+				"IsRegistering": false,
+			}
+			tmpl.Execute(w, data)
+			return
+		} else if err != nil {
+			log.Printf("LoginUser: Error retrieving user: %v", err)
+			utils.HandleError(w, http.StatusInternalServerError, "Error retrieving user")
+			return
+		}
 
-		// Handle incorrect login attempt
-		if err == sql.ErrNoRows || CheckPasswordHash(password, storedHashedPassword) != nil {
+		// Check the password
+		log.Println("LoginUser: Checking password")
+		if CheckPasswordHash(password, storedHashedPassword) != nil {
+			log.Println("LoginUser: Incorrect password")
 			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 			data := map[string]interface{}{
 				"LoginError":    "Invalid email or password.",
@@ -234,9 +253,12 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Printf("LoginUser: Login successful for user ID %d", id)
+
 		// Set session cookie on successful login
 		err = SetSessionCookie(w, id)
 		if err != nil {
+			log.Printf("LoginUser: Error setting session cookie: %v", err)
 			utils.HandleError(w, http.StatusInternalServerError, "Error setting session cookie")
 			return
 		}
@@ -253,6 +275,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == http.MethodGet {
 		csrfToken, err := GenerateAndSetCSRFToken(w, r)
 		if err != nil {
+			log.Println("LoginUser: Error generating CSRF token")
 			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
