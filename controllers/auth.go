@@ -217,7 +217,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Re-render home page with login success message
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html", "views/create_post.html"))
 		data := map[string]interface{}{
 			"LoginSuccess": true,
 			"IsLoggedIn":   true,
