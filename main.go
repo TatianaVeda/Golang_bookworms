@@ -13,11 +13,16 @@ import (
 
 func main() {
 	log.Println("Starting database initialization...")
-	err := database.InitDB()
+	dsn := "./forum.db" // defining the path to the database
+
+	err := database.InitDB(dsn)
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
 	log.Println("Database initialized successfully!")
+
+	// Load templates (adjust path if needed)
+	templates := template.Must(template.ParseGlob("views/*.html"))
 
 	// Set up routes
 	http.HandleFunc("/", HomeHandler)
@@ -26,10 +31,12 @@ func main() {
 	http.HandleFunc("/posts/create", controllers.CreatePost)     // Create post form
 	http.HandleFunc("/posts/comment", controllers.CreateComment) // Comment on a post
 	http.HandleFunc("/myposts", controllers.MyPostsHandler)      // Add new route for viewing user's posts
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/posts/like", controllers.LikePostHandler)
 	http.HandleFunc("/posts/dislike", controllers.DislikePostHandler)
+	http.HandleFunc("/categories", CategoriesHandler)
+	http.HandleFunc("/profile", controllers.ProfileHandler(templates))
 
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
 	err = http.ListenAndServe(":8080", nil)
@@ -100,4 +107,12 @@ func newHTTPRequest(method, path string, form url.Values) *http.Request {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	return req
+}
+
+func CategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	// Serve the categories.html view
+	tmpl := template.Must(template.ParseFiles("views/categories.html"))
+	if err := tmpl.Execute(w, nil); err != nil {
+		http.Error(w, "Error rendering categories page", http.StatusInternalServerError)
+	}
 }
