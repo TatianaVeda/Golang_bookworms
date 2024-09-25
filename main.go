@@ -86,7 +86,9 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Render the homepage with modal
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html", "views/create_post.html"))
+		//tmpl := template.Must(template.ParseGlob("views/*.html"))
+
 		data := map[string]interface{}{
 			"IsLoggedIn": isLoggedIn,
 			"CsrfToken":  csrfToken,

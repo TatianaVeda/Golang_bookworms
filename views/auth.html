@@ -33,7 +33,7 @@
                 {{if .LoginError}}
                 <p style="color: red;">{{.LoginError}}</p>
                 {{end}}
-                <form action="/home" method="POST">
+                <form action="/" method="POST">
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
                     <input type="hidden" name="action" value="login">
                     <label for="login-email">Email:</label><br>
@@ -50,7 +50,7 @@
                 {{if .RegistrationError}}
                 <p style="color: red;">{{.RegistrationError}}</p>
                 {{end}}
-                <form action="/home" method="POST">
+                <form action="/" method="POST">
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
                     <input type="hidden" name="action" value="register">
                     <label for="username">Username:</label><br>

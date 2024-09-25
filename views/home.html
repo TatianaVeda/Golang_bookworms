@@ -21,6 +21,9 @@
         {{template "auth" .}} <!-- Include the auth template here -->
 
         {{else}}
+        <p>You are logged in! Feel free to comment, like, or <a href="/posts/create">create a post</a>.</p>
+
+        {{template "create_post" .}}
         <br><p class="message">You are logged in! Feel free to comment💬, like👍, or <a href="/posts/create">create a post📝</a>.</p>
         <form action="/logout" method="POST">
             <button type="submit"class="logout-button">Log Out 🔓</button>
