@@ -74,7 +74,10 @@ func GetCSRFCookie(r *http.Request) (string, error) {
 // RegisterUser handles user registration and CSRF token validation
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		r.ParseForm()
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "Error parsing form", http.StatusInternalServerError)
+			return
+		}
 
 		// CSRF token validation
 		formToken := r.FormValue("csrf_token")
@@ -114,29 +117,15 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Re-render home page with success message
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
-		data := map[string]interface{}{
-			"RegistrationSuccess": true,
-			"CsrfToken":           formToken,
-			"ShowModal":           true,
-			"IsRegistering":       false, // After successful registration, go back to login tab
-		}
-		tmpl.Execute(w, data)
+		/* // Optionally, set a success message in session or prepare data for response
+		controllers.SessionMutex.Lock()
+		controllers.SessionStore[sessionId]["registration_success_message"] = "You have registered successfully! You can now log in."
+		controllers.SessionMutex.Unlock()
+		*/
 
-	} else {
-		// Get or generate CSRF token
-		csrfToken, err := GenerateAndSetCSRFToken(w, r)
-		if err != nil {
-			http.Error(w, "Error generating CSRF token", http.StatusInternalServerError)
-			return
-		}
-
-		// Render the registration template with the CSRF token
-		tmpl := template.Must(template.ParseFiles("views/register.html"))
-		tmpl.Execute(w, map[string]interface{}{
-			"CsrfToken": csrfToken,
-		})
+		// Redirect to home page after successful registration
+		http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home page (HTTP 303 See Other)
+		return
 	}
 }
 
@@ -216,29 +205,15 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Re-render home page with login success message
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html", "views/create_post.html"))
-		data := map[string]interface{}{
-			"LoginSuccess": true,
-			"IsLoggedIn":   true,
-			"CsrfToken":    formToken,
-			"ShowModal":    false, // Close the modal upon successful login
-		}
-		tmpl.Execute(w, data)
+		/* // Set a success message in the session
+		controllers.SessionMutex.Lock()
+		controllers.SessionStore[sessionId]["login_success_message"] = "You have logged in successfully!"
+		controllers.SessionMutex.Unlock()
+		*/
 
-	} else {
-		// Get or generate CSRF token
-		csrfToken, err := GenerateAndSetCSRFToken(w, r)
-		if err != nil {
-			http.Error(w, "Error generating CSRF token", http.StatusInternalServerError)
-			return
-		}
-
-		// Render the login template with the CSRF token
-		tmpl := template.Must(template.ParseFiles("views/login.html"))
-		tmpl.Execute(w, map[string]interface{}{
-			"CsrfToken": csrfToken,
-		})
+		// Redirect to home page after successful login
+		http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home page (HTTP 303 See Other)
+		return
 	}
 }
 
