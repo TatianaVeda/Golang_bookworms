@@ -10,17 +10,24 @@ import (
 )
 
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
-	// Modify the query to include likeCount and dislikeCount
+	page := 1 // Assume the user is on the first page (later, this value can be passed dynamically)
+	limit := 10
+	offset := (page - 1) * limit // Calculate offset based on the page number
+
 	query := `
-        SELECT 
-            posts.id, posts.title, posts.body, 
-            COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-            COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
-        FROM posts
-        LEFT JOIN likes_dislikes ON posts.id = likes_dislikes.post_id
-        GROUP BY posts.id
-    `
-	rows, err := database.DB.Query(query)
+    SELECT 
+        posts.id, posts.title, posts.body, 
+        COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+        COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+    FROM posts
+    LEFT JOIN likes_dislikes ON posts.id = likes_dislikes.post_id
+    GROUP BY posts.id
+    ORDER BY posts.created_at DESC
+    LIMIT ? OFFSET ?;
+`
+	rows, err := database.DB.Query(query, limit, offset)
+	log.Printf("Executing SQL query: %s", query)
+
 	if err != nil {
 		log.Printf("Error fetching posts: %v", err)
 		utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
@@ -97,11 +104,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		utils.HandleError(w, http.StatusUnauthorized, "Invalid session.")
 		return
 	}
-
-	// At this point, the user is authenticated, and you can allow them to create a post.
-	// Add the rest of your CreatePost logic here...
-
-	// For example:
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
 			utils.HandleError(w, http.StatusBadRequest, "Unable to parse form data")

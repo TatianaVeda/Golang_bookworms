@@ -4,6 +4,7 @@ package utils
 import (
 	"database/sql"
 	"html/template"
+	"log"
 	"net/http"
 )
 
@@ -37,14 +38,15 @@ func RenderErrorPage(w http.ResponseWriter, statusCode int, message string) {
 		http.Error(w, "An error occurred", http.StatusInternalServerError)
 	}
 }
-func HandleError(w http.ResponseWriter, statusCode int, message string) {
-	tmpl := template.Must(template.ParseFiles("views/error.html"))
-	data := map[string]interface{}{
-		"StatusCode": statusCode,
-		"Message":    message,
+
+func HandleError(w http.ResponseWriter, statusCode int, userMessage string, err ...error) {
+	// Log the internal error, if provided
+	if len(err) > 0 && err[0] != nil {
+		log.Printf("Internal error: %v", err[0])
 	}
-	w.WriteHeader(statusCode)
-	tmpl.Execute(w, data)
+
+	// Send the user-friendly message to the client
+	http.Error(w, userMessage, statusCode)
 }
 
 func middleware(next http.Handler, templates *template.Template) http.Handler {

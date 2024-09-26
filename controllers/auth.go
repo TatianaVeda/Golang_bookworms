@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
@@ -82,10 +82,11 @@ func GetCSRFCookie(r *http.Request) (string, error) {
 	}
 	return cookie.Value, nil
 }
+
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
-			utils.HandleError(w, http.StatusBadRequest, "Unable to parse form data")
+			renderModalWithError(w, r, "Unable to parse form data", true)
 			return
 		}
 
@@ -93,8 +94,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
-			fmt.Printf("Invalid CSRF token. Form token: %s, Cookie token: %s\n", formToken, cookieToken)
-			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+			renderModalWithError(w, r, "Invalid CSRF token", true)
 			return
 		}
 
@@ -103,53 +103,58 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		// Hash the password using the modular HashPassword function
-		hashedPassword, err := HashPassword(password)
-		if err != nil {
-			utils.HandleError(w, http.StatusInternalServerError, "Error hashing password")
+		// Validation checks
+		if !isValidEmail(email) {
+			renderModalWithError(w, r, "Invalid email format", true)
+			return
+		}
+		if len(password) < 8 {
+			renderModalWithError(w, r, "Password must be at least 8 characters long", true)
 			return
 		}
 
-		// Insert user into the database
+		hashedPassword, err := HashPassword(password)
+		if err != nil {
+			renderModalWithError(w, r, "Error hashing password", true)
+			return
+		}
+
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
 			if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.Code == sqlite3.ErrConstraint {
-				tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
-				data := map[string]interface{}{
-					"RegistrationError": "The email or username already exists. Please try again.",
-					"CsrfToken":         formToken,
-					"ShowModal":         true, // Keep the modal open
-					"IsRegistering":     true, // Ensure the Register tab is active
-				}
-				tmpl.Execute(w, data)
+				renderModalWithError(w, r, "The email or username already exists. Please try again.", true)
 				return
 			}
 
-			fmt.Fprintf(w, "Error registering user: %v", err)
+			renderModalWithError(w, r, "Error registering user", true)
 			return
 		}
 
-		// Re-render home page with success message
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
-		data := map[string]interface{}{
-			"RegistrationSuccess": true,
-			"CsrfToken":           formToken,
-			"ShowModal":           true,
-			"IsRegistering":       false, // After successful registration, go back to login tab
-		}
-		tmpl.Execute(w, data)
-	} else {
-		csrfToken, err := GenerateAndSetCSRFToken(w, r)
-		if err != nil {
-			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-			return
-		}
-
-		tmpl := template.Must(template.ParseFiles("views/register.html"))
-		tmpl.Execute(w, map[string]interface{}{
-			"CsrfToken": csrfToken,
-		})
+		// On success, render the modal with a success message
+		renderModalWithError(w, r, "Registration successful. Please log in.", false)
 	}
+}
+
+// isValidEmail checks if the provided email has a valid format
+func isValidEmail(email string) bool {
+	// Simple email regex pattern
+	const emailRegexPattern = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	re := regexp.MustCompile(emailRegexPattern)
+	return re.MatchString(email)
+}
+
+// Function to render the modal with error or success message
+func renderModalWithError(w http.ResponseWriter, r *http.Request, message string, isRegistering bool) {
+	csrfToken, _ := GenerateAndSetCSRFToken(w, r)
+
+	tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+	data := map[string]interface{}{
+		"ShowModal":     true,    // Keeps the modal open
+		"ErrorMessage":  message, // Error message to display
+		"CsrfToken":     csrfToken,
+		"IsRegistering": isRegistering, // Controls whether it's the login or register tab
+	}
+	tmpl.Execute(w, data)
 }
 
 func GenerateSessionID() (string, error) {
