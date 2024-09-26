@@ -7,6 +7,7 @@ import (
 	"literary-lions/utils"
 	"log"
 	"net/http"
+	"time"
 )
 
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
@@ -276,5 +277,67 @@ func DislikePostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+	}
+}
+
+func SearchPosts(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query") // Retrieve the search query from the URL
+
+	// Ensure query isn't empty
+	if query == "" {
+		utils.RenderErrorPage(w, http.StatusBadRequest, "Search query cannot be empty.")
+		return
+	}
+
+	// Search posts based on the query (e.g., title or body match)
+	rows, err := database.DB.Query(`
+        SELECT title, body, author, created_at FROM posts
+        WHERE title LIKE ? OR body LIKE ?`, "%"+query+"%", "%"+query+"%")
+	if err != nil {
+		log.Printf("Database query error: %v", err) // Log the error
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching search results.")
+		return
+	}
+	defer rows.Close()
+
+	var results []map[string]interface{}
+	for rows.Next() {
+		var title, body, author string
+		var createdAt time.Time
+		err := rows.Scan(&title, &body, &author, &createdAt)
+		if err != nil {
+			log.Printf("Error scanning results: %v", err) // Log the error
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error scanning search results.")
+			return
+		}
+
+		result := map[string]interface{}{
+			"Title":     title,
+			"Body":      body,
+			"Author":    author,
+			"CreatedAt": createdAt.Format("2006-01-02"), // Format the date
+		}
+		results = append(results, result)
+	}
+
+	// Log the fetched results to verify
+	log.Printf("Fetched search results: %+v", results)
+
+	// Check if there were any results
+	if len(results) == 0 {
+		utils.RenderErrorPage(w, http.StatusNotFound, "No posts found matching your search query.")
+		return
+	}
+
+	// Render the search results page, handle template execution error
+	tmpl := template.Must(template.ParseFiles("views/search_results.html"))
+	err = tmpl.Execute(w, map[string]interface{}{
+		"Query":   query,
+		"Results": results,
+	})
+	if err != nil {
+		log.Printf("Error rendering search results: %v", err) // Log any template rendering errors
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering search results.")
+		return
 	}
 }

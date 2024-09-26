@@ -24,7 +24,6 @@ func NewConfig() (*Config, error) {
 	return &Config{DB: db, Templates: templates}, nil
 }
 
-// RenderErrorPage renders a custom error page with a status code and message
 func RenderErrorPage(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
 

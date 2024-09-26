@@ -58,7 +58,7 @@ func main() {
 	http.HandleFunc("/404", NotFoundHandler)
 	http.HandleFunc("/500", InternalServerErrorHandler)
 	http.HandleFunc("/test-error", CauseInternalServerError)
-
+	http.HandleFunc("/search", controllers.SearchPosts)
 	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
 	err = http.ListenAndServe(":8080", nil)
