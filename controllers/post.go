@@ -157,9 +157,19 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-
+	query := `
+	SELECT 
+        posts.id, posts.title, posts.body, 
+        COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+        COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+    FROM posts
+    LEFT JOIN likes_dislikes ON posts.id = likes_dislikes.post_id
+    WHERE posts.user_id = ?
+    GROUP BY posts.id
+	`
+	rows, err := database.DB.Query(query, userID)
 	// Fetch posts created by the user
-	rows, err := database.DB.Query("SELECT id, title, body FROM posts WHERE user_id = ?", userID)
+	// rows, err := database.DB.Query("SELECT id, title, body FROM posts WHERE user_id = ?", userID)
 	if err != nil {
 		log.Printf("Error fetching user's posts: %v", err)
 		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
@@ -170,17 +180,19 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 	posts := []map[string]interface{}{}
 
 	for rows.Next() {
-		var id int
+		var id, likeCount, dislikeCount int
 		var title, body string
-		err := rows.Scan(&id, &title, &body)
+		err := rows.Scan(&id, &title, &body, &likeCount, &dislikeCount)
 		if err != nil {
 			log.Printf("Error scanning post: %v", err)
 			continue
 		}
 		post := map[string]interface{}{
-			"id":    id,
-			"title": title,
-			"body":  body,
+			"id":           id,
+			"title":        title,
+			"body":         body,
+			"likeCount":    likeCount,
+			"dislikeCount": dislikeCount,
 		}
 		posts = append(posts, post)
 	}

@@ -12,18 +12,22 @@
 /* Hidden checkbox input */
 input[type="checkbox"] {
     display: none;
+    display: hidden;
     
 }
 
 
 /* Hidden Radio Buttons */
 input[type="radio"] {
+    display: hidden;
     display: none;
 }
 
 /* Modal Styling */
 .modal {
-    display: none; /* Hidden by default */
+    /*visibility: hidden; Hidden by default   */
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -53,12 +57,17 @@ input[type="checkbox"]:checked ~ .modal {
 
 /* Modal Overlay (clickable area outside modal) */
 .modal-overlay {
-    position: absolute;
+    /* position: absolute; */
+    position: fixed;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
     height: 100%;
-    background-color: transparent;
+    /* background-color: transparent; */
+    background: rgba(0, 0, 0, 0.5); /* Фон затемнения */
+    /* visibility: hidden; Скрываем фон по умолчанию */
     cursor: pointer;
   }
 
@@ -87,10 +96,10 @@ input[type="checkbox"]:checked ~ .modal {
     transition: background-color 0.3s;
 }
 
-input[type="radio"]:checked + label {
+/* input[type="radio"]:checked + label {
     background-color: #007bff;
     color: white;
-}
+} */
 
 /* Hide both forms by default */
 .auth-form {
@@ -98,19 +107,94 @@ input[type="radio"]:checked + label {
 }
 
 /* Only show the login form when the login tab is active */
-#login-tab:checked ~ .tab-content #login-form {
+ #login-tab:checked ~ .tab-content #login-form {
     display: block;
     
-}
+} 
 
 /* Only show the register form when the register tab is active */
-#register-tab:checked ~ .tab-content #register-form {
+ #register-tab:checked ~ .tab-content #register-form {
     display: block;
     
-}
+} 
+/*
+.modal-toggle:checked + .modal {
+    visibility: visible; /* Показываем модальное окно при проверке чекбокса
+    opacity: 1; /* Делаем видимым 
+}*/
+/*
+.modal-toggle:checked + .modal .modal-overlay {
+    visibility: visible; /* Показываем фон при проверке чекбокса 
+}*/
 
 .error-message {
     color: red;
     font-size: 1.1em;
     margin-bottom: 10px;
+}
+
+/* .auth-form ::-ms-value {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+} */
+
+form {
+    width: 100%;
+    max-width: 400px;  /* Ограничение ширины формы */
+    margin: 0 auto;    /* Центрирование формы на странице */
+    padding: 20px;
+    background-color: #f8f8f8;
+    border-radius: 10px; /* Сглаженные углы */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Легкая тень */
+}
+
+label {
+    font-family: 'Playfair Display', serif; /* Шрифт, согласующийся с общим стилем */
+    color: #6D0101;                /* Красный цвет для текста */
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+
+input[type="email"], input[type="password"], input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #6D0101;  /* Красная рамка */
+    border-radius: 5px;         /* Скругленные углы */
+    font-size: 16px;
+    background-color: #fdfdfd;
+    color: #333;
+    box-sizing: border-box;     /* Чтобы отступы учитывались в ширине */
+    outline: none;
+    transition: border-color 0.3s ease; /* Плавный переход цвета */
+}
+
+input[type="email"]:focus, input[type="password"]:focus {
+    border-color: #AA2D2D;  /* Изменение цвета рамки при фокусе */
+}
+
+input[type="submit"] {
+    width: 100%;
+    padding: 10px 15px;
+    background-color: #046871;   /* Красная кнопка */
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;          /* Сглаженные углы */
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Плавное изменение цвета */
+}
+
+input[type="submit"]:hover {
+    background-color: #AA2D2D;   /* Более темный красный при наведении */
+}
+
+input[type="submit"]:active {
+    background-color: #046871;   /* Более глубокий цвет при нажатии */
 }

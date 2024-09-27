@@ -12,23 +12,23 @@
         <!-- Header Section -->
         <div class="header">
             <img src="static/images/lion-icon.png" alt="Logo" class="logo">
-            <h1> Feeling your inner lion?</h1>
+            <h1> Feeling your inner-r-rr-rrr lion?</h1>
 
-            <p class="welcome-message">Welcome to Literary Lions Forum</p>
+            <p class="welcome-message">Welcome to Literary Lions Forum! Here you can embrace the power of online discussions, fostering deeper connections, enriching their reading journeys, and ensuring the book club roars with literary passion ;-))</p>
         </div>
         {{if not .IsLoggedIn}}
 
         {{template "auth" .}} <!-- Include the auth template here -->
 
         {{else}}
-        <p>You are logged in! Feel free to comment, like, or <a href="/posts/create">create a post</a>.</p>
+        <br><p class="message">You are logged in! Feel free to comment💬, like👍, or <a href="/posts/create">create a post📝</a>.</p>
         <form action="/logout" method="POST">
-            <button type="submit">Log Out</button>
+            <button type="submit"class="logout-button">Log Out 🔓</button>
         </form>
         {{end}}
         <!-- Categories Section -->
         <div class="categories">
-            <h2>Choose a Category</h2>
+            <h2>Choose a Category📚</h2>
             <ul>
                 <li>Literature</li>
                 <li>Poetry</li>
@@ -39,7 +39,7 @@
 
         <!-- Published Posts Section -->
         <div class="posts-section">
-            <h2>Published Posts</h2>
+            <h2>Published Posts📜</h2>
             <div class="post">
                 <p class="post-title">Bookcrossing shelves at trains stations</p>
                 <p class="post-content">I once found and incredible book there</p>

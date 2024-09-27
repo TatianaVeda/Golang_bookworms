@@ -1,37 +1,46 @@
 /* General Styles */
  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
-/*@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&display=swap'); 
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English&display=swap');*/
 
 body {
     font-family: 'Playfair Display', serif;
-    /*color: #4B0082;  Индиго для стильного акцента */
-    /* font-family: Arial, sans-serif; 
-    background-color: #f4f4f4;
-    font-family: 'Cormorant Garamond', serif;
-    font-family: 'Libre Baskerville', serif;
-    font-family: 'Cinzel', serif; 
-    font-family: 'IM Fell English', serif;*/
     font-size: 20px;
     color: #8B0000; /* Dark Red for a bold, striking look */
-   /* color: #542504;  Цвет коричневой кожи, часто ассоциирующийся со старыми книгами */
     letter-spacing: 1px;
     margin: 0;
     padding: 0;
 }
 
 .buttons {
+    width: 100%;
     background-color: #28a745;
     color: white;
-    padding: 10px;
+    padding: 10px 15px;
+    /* margin: 10px; */
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
+    /* font-size: 16px; */
+    transition: background-color 0.3s ease;
+}
+
+.logout-button {
+    width: 100%;
+    padding: 10px 15px;
+    background-color: #046871;   /* Same as login button */
+    color: #fff;
     font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
 
+.logout-button:hover {
+    background-color: #AA2D2D;   /* Darker red on hover, similar to the login button */
+}
 
+.logout-button:active {
+    background-color: #046871;   /* Same deep color when clicked */
 }
 .container {
     width: 80%;
@@ -60,6 +69,12 @@ body {
     /* color: #333; */
     margin-top: 10px;
 }
+.message {
+    font-family: 'Mountains of Christmas', cursive;
+    color: #ff4500;
+    font-size: 24px;
+    font-weight: bold;   
+}
 
 /* User Registration and Login */
 .auth-section {
@@ -73,15 +88,14 @@ body {
 .auth-section h2 {
     color: #974904;
     text-align: center;
-/* }
-.auth-section h2::before { */
-    content: '🦁';
+}
+.auth-section h2::before {
     font-size: 20px;
     position: absolute;
     left: -50px;
     top: 0;
     font-size: 1.5em;
-}
+} 
 
 .auth-section form {
     display: flex;
@@ -160,11 +174,12 @@ body {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
+    margin: 20px;
+    padding: 10px;
 }
 
 .posts-section h2 {
-    color: #444;
+    color: #0b0a0c;
     text-align: center;
 }
 
@@ -172,6 +187,16 @@ body {
     border-bottom: 1px solid #ccc;
     padding-bottom: 10px;
     margin-bottom: 10px;
+}
+.post-input {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+
 }
 
 .post-title {
@@ -184,6 +209,7 @@ body {
     color: #555;
     font-size: 16px;
     margin-top: 5px;
+    font-family: 'Mountains of Christmas', cursive;
 }
 
 /* Footer */
