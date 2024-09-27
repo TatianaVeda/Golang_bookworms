@@ -177,7 +177,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 		// Get the session username (no need to pass db)
 		username, err := database.GetSession(r)
 		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(w, r, "/loginplease", http.StatusSeeOther)
 			return
 		}
 

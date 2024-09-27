@@ -16,6 +16,8 @@
     {{range .}}
     <h2>{{.Title}}</h2>
     <p>{{.Body}}</p>
+    <!-- or -->
+    {{template "create_post" .}}
 
     <!-- Like form -->
     <form action="/posts/like" method="POST">

@@ -204,6 +204,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Error setting session: %v", err)
 			return
 		}
+		fmt.Printf("This is sessionStore: %v", w)
 
 		/* // Set a success message in the session
 		controllers.SessionMutex.Lock()
