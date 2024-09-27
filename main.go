@@ -86,7 +86,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Render the homepage with modal
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html", "views/create_post.html"))
+		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html", "views/create_post.html", "views/categories.html"))
 		//tmpl := template.Must(template.ParseGlob("views/*.html"))
 
 		data := map[string]interface{}{
@@ -115,6 +115,6 @@ func CategoriesHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve the categories.html view
 	tmpl := template.Must(template.ParseFiles("views/categories.html"))
 	if err := tmpl.Execute(w, nil); err != nil {
-		http.Error(w, "Error rendering categories page", http.StatusInternalServerError)
+		http.Error(w, "Error rendering categories section", http.StatusInternalServerError)
 	}
 }
