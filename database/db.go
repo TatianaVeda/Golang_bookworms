@@ -127,3 +127,19 @@ func AddPostCategory(postID, categoryID int) error {
 	}
 	return nil
 }
+
+func GetUsernameByID(userID int) (string, error) {
+	var username string
+	err := DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
+	if err != nil {
+		return "", fmt.Errorf("error fetching username: %v", err)
+	}
+
+	return username, err
+}
+
+func GetUserID(username string) (int, error) {
+	var userID int
+	err := DB.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+	return userID, err
+}

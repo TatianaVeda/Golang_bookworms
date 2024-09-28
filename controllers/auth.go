@@ -144,10 +144,12 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 		return err
 	}
 
+	fmt.Println("\n Before adding to SessionStore: ", SessionStore)
 	// Store the session ID with the userID
 	SessionMutex.Lock()
 	SessionStore[sessionID] = userID
 	SessionMutex.Unlock()
+	fmt.Println("\n After adding to SessionStore: ", SessionStore)
 
 	// Set the session ID in a cookie
 	cookie := &http.Cookie{
@@ -159,6 +161,31 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 	http.SetCookie(w, cookie)
 
 	return nil
+}
+
+func GetSession(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		return "", fmt.Errorf("session cookie not found")
+	}
+
+	fmt.Println("\n current sessionStore : ", SessionStore)
+	sessionID := cookie.Value
+	SessionMutex.Lock()
+	userID, exists := SessionStore[sessionID]
+	SessionMutex.Unlock()
+
+	if !exists {
+		return "", fmt.Errorf("invalid session ID")
+	}
+
+	username, err := database.GetUsernameByID(userID)
+	if err != nil {
+		fmt.Println("Error while getting username by ID: ", err)
+		return "", fmt.Errorf("Error while getting username by ID")
+	}
+
+	return username, nil
 }
 
 // LoginUser handles user login and CSRF token validation

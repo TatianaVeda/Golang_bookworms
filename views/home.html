@@ -21,6 +21,11 @@
         {{template "auth" .}} <!-- Include the auth template here -->
 
         {{else}}
+        {{if .LoginSuccessMessage}}
+            <div class="success-message">
+                {{.LoginSuccessMessage}}
+            </div>
+        {{end}}
         <p>You are logged in! Feel free to comment, like, or <a href="/posts/create">create a post</a>.</p>
 
         {{template "create_post" .}}

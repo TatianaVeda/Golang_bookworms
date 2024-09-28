@@ -22,7 +22,7 @@ type Post struct {
 func PostsHandler(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get the session username (only pass the request, not the db)
-		username, err := database.GetSession(r)
+		username, err := GetSession(r)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -175,11 +175,13 @@ func GetUserIDFromSession(r *http.Request) (int, error) {
 func ProfileHandler(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get the session username (no need to pass db)
-		username, err := database.GetSession(r)
+		username, err := GetSession(r)
 		if err != nil {
+			fmt.Println("Get session error:", err)
 			http.Redirect(w, r, "/loginplease", http.StatusSeeOther)
 			return
 		}
+		fmt.Println("Session retrieved successfully. Username:", username)
 
 		// Get the username from the query string (if provided), otherwise use session username
 		profileUsername := r.URL.Query().Get("username")
@@ -258,7 +260,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 }
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
-	sessionUsername, err := database.GetSession(r) // Fetch session username
+	sessionUsername, err := GetSession(r) // Fetch session username
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -322,7 +324,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 func LikePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the session username
-	username, err := database.GetSession(r) // Only pass the request
+	username, err := GetSession(r) // Only pass the request
 	if err != nil {
 		http.Error(w, "Unauthorized. Please log in.", http.StatusUnauthorized)
 		return
@@ -397,7 +399,7 @@ func CreatePostHandler(templates *template.Template) http.HandlerFunc {
 		log.Println("CreatePostHandler: Incoming request for /posts/create")
 
 		// Validate the session
-		username, err := database.GetSession(r)
+		username, err := GetSession(r)
 		if err != nil {
 			log.Printf("CreatePostHandler: Error retrieving session: %v", err)
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
