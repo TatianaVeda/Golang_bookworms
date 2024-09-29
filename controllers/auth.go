@@ -182,7 +182,7 @@ func GetSession(r *http.Request) (string, error) {
 	username, err := database.GetUsernameByID(userID)
 	if err != nil {
 		fmt.Println("Error while getting username by ID: ", err)
-		return "", fmt.Errorf("Error while getting username by ID")
+		return "", fmt.Errorf("error while getting username by ID")
 	}
 
 	return username, nil
