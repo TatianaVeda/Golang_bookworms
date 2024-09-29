@@ -29,7 +29,7 @@ COPY --from=build /literary-lions/static ./static
 COPY --from=build /literary-lions/forum.db ./forum.db
 
 # Install runtime dependencies
-RUN apk add --no-cache sqlite-libs
+RUN apk add --no-cache sqlite-libs sqlite
 
 # Expose port 8080 to the outside world
 EXPOSE 8080

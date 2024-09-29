@@ -110,11 +110,13 @@ systemctl status docker
 ```
 2. Navigate to the project directory and build the Docker image:
 ```
-docker build -t literary-lions-forum .
+docker build -t lions-forum-image .
 ```
 3. Start the container using the built image:
 ```
-docker run -d --name literary-lions-forum -p 8080:8080 literary-lions-forum
+docker run -d -p 8080:8080 -v lions_volume:/literary-lions/ --name lions-forum lions-forum-image
+<!-- docker run -p 8080:8080 -v lions_db --name lions literary-lions-image
+docker run -p 8080:8080 -v lions_db:/app/data --name lions literary-lions-image -->
 ```
 This command runs a container named <my-container> from the <my-image>,  mapping port 8080 on the host to port 8080 on the container.
 The application will be available at http://localhost:8080.
@@ -129,17 +131,24 @@ docker images
 ```
 Shows all images. You can check the logs of the running container:
 ```
-docker logs literary-lions-forum
+docker logs lions-forum
 ```
 5. To keep your Docker environment clean, remove unused objects.
+To stop container:
+```
+docker stop container_ID
+```
 Remove stopped containers: 
 ```
-docker container prune -f
+docker rm -f <container_name_or_id>
 ``` 
-Remove unused images: 
+Remove image: 
 ```
+docker rmi <image_name_or_id>
 docker image prune -a -f
 ``` 
+for all unused images.
+
 Remove unused volumes:
 ```
 docker volume prune -f

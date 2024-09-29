@@ -3,18 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Post</title>
+    <title>Create ТNew Post🖋️</title>
+    <link rel="stylesheet" href="static/home.css">
+    <link rel="stylesheet" href="static/create_post.css">
 </head>
 <body>
+    <div class="container">
+    <div class="posts-section">
     <h1>Create New Post</h1>
-    <form action="/posts/create" method="POST">
-        <label for="title">Title:</label><br>
-        <input type="text" id="title" name="title" required><br><br>
-
-        <label for="body">Body:</label><br>
-        <textarea id="body" name="body" required></textarea><br><br>
-
-        <input type="submit" value="Create Post">
-    </form>
-</body>
+    <div class="post">
+    <form action="/posts/create" method="POST"> 
+        <div class="form-group">
+            <label for="post-title" class="form-label">Title:</label><br>
+            <input type="text" id="title" name="title" class="form-input" required><br><br>
+        </div>
+        <div class="form-group">
+            <label for="post-content" class="form-label">Body:</label><br>
+            <textarea type="text" id="body" name="body" class="form-textarea" required></textarea><br><br>
+        </div>      
+              <!--   <p class="post-title">Bookcrossing shelves at trains stations</p>
+              <p class="post-content">I once found and incredible book there</p> -->
+       <div class="form-group">
+        <label for="category">Category:</label>
+            <select id="category" name="category_id" required>
+                <option value="">Select a Category</option>
+                {{range .Categories}}
+                    <option value="{{.ID}}">{{.Name}}</option>
+                {{end}}
+            </select>
+        </div>
+        
+              <div class="form-group">
+              <input type="submit" value="Create Post" class="form-button">
+        </div>
+        </form>
+    </div>
+    </div>
+    </div>
+        <!-- Footer Section -->
+        <div class="footer">
+    <p>&copy; 2024 Literary Lions Forum</p>
+        </div>
+    </body>
 </html>
