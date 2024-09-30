@@ -1,6 +1,9 @@
 package database
 
-import "literary-lions/structs"
+import (
+	"fmt"
+	"literary-lions/structs"
+)
 
 // FetchProfile retrieves a user's profile from the database.
 func FetchProfile(userID int) (map[string]interface{}, error) {
@@ -110,7 +113,7 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 
 	var comments []map[string]interface{}
 	for rows.Next() {
-		var id, postID int
+		var id, postID int64
 		var body string
 		err := rows.Scan(&id, &body, &postID)
 		if err != nil {
@@ -123,6 +126,13 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 		}
 		comments = append(comments, comment)
 	}
+
+	// Check for any errors that occurred during the iteration
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Fetched liked comments: %+v\n", comments)
 	return comments, nil
 }
 
