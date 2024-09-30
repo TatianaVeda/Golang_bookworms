@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+type Post struct {
+	Title     string
+	Body      string
+	Author    string
+	CreatedAt string
+}
+
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	page := 1 // Assume the user is on the first page (later, this value can be passed dynamically)
 	limit := 10
@@ -289,13 +296,14 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Executing search with query: %s", query)
+
 	// Search posts based on the query (e.g., title or body match)
 	rows, err := database.DB.Query(`
         SELECT title, body, author, created_at FROM posts
         WHERE title LIKE ? OR body LIKE ?`, "%"+query+"%", "%"+query+"%")
 	if err != nil {
-		log.Printf("Database query error: %v", err) // Log the error
-		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching search results.")
+		utils.HandleError(w, http.StatusInternalServerError, "Error fetching search results.", err)
 		return
 	}
 	defer rows.Close()
@@ -306,8 +314,7 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 		var createdAt time.Time
 		err := rows.Scan(&title, &body, &author, &createdAt)
 		if err != nil {
-			log.Printf("Error scanning results: %v", err) // Log the error
-			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error scanning search results.")
+			utils.HandleError(w, http.StatusInternalServerError, "Error scanning search results.", err)
 			return
 		}
 
@@ -320,24 +327,23 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 		results = append(results, result)
 	}
 
-	// Log the fetched results to verify
-	log.Printf("Fetched search results: %+v", results)
-
-	// Check if there were any results
-	if len(results) == 0 {
-		utils.RenderErrorPage(w, http.StatusNotFound, "No posts found matching your search query.")
-		return
-	}
-
-	// Render the search results page, handle template execution error
+	// Render the search results page, including a "no results" message if empty
 	tmpl := template.Must(template.ParseFiles("views/search_results.html"))
-	err = tmpl.Execute(w, map[string]interface{}{
-		"Query":   query,
-		"Results": results,
-	})
-	if err != nil {
-		log.Printf("Error rendering search results: %v", err) // Log any template rendering errors
-		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering search results.")
-		return
+	if len(results) == 0 {
+		// Display a "no results found" message instead of a 404 page
+		data := map[string]interface{}{
+			"Query":       query,
+			"Results":     results,
+			"NoResults":   true,
+			"EmptyResult": "No posts found matching your search query.",
+		}
+		tmpl.Execute(w, data)
+	} else {
+		// Display the search results
+		data := map[string]interface{}{
+			"Query":   query,
+			"Results": results,
+		}
+		tmpl.Execute(w, data)
 	}
 }
