@@ -449,17 +449,17 @@ func CreatePostHandler(templates *template.Template) http.HandlerFunc {
 			http.Redirect(w, r, "/posts", http.StatusSeeOther)
 			return
 		}
-query := `
-	SELECT 
-        posts.id, posts.title, posts.body, 
-        COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-        COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
-    FROM posts
-    LEFT JOIN likes_dislikes ON posts.id = likes_dislikes.post_id
-    WHERE posts.user_id = ?
-    GROUP BY posts.id
-	`
-	rows, err := database.DB.Query(query, userID)
+		query := `
+			SELECT 
+				posts.id, posts.title, posts.body, 
+				COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+				COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+			FROM posts
+			LEFT JOIN likes_dislikes ON posts.id = likes_dislikes.post_id
+			WHERE posts.user_id = ?
+			GROUP BY posts.id
+			`
+		rows, err := database.DB.Query(query, userID)
 		// If the method is GET, display the post creation form
 		if r.Method == http.MethodGet {
 			// Fetch categories to display in the form
@@ -494,7 +494,7 @@ query := `
 					log.Printf("Error scanning post: %v", err)
 					continue
 				}
-				post = map[string]interface{}{
+				post := map[string]interface{}{
 					"id":           id,
 					"title":        title,
 					"body":         body,
@@ -512,10 +512,10 @@ query := `
 				log.Printf("CreatePostHandler: Error rendering template: %v", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
-		}
 
-	tmpl := template.Must(template.ParseFiles("views/myposts.html"))
-	tmpl.Execute(w, posts)
+			tmpl := template.Must(template.ParseFiles("views/myposts.html"))
+			tmpl.Execute(w, posts)
+		}
 	}
 }
 
