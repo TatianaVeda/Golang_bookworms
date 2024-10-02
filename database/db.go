@@ -2,87 +2,144 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"sync"
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver for Go
 )
 
-var DB *sql.DB
+var (
+	DB           *sql.DB                // Global DB instance
+	SessionMutex sync.Mutex             // Mutex to protect session store
+	SessionStore = make(map[string]int) // Session store to map session IDs to user IDs
+)
 
-// InitDB initializes the SQLite database connection and runs schema creation queries.
-func InitDB() error { // Changed the return type to error
+// InitDB initializes the SQLite database connection
+func InitDB(dataSourceName string) error {
 	var err error
 
-	log.Println("Connecting to the SQLite database...")
-
-	// Assign to the global DB variable, not a local one
-	DB, err = sql.Open("sqlite3", "./forum.db")
-	if err != nil {
-		return err // Return error instead of using log.Fatalf to let caller handle it
-	}
-
-	// Check if the connection is valid
-	log.Println("Pinging the database...")
-	err = DB.Ping()
+	DB, err = sql.Open("sqlite3", dataSourceName)
 	if err != nil {
 		return err
 	}
 
-	// Call schema creation function to create all necessary tables
-	log.Println("Creating database schema...")
-	createSchema()
-	log.Println("Database schema created successfully!")
+	if err = DB.Ping(); err != nil {
+		return err
+	}
 
-	return nil // Return nil to indicate success
+	log.Println("Database connection established.")
+	return nil
 }
 
 // createSchema defines and executes the SQL schema to create the necessary tables
-func createSchema() {
-	// Users table already exists
+func createSchema() error {
+	queries := []string{
+		`CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			email TEXT NOT NULL UNIQUE,
+			username TEXT NOT NULL UNIQUE,
+			password TEXT NOT NULL,
+			is_admin BOOLEAN DEFAULT FALSE,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);`,
 
-	// Schema for creating Posts table
-	postsTable := `
-	CREATE TABLE IF NOT EXISTS posts (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		title TEXT NOT NULL,
-		body TEXT NOT NULL,
-		user_id INTEGER,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY(user_id) REFERENCES users(id)
-	);`
-	execSchemaQuery(postsTable)
+		`CREATE TABLE IF NOT EXISTS posts (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			title TEXT NOT NULL,
+			body TEXT NOT NULL,
+			user_id INTEGER,
+			category_id INTEGER,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(user_id) REFERENCES users(id),
+			FOREIGN KEY(category_id) REFERENCES categories(id)
+		);`,
 
-	// Schema for creating Comments table
-	commentsTable := `
-	CREATE TABLE IF NOT EXISTS comments (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		body TEXT NOT NULL,
-		post_id INTEGER NOT NULL,
-		user_id INTEGER NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY(post_id) REFERENCES posts(id),
-		FOREIGN KEY(user_id) REFERENCES users(id)
-	);`
-	execSchemaQuery(commentsTable)
+		`CREATE TABLE IF NOT EXISTS categories (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL UNIQUE
+		);`,
 
-	likesDislikesTable := `
-	CREATE TABLE IF NOT EXISTS likes_dislikes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    post_id INTEGER NOT NULL,
-    like_type INTEGER CHECK(like_type IN (1, -1)), -- 1 for like, -1 for dislike
-    UNIQUE(user_id, post_id), -- Ensure one user can like/dislike a post only once
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    FOREIGN KEY(post_id) REFERENCES posts(id)
-);
-`
-	execSchemaQuery(likesDislikesTable)
+		`CREATE TABLE IF NOT EXISTS post_categories (
+			post_id INTEGER,
+			category_id INTEGER,
+			FOREIGN KEY(post_id) REFERENCES posts(id),
+			FOREIGN KEY(category_id) REFERENCES categories(id),
+			PRIMARY KEY(post_id, category_id)
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS comments (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			body TEXT NOT NULL,
+			post_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(post_id) REFERENCES posts(id),
+			FOREIGN KEY(user_id) REFERENCES users(id)
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS likes_dislikes (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			post_id INTEGER NOT NULL,
+			like_type INTEGER NOT NULL CHECK (like_type IN (1, -1)),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(user_id) REFERENCES users(id),
+			FOREIGN KEY(post_id) REFERENCES posts(id)
+		);`,
+
+		`PRAGMA foreign_keys = ON;`, // Ensure foreign keys are enforced.
+	}
+
+	for _, query := range queries {
+		err := execSchemaQuery(query) // Use the helper function here
+		if err != nil {
+			return fmt.Errorf("error creating table: %w", err)
+		}
+	}
+	return nil
 }
 
-// execSchemaQuery executes a single schema creation query
-func execSchemaQuery(query string) {
+func execSchemaQuery(query string) error {
 	_, err := DB.Exec(query)
 	if err != nil {
 		log.Fatalf("Error executing schema query: %v", err)
+		return err // Return the error instead of just logging it.
 	}
+	return nil
+}
+
+// Functions for interacting with the database, e.g., adding categories, posts, etc.
+func AddCategory(name string) error {
+	query := `INSERT INTO categories (name) VALUES (?)`
+	_, err := DB.Exec(query, name)
+	if err != nil {
+		return fmt.Errorf("error adding category: %w", err)
+	}
+	return nil
+}
+
+func AddPostCategory(postID, categoryID int) error {
+	query := `INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)`
+	_, err := DB.Exec(query, postID, categoryID)
+	if err != nil {
+		return fmt.Errorf("error linking post with category: %w", err)
+	}
+	return nil
+}
+
+func GetUsernameByID(userID int) (string, error) {
+	var username string
+	err := DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
+	if err != nil {
+		return "", fmt.Errorf("error fetching username: %v", err)
+	}
+
+	return username, err
+}
+
+func GetUserID(username string) (int, error) {
+	var userID int
+	err := DB.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+	return userID, err
 }

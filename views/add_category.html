@@ -1,0 +1,12 @@
+{{define "add_category"}}
+<div class="container">
+    <h1>You can also add a New Category</h1>
+    <form method="POST" action="/add-category">
+        <div class="form-group">
+            <label for="categoryName">Category Name</label>
+            <input type="text" id="categoryName" name="categoryName" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Category</button>
+    </form>
+</div>
+{{end}}

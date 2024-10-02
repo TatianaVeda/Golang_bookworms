@@ -32,7 +32,9 @@ func GenerateHash(password string) string {
 
 func main() {
 	log.Println("Starting database initialization...")
-	err := database.InitDB()
+	dsn := "./forum.db" // defining the path to the database
+
+	err := database.InitDB(dsn)
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
@@ -59,6 +61,23 @@ func main() {
 	http.HandleFunc("/500", InternalServerErrorHandler)
 	http.HandleFunc("/test-error", CauseInternalServerError)
 	http.HandleFunc("/search", controllers.SearchPosts)
+
+	// // Load templates (adjust path if needed)
+	// templates := template.Must(template.ParseGlob("views/*.html"))
+
+	// // Set up routes
+	// http.HandleFunc("/", HomeHandler)
+	// http.HandleFunc("/logout", controllers.LogoutHandler)
+	// http.HandleFunc("/posts", controllers.ShowPosts)             // Show all posts
+	// http.HandleFunc("/posts/create", controllers.CreatePost)     // Create post form
+	// http.HandleFunc("/posts/comment", controllers.CreateComment) // Comment on a post
+	// http.HandleFunc("/myposts", controllers.MyPostsHandler)      // Add new route for viewing user's posts
+	// http.HandleFunc("/posts/like", controllers.LikePostHandler)
+	// http.HandleFunc("/posts/dislike", controllers.DislikePostHandler)
+	// http.HandleFunc("/categories", CategoriesHandler)
+	// http.HandleFunc("/profile", controllers.ProfileHandler(templates))
+	// http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
 	err = http.ListenAndServe(":8080", nil)
@@ -118,7 +137,9 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			return
 		}
 
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
+		// Render the homepage with modal
+		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html", "views/create_post.html", "views/categories.html", "views/add_category.html"))
+		//tmpl := template.Must(template.ParseGlob("views/*.html"))
 		data := map[string]interface{}{
 			"IsLoggedIn": isLoggedIn,
 			"CsrfToken":  csrfToken,
@@ -152,4 +173,12 @@ func CauseInternalServerError(w http.ResponseWriter, r *http.Request) {
 	err := fmt.Errorf("deliberate error for testing")
 	log.Printf("Forced error: %v", err)
 	http.Error(w, "Something went wrong. Please try again later.", http.StatusInternalServerError)
+}
+
+func CategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	// Serve the categories.html view
+	tmpl := template.Must(template.ParseFiles("views/categories.html"))
+	if err := tmpl.Execute(w, nil); err != nil {
+		http.Error(w, "Error rendering categories section", http.StatusInternalServerError)
+	}
 }

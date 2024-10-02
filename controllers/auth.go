@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -129,9 +130,9 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			renderModalWithError(w, r, "Error registering user", true)
 			return
 		}
-
 		// On success, render the modal with a success message
 		renderModalWithError(w, r, "Registration successful. Please log in.", false)
+
 	}
 }
 
@@ -168,10 +169,12 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 		return err
 	}
 
+	fmt.Println("\n Before adding to SessionStore: ", SessionStore)
 	// Store the session ID with the userID
 	SessionMutex.Lock()
 	SessionStore[sessionID] = userID
 	SessionMutex.Unlock()
+	fmt.Println("\n After adding to SessionStore: ", SessionStore)
 
 	// Set the session ID in a cookie
 	cookie := &http.Cookie{
@@ -191,6 +194,31 @@ func CheckPasswordHash(password, hashedPassword string) error {
 		return errors.New("incorrect password")
 	}
 	return nil
+}
+
+func GetSession(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		return "", fmt.Errorf("session cookie not found")
+	}
+
+	fmt.Println("\n current sessionStore : ", SessionStore)
+	sessionID := cookie.Value
+	SessionMutex.Lock()
+	userID, exists := SessionStore[sessionID]
+	SessionMutex.Unlock()
+
+	if !exists {
+		return "", fmt.Errorf("invalid session ID")
+	}
+
+	username, err := database.GetUsernameByID(userID)
+	if err != nil {
+		fmt.Println("Error while getting username by ID: ", err)
+		return "", fmt.Errorf("error while getting username by ID")
+	}
+
+	return username, nil
 }
 
 func LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -267,8 +295,8 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			utils.HandleError(w, http.StatusInternalServerError, "Error setting session cookie")
 			return
 		}
+		fmt.Printf("This is sessionStore: %v", w)
 
-		// Render home page on successful login
 		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
 		data := map[string]interface{}{
 			"LoginSuccess": true,
