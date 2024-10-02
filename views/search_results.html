@@ -4,25 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results</title>
+    <link rel="stylesheet" href="static/home.css">
 </head>
 <body>
-    <h1>Search Results</h1>
-    <p>Results for query: <strong>{{.Query}}</strong></p>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <img src="static/images/lion-icon.png" alt="Logo" class="logo">
+            <h1>Literary Lions Forum</h1>
+            <p class="welcome-message">Welcome to the Search Results Page!</p>
+        </div>
 
-    {{if .NoResults}}
-        <p style="color: red;">{{.EmptyResult}}</p>
-    {{else}}
-        <ul>
-            {{range .Results}}
-                <li>
-                    <strong>{{.Title}}</strong><br>
-                    By {{.Author}} on {{.CreatedAt}}<br>
-                    {{.Body}}
-                </li>
+        <!-- Search Form (Always visible to allow a new search) -->
+        <form action="/search" method="GET" class="search-form">
+            <input type="text" name="query" placeholder="Search posts..." value="{{.Query}}" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Display Search Results -->
+        <div class="search-results">
+            <h2>Results for query: <strong>{{.Query}}</strong></h2>
+
+            <!-- Check if there are no results and show a message -->
+            {{if eq (len .Results) 0}}
+                <p class="no-results" style="color: red; text-align: center; font-weight: bold;">
+                    No search results were found. Try using different keywords.
+                </p>
+            {{else}}
+                <ul class="post-list">
+                    {{range .Results}}
+                        <li class="post-item">
+                            <h3>{{.Title}}</h3>
+                            <p>By <strong>{{.Author}}</strong> on <em>{{.CreatedAt}}</em></p>
+                            <div class="post-content">{{.Body}}</div>
+                        </li>
+                    {{end}}
+                </ul>
             {{end}}
-        </ul>
-    {{end}}
+        </div>
 
-    <a href="/">Go back to Home</a>
+        <!-- Link to go back to the Home Page -->
+        <div class="back-home">
+            <a href="/">Go back to Home</a>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer">
+            <p>&copy; 2024 Literary Lions Forum</p>
+        </div>
+    </div>
 </body>
 </html>

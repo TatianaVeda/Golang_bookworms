@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type Post struct {
@@ -425,46 +424,36 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
         SELECT title, body, author, created_at FROM posts
         WHERE title LIKE ? OR body LIKE ?`, "%"+query+"%", "%"+query+"%")
 	if err != nil {
-		utils.HandleError(w, http.StatusInternalServerError, "Error fetching search results.", err)
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching search results.")
 		return
 	}
-	defer rows.Close() // Ensure rows are closed after processing
+	defer rows.Close()
 
-	// Use the rows variable to process and store the search results
+	// Collect results
 	var results []map[string]interface{}
 	for rows.Next() {
 		var title, body, author string
-		var createdAt time.Time
-
-		err := rows.Scan(&title, &body, &author, &createdAt)
-		if err != nil {
-			utils.HandleError(w, http.StatusInternalServerError, "Error scanning search results.", err)
+		var createdAt string
+		if err := rows.Scan(&title, &body, &author, &createdAt); err != nil {
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error scanning search results.")
 			return
 		}
-
 		result := map[string]interface{}{
 			"Title":     title,
 			"Body":      body,
 			"Author":    author,
-			"CreatedAt": createdAt.Format("2006-01-02"), // Format the date
+			"CreatedAt": createdAt,
 		}
 		results = append(results, result)
 	}
 
-	// Check if any results were found
-	if len(results) == 0 {
-		utils.RenderErrorPage(w, http.StatusNotFound, "No posts found matching your search query.")
-		return
-	}
-
-	// Render the search results page with the found posts
+	// Render the search results template
 	tmpl := template.Must(template.ParseFiles("views/search_results.html"))
-	err = tmpl.Execute(w, map[string]interface{}{
+	if err := tmpl.Execute(w, map[string]interface{}{
 		"Query":   query,
 		"Results": results,
-	})
-	if err != nil {
-		utils.HandleError(w, http.StatusInternalServerError, "Error rendering search results.", err)
+	}); err != nil {
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering search results.")
 	}
 }
 
