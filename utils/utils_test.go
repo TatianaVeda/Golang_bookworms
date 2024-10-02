@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,7 +31,7 @@ func TestHandleErrorWithLogging(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// Simulate an internal error
-	internalError := error.New("Internal server error")
+	internalError := errors.New("Internal server error")
 
 	// Call HandleError with an internal error
 	HandleError(rr, http.StatusInternalServerError, "An error occurred", internalError)
