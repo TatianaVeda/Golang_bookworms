@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -40,29 +40,33 @@
             
             <br>
             <p class="message">
-                You are logged in! Feel free to comment💬, like👍, or <a href="/posts/create">create a post📝</a>.
+                You are logged in! Feel free to comment💬, like👍, or <a href="/posts/create">create a post📝</a> or go to your <a href="/profile">profile</a>.
             </p>
             <form action="/logout" method="POST">
                 <button type="submit">Log Out</button>
             </form>
 
             <!-- Create Post Section (Visible if user is logged in) -->
-            {{template "create_post" .}}
+            {{template "create_post" }}
         {{end}}
 
         <!-- Categories Section -->
         <h2>Sort by Category📚</h2>
-        {{if .Categories}}
-            <ul>
-                {{range .Categories}}
-                    <li><a href="/posts?category_id={{.ID}}">{{.Name}}</a></li>
-                {{else}}
-                    <li>No categories available</li>
-                {{end}}
-            </ul>
-        {{else}}
-            <p>No categories found.</p>
-        {{end}}
+{{if .Categories}}
+    <div class="category-section">
+        <ul class="category-list">
+            {{range .Categories}}
+                <li class="category-item">
+                    <a href="/posts?category_id={{.ID}}">{{.Name}}</a>
+                </li>
+            {{else}}
+                <li>No categories available</li>
+            {{end}}
+        </ul>
+    </div>
+{{else}}
+    <p>No categories found.</p>
+{{end}}
 
         <!-- Published Posts Section -->
         <div class="posts-section">
@@ -70,14 +74,13 @@
             {{if .Posts}}
                 {{range .Posts}}
                     <div class="post">
-                        <p class="post-title">{{.Title}}</p>
+                        <h3 class="post-title">{{.Title}}</h3>
+                        <p class="post-category">Category: {{.CategoryName}}</p>
                         <p class="post-content">{{.Body}}</p>
                     </div>
-                {{else}}
-                    <p>No posts found yet.</p>
                 {{end}}
             {{else}}
-                <p>No posts available at the moment.</p>
+                <p>No posts found yet.</p>
             {{end}}
         </div>
 

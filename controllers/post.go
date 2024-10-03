@@ -22,136 +22,61 @@ type Post struct {
 
 func PostsHandler(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get the session username (only pass the request, not the db)
-		username, err := GetSession(r)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+		// Use a simpler approach for debugging first
+		tmpl := template.Must(template.ParseFiles("views/posts.html", "views/create_post.html"))
+
+		// Hardcoded sample data
+		samplePosts := []map[string]interface{}{
+			{"ID": 1, "Title": "Test Post 1", "Body": "Sample body for Post 1", "CategoryName": "Literature", "LikeCount": 10, "DislikeCount": 1},
+			{"ID": 2, "Title": "Test Post 2", "Body": "Sample body for Post 2", "CategoryName": "Non-fiction", "LikeCount": 5, "DislikeCount": 0},
 		}
 
-		if r.Method == http.MethodPost {
-			// Get the user ID using the username (only pass the username, not the db)
-			userID, err := database.GetUserID(username)
-			if err != nil {
-				log.Println("Error fetching user ID")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			title := r.FormValue("title")
-			content := r.FormValue("content")
-			categoryIDs := r.Form["categories"]
-			if title == "" || content == "" {
-				log.Println("Bad Request: Title and content are required")
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
+		sampleCategories := []map[string]interface{}{
+			{"ID": 1, "Name": "Literature"},
+			{"ID": 2, "Name": "Non-fiction"},
+		}
 
-			// Begin transaction to insert post and categories
-			tx, err := database.DB.Begin()
-			if err != nil {
-				log.Printf("Error starting transaction: %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			// Insert post into DB
-			res, err := tx.Exec("INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)", userID, title, content)
-			if err != nil {
-				log.Printf("Error inserting post: %v", err)
-				tx.Rollback()
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			postID, _ := res.LastInsertId()
-
-			// Link post with categories
-			stmt, err := tx.Prepare("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)")
-			if err != nil {
-				log.Printf("Error preparing category insert: %v", err)
-				tx.Rollback()
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			for _, categoryID := range categoryIDs {
-				_, err = stmt.Exec(postID, categoryID)
-				if err != nil {
-					log.Printf("Error linking post with category: %v", err)
-					tx.Rollback()
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-			}
-
-			err = tx.Commit()
-			if err != nil {
-				log.Printf("Error committing transaction: %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			http.Redirect(w, r, "/posts", http.StatusSeeOther)
-		} else {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+		// Pass the hardcoded values to the template to test rendering
+		err := tmpl.Execute(w, map[string]interface{}{
+			"Posts":      samplePosts,
+			"Categories": sampleCategories,
+		})
+		if err != nil {
+			log.Printf("Error rendering template: %v", err)
+			http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		}
 	}
 }
 
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
-	page := 1 // Assuming the user is on the first page by default
-	limit := 10
-	offset := (page - 1) * limit // Calculate offset based on the page number
+	categoryID := r.URL.Query().Get("category_id")
+	var err error
+	var posts = []map[string]interface{}{
+		{"ID": 1, "Title": "Sample Post", "Body": "This is a test post.", "CategoryName": "Test Category", "LikeCount": 3, "DislikeCount": 1},
+		{"ID": 2, "Title": "Another Post", "Body": "Another test body", "CategoryName": "General", "LikeCount": 5, "DislikeCount": 0},
+	}
+	data := map[string]interface{}{
+		"Posts": posts,
+	}
 
-	// SQL query to fetch posts with like and dislike counts
-	query := `
-		SELECT 
-			posts.id, posts.title, posts.body, 
-			COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-			COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
-		FROM posts
-		LEFT JOIN likes_dislikes ON posts.id = likes_dislikes.post_id
-		GROUP BY posts.id
-		ORDER BY posts.created_at DESC
-		LIMIT ? OFFSET ?;
-	`
-	rows, err := database.DB.Query(query, limit, offset)
+	if categoryID != "" {
+		// Retrieve posts by category
+		posts, err = database.FetchPostsByCategory(categoryID)
+	} else {
+		// Retrieve all posts
+		posts, err = database.FetchAllPosts()
+	}
+
 	if err != nil {
-		log.Printf("Error executing SQL query: %s, %v", query, err)
-		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
+		log.Printf("Error retrieving posts: %v", err)
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error retrieving posts.")
 		return
 	}
-	defer rows.Close()
 
-	// Store the fetched posts in a slice of maps
-	posts := []map[string]interface{}{}
-	for rows.Next() {
-		var id, likeCount, dislikeCount int
-		var title, body string
-		err := rows.Scan(&id, &title, &body, &likeCount, &dislikeCount)
-		if err != nil {
-			log.Printf("Error scanning posts: %v", err)
-			http.Error(w, "Error scanning posts", http.StatusInternalServerError)
-			return
-		}
-		post := map[string]interface{}{
-			"ID":           id,
-			"Title":        title,
-			"Body":         body,
-			"LikeCount":    likeCount,
-			"DislikeCount": dislikeCount,
-		}
-		posts = append(posts, post)
-	}
-
-	// Render the posts.html template with fetched posts
 	tmpl := template.Must(template.ParseFiles("views/posts.html"))
-	err = tmpl.Execute(w, map[string]interface{}{
-		"Posts": posts,
-	})
-	if err != nil {
-		log.Printf("Error rendering template: %v", err)
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	if err := tmpl.Execute(w, data); err != nil {
+		log.Printf("Template execution error: %v", err) // Log the exact template error
+		utils.RenderErrorPage(w, http.StatusInternalServerError, fmt.Sprintf("Error rendering template: %v", err))
 	}
 }
 
@@ -165,9 +90,9 @@ func GetUserIDFromSession(r *http.Request) (int, error) {
 	sessionID := cookie.Value
 	log.Printf("Session ID from cookie: %s", sessionID)
 
-	database.SessionMutex.Lock() // Lock the mutex before accessing the session store
+	SessionMutex.Lock() // Lock the mutex before accessing the session store
 	userID, ok := database.SessionStore[sessionID]
-	database.SessionMutex.Unlock() // Unlock the mutex after access
+	SessionMutex.Unlock() // Unlock the mutex after access
 
 	if !ok {
 		log.Println("Invalid session ID")
@@ -178,16 +103,39 @@ func GetUserIDFromSession(r *http.Request) (int, error) {
 	return userID, nil
 }
 
+func GetUsernameFromSession(r *http.Request) (string, error) {
+	// Retrieve the user ID from the session
+	userID, err := GetSession(r)
+	if err != nil {
+		return "", fmt.Errorf("unable to get session: %v", err)
+	}
+
+	// Fetch the username based on the user ID
+	username, err := database.GetUsernameByID(userID)
+	if err != nil {
+		return "", fmt.Errorf("error while getting username by ID: %v", err)
+	}
+
+	return username, nil
+}
+
 func ProfileHandler(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get the session username (no need to pass db)
-		username, err := GetSession(r)
+		// Get the session user ID instead of username
+		userID, err := GetSession(r)
 		if err != nil {
 			fmt.Println("Get session error:", err)
 			http.Redirect(w, r, "/loginplease", http.StatusSeeOther)
 			return
 		}
-		fmt.Println("Session retrieved successfully. Username:", username)
+		fmt.Printf("Session retrieved successfully. UserID: %d\n", userID)
+
+		// Fetch the username using the user ID
+		username, err := database.GetUsernameByID(userID)
+		if err != nil {
+			http.Error(w, "Error fetching username", http.StatusInternalServerError)
+			return
+		}
 
 		// Get the username from the query string (if provided), otherwise use session username
 		profileUsername := r.URL.Query().Get("username")
@@ -202,15 +150,15 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			return
 		}
 
-		// Get user ID (no need to pass db)
-		userID, err := database.GetUserID(profileUsername)
+		// Get user ID of the profile being viewed
+		profileUserID, err := database.GetUserID(profileUsername)
 		if err != nil {
 			http.Error(w, "Error fetching user ID", http.StatusInternalServerError)
 			return
 		}
 
 		// Fetch user comments
-		comments, err := database.FetchUserComments(userID)
+		comments, err := database.FetchUserComments(profileUserID)
 		if err != nil {
 			http.Error(w, "Error fetching comments", http.StatusInternalServerError)
 			return
@@ -218,7 +166,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 		profileData.Comments = comments
 
 		// Fetch liked posts if viewing own profile
-		if profileUsername == username {
+		if profileUserID == userID {
 			likedPosts, err := database.FetchLikedPosts(userID)
 			if err != nil {
 				http.Error(w, "Error fetching liked posts", http.StatusInternalServerError)
@@ -269,86 +217,34 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 	}
 }
 
-var createPostTemplate = template.Must(template.ParseFiles("views/create_post.html"))
-
-func CreatePost(w http.ResponseWriter, r *http.Request) {
-	// Retrieve and validate the session
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		utils.HandleError(w, http.StatusUnauthorized, "Session not found.")
-		return
-	}
-
-	// Check if the session exists in the session store
-	SessionMutex.Lock()
-	userID, sessionExists := SessionStore[cookie.Value]
-	SessionMutex.Unlock()
-
-	if !sessionExists {
-		utils.HandleError(w, http.StatusUnauthorized, "Invalid session.")
-		return
-	}
-	if r.Method == http.MethodPost {
-		if err := r.ParseForm(); err != nil {
-			utils.HandleError(w, http.StatusBadRequest, "Unable to parse form data")
-			return
-		}
-		title := r.FormValue("title")
-		body := r.FormValue("body")
-		//categoryID := r.FormValue("category_id")
-
-		// Insert post into the database (assuming you have a DB set up)
-		_, err := database.DB.Exec(`INSERT INTO posts (user_id, title, body) VALUES (?, ?, ?)`, userID, title, body)
-		if err != nil {
-			utils.HandleError(w, http.StatusInternalServerError, "Error creating post")
-			return
-		}
-
-		// Success! Redirect or return success response
-		http.Redirect(w, r, "/myposts", http.StatusSeeOther)
-	} else {
-		// Render the post creation form (GET request)
-		tmpl := template.Must(template.ParseFiles("views/create_post.html"))
-		tmpl.Execute(w, nil)
-	}
-}
-
 func RequireSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Retrieve and validate the session
+		// Retrieve and validate the session cookie
 		cookie, err := r.Cookie("session_id")
 		if err != nil {
-			utils.HandleError(w, http.StatusUnauthorized, "Session not found.")
+			http.Redirect(w, r, "/login", http.StatusSeeOther) // Redirect to /login if no session
 			return
 		}
 
-		// Check if the session exists in the session store
 		SessionMutex.Lock()
 		_, sessionExists := SessionStore[cookie.Value]
 		SessionMutex.Unlock()
 
 		if !sessionExists {
-			utils.HandleError(w, http.StatusUnauthorized, "Invalid session.")
+			http.Redirect(w, r, "/login", http.StatusSeeOther) // Redirect if session is not found
 			return
 		}
 
-		// Proceed to the next handler if session is valid
+		// If session is valid, proceed to the next handler
 		next.ServeHTTP(w, r)
 	})
 }
 
 func LikePostHandler(w http.ResponseWriter, r *http.Request) {
-	// Get the session username
-	username, err := GetSession(r) // Only pass the request
+	// Get the session user ID instead of username
+	userID, err := GetSession(r) // Get the `userID` directly
 	if err != nil {
 		http.Error(w, "Unauthorized. Please log in.", http.StatusUnauthorized)
-		return
-	}
-
-	// Get the user ID from the username
-	userID, err := database.GetUserID(username) // Only pass the username
-	if err != nil {
-		http.Error(w, "Error fetching user ID", http.StatusInternalServerError)
 		return
 	}
 
@@ -447,171 +343,116 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 		results = append(results, result)
 	}
 
-	// Render the search results template
-	tmpl := template.Must(template.ParseFiles("views/search_results.html"))
-	if err := tmpl.Execute(w, map[string]interface{}{
+	// Create the data map to pass to the template
+	data := map[string]interface{}{
 		"Query":   query,
 		"Results": results,
-	}); err != nil {
-		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering search results.")
+	}
+
+	// Render the search results template
+	tmpl := template.Must(template.ParseFiles("views/search_results.html"))
+	if err := tmpl.Execute(w, data); err != nil {
+		log.Printf("Template execution error: %v", err) // Log the exact template error
+		utils.RenderErrorPage(w, http.StatusInternalServerError, fmt.Sprintf("Error rendering template: %v", err))
 	}
 }
 
-func CreatePostHandler(templates *template.Template) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Log request
-		log.Println("CreatePostHandler: Incoming request for /posts/create")
-
-		// Validate the session
-		username, err := GetSession(r)
-		if err != nil {
-			log.Printf("CreatePostHandler: Error retrieving session: %v", err)
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-		log.Printf("CreatePostHandler: Session found for user: %s", username)
-
-		// Get the user ID based on the session username
-		userID, err := database.GetUserID(username)
-		if err != nil {
-			log.Printf("CreatePostHandler: Error retrieving user ID: %v", err)
-			http.Error(w, "Error retrieving user information", http.StatusInternalServerError)
-			return
-		}
-		log.Printf("CreatePostHandler: User ID retrieved: %d", userID)
-
-		// If the method is POST, process the form submission
-		if r.Method == http.MethodPost {
-			r.ParseForm()
-
-			title := r.FormValue("title")
-			body := r.FormValue("body")
-			categoryID := r.FormValue("category_id")
-
-			// Validate form input
-			if title == "" || body == "" {
-				log.Println("CreatePostHandler: Bad request, title or body missing")
-				http.Error(w, "Title and body cannot be empty", http.StatusBadRequest)
-				return
-			}
-
-			// Insert the new post into the database
-			_, err = database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)",
-				title, body, userID, categoryID)
-			if err != nil {
-				log.Printf("CreatePostHandler: Error creating post: %v", err)
-				http.Error(w, "Error creating post", http.StatusInternalServerError)
-				return
-			}
-
-			// Redirect to the posts page after successful creation
-			log.Println("CreatePostHandler: Post created successfully")
-			http.Redirect(w, r, "/posts", http.StatusSeeOther)
-			return
-		}
-		query := `
-			SELECT 
-				posts.id, posts.title, posts.body, 
-				COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-				COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
-			FROM posts
-			LEFT JOIN likes_dislikes ON posts.id = likes_dislikes.post_id
-			WHERE posts.user_id = ?
-			GROUP BY posts.id
-			`
-		rows, err := database.DB.Query(query, userID)
-		// If the method is GET, display the post creation form
-		if r.Method == http.MethodGet {
-			// Fetch categories to display in the form
-			// rows, err := database.DB.Query("SELECT id, name FROM categories")
-			if err != nil {
-				log.Printf("CreatePostHandler: Error fetching categories: %v", err)
-				http.Error(w, "Error fetching categories", http.StatusInternalServerError)
-				return
-			}
-			defer rows.Close()
-
-			var posts = []map[string]interface{}{}
-			var categories []map[string]interface{}
-			for rows.Next() {
-				var name string
-				var id, likeCount, dislikeCount int
-				var title, body string
-
-				err := rows.Scan(&id, &name)
-				if err != nil {
-					log.Printf("CreatePostHandler: Error scanning category: %v", err)
-					http.Error(w, "Error reading categories", http.StatusInternalServerError)
-					return
-				}
-				categories = append(categories, map[string]interface{}{
-					"ID":   id,
-					"Name": name,
-				})
-
-				err = rows.Scan(&id, &title, &body, &likeCount, &dislikeCount)
-				if err != nil {
-					log.Printf("Error scanning post: %v", err)
-					continue
-				}
-				post := map[string]interface{}{
-					"id":           id,
-					"title":        title,
-					"body":         body,
-					"likeCount":    likeCount,
-					"dislikeCount": dislikeCount,
-				}
-				posts = append(posts, post)
-			}
-
-			// Render the create post form
-			err = templates.ExecuteTemplate(w, "create_post.html", map[string]interface{}{
-				"Categories": categories,
-			})
-			if err != nil {
-				log.Printf("CreatePostHandler: Error rendering template: %v", err)
-				http.Error(w, "Error rendering form", http.StatusInternalServerError)
-			}
-
-			tmpl := template.Must(template.ParseFiles("views/myposts.html"))
-			tmpl.Execute(w, posts)
-		}
-	}
-}
-
-// CreateComment handles posting a comment on a post
-func CreateComment(w http.ResponseWriter, r *http.Request) {
+func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
+		// Retrieve and validate the session
 		userID, err := GetUserIDFromSession(r)
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
-		r.ParseForm()
-		postID := r.FormValue("post_id") // Ensure this is properly coming from the form
-		commentBody := r.FormValue("body")
+		// Get form values
+		title := r.FormValue("title")
+		body := r.FormValue("body")
+		categoryID := r.FormValue("category_id")
 
+		if title == "" || body == "" || categoryID == "" {
+			http.Error(w, "Title, body, and category cannot be empty", http.StatusBadRequest)
+			return
+		}
+
+		// Convert category ID to integer
+		categoryIDInt, err := strconv.Atoi(categoryID)
+		if err != nil {
+			http.Error(w, "Invalid category ID", http.StatusBadRequest)
+			return
+		}
+
+		// Insert the post into the database
+		_, err = database.DB.Exec("INSERT INTO posts (user_id, title, body, category_id) VALUES (?, ?, ?, ?)", userID, title, body, categoryIDInt)
+		if err != nil {
+			log.Printf("CreatePostHandler: Error executing query: %v", err)
+			http.Error(w, "Error creating post", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+	} else {
+		// Fetch categories to render in the form
+		categories, err := database.FetchCategories()
+		if err != nil {
+			log.Printf("CreatePostHandler: Error fetching categories: %v", err)
+			http.Error(w, "Error fetching categories", http.StatusInternalServerError)
+			return
+		}
+
+		// Debugging log to check if categories are populated
+		log.Printf("Fetched categories: %+v", categories)
+
+		// Render the create post form with categories
+		tmpl := template.Must(template.ParseFiles("views/create_post.html"))
+		err = tmpl.Execute(w, map[string]interface{}{
+			"Categories": categories,
+		})
+		if err != nil {
+			log.Printf("CreatePostHandler: Error rendering template: %v", err)
+			http.Error(w, "Error rendering create post form", http.StatusInternalServerError)
+		}
+	}
+}
+
+func CreateComment(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// Retrieve the user ID from the session
+		userID, err := GetUserIDFromSession(r)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		// Parse form values
+		r.ParseForm()
+		postID := r.FormValue("post_id")   // Retrieve the post ID from the form
+		commentBody := r.FormValue("body") // Retrieve the comment body from the form
+
+		// Validate form inputs
 		if postID == "" || commentBody == "" {
 			http.Error(w, "Post ID and comment body cannot be empty", http.StatusBadRequest)
 			return
 		}
 
-		// Ensure that postID is converted to an integer, like this:
+		// Convert post ID to an integer for database use
 		postIDInt, err := strconv.Atoi(postID)
 		if err != nil {
 			http.Error(w, "Invalid Post ID", http.StatusBadRequest)
 			return
 		}
 
-		_, err = database.DB.Exec("INSERT INTO comments (body, post_id, user_id) VALUES (?, ?, ?)", commentBody, postIDInt, userID)
+		// Insert the comment into the database
+		_, err = database.WriteDB.Exec("INSERT INTO comments (user_id, post_id, body) VALUES (?, ?, ?)", userID, postIDInt, commentBody)
 		if err != nil {
 			http.Error(w, "Error posting comment", http.StatusInternalServerError)
 			log.Printf("Error posting comment: %v", err)
 			return
 		}
 
-		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+		// Redirect back to the post after adding the comment
+		http.Redirect(w, r, fmt.Sprintf("/posts?post_id=%d", postIDInt), http.StatusSeeOther)
 	}
 }
 
@@ -678,6 +519,61 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
+}
+
+func FilterPostsByCategory(w http.ResponseWriter, r *http.Request) {
+	// Get category ID from the URL query parameters
+	categoryID := r.URL.Query().Get("category_id")
+
+	// Define the query to get posts for a specific category ID
+	query := `
+        SELECT posts.id, posts.title, posts.body, categories.name
+        FROM posts
+        JOIN categories ON posts.category_id = categories.id
+        WHERE categories.id = ?
+    `
+
+	// Execute the query to retrieve posts based on the specified category
+	rows, err := database.DB.Query(query, categoryID)
+	if err != nil {
+		http.Error(w, "Error fetching posts by category", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// Prepare a slice to store posts
+	var posts []map[string]interface{}
+	var categoryName string
+
+	// Iterate over the results and add them to the posts slice
+	for rows.Next() {
+		var id int
+		var title, body string
+
+		err := rows.Scan(&id, &title, &body, &categoryName)
+		if err != nil {
+			http.Error(w, "Error scanning posts", http.StatusInternalServerError)
+			return
+		}
+
+		post := map[string]interface{}{
+			"ID":           id,
+			"Title":        title,
+			"Body":         body,
+			"CategoryName": categoryName,
+		}
+		posts = append(posts, post)
+	}
+
+	// Render the category-specific posts using a dedicated template (ensure the file exists)
+	tmpl := template.Must(template.ParseFiles("views/category_posts.html"))
+	err = tmpl.Execute(w, map[string]interface{}{
+		"CategoryName": categoryName,
+		"Posts":        posts,
+	})
+	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
 }

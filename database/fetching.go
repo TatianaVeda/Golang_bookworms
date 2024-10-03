@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"literary-lions/structs"
+	"log"
 )
 
 // FetchProfile retrieves a user's profile from the database.
@@ -136,13 +137,60 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 	return comments, nil
 }
 
-func FetchPostCategories(postID int) ([]structs.Category, error) {
-	query := `
-		SELECT c.id, c.name
-		FROM categories c
-		JOIN post_categories pc ON c.id = pc.category_id
-		WHERE pc.post_id = ?`
-	rows, err := DB.Query(query, postID)
+func FetchPostsByCategory(categoryID string) ([]map[string]interface{}, error) {
+	query := `SELECT id, title, body, COALESCE(user_id, 0) AS user_id, created_at 
+	          FROM posts 
+	          WHERE category_id = ? 
+	          ORDER BY created_at DESC`
+	rows, err := DB.Query(query, categoryID)
+	if err != nil {
+		log.Printf("Error executing SQL query: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Prepare a slice to store posts
+	var posts []map[string]interface{}
+
+	for rows.Next() {
+		var id, userID int
+		var title, body, createdAt string
+
+		if err := rows.Scan(&id, &title, &body, &userID, &createdAt); err != nil {
+			log.Printf("Error scanning post row: %v", err)
+			return nil, err
+		}
+
+		post := map[string]interface{}{
+			"ID":        id,
+			"Title":     title,
+			"Body":      body,
+			"UserID":    userID,
+			"CreatedAt": createdAt,
+		}
+		posts = append(posts, post)
+	}
+
+	// Return the posts for the given category
+	return posts, nil
+}
+
+// FetchProfileData retrieves the profile data for a given username
+func FetchProfileData(username string) (structs.ProfileData, error) {
+	var profileData structs.ProfileData
+
+	// Example query to get the username and email
+	err := DB.QueryRow("SELECT username, email FROM users WHERE username = ?", username).Scan(&profileData.Username, &profileData.Email)
+	if err != nil {
+		return profileData, err
+	}
+
+	// Fetch other profile-related data if needed, like user posts, etc.
+	return profileData, nil
+}
+
+func FetchCategories() ([]structs.Category, error) {
+	rows, err := DB.Query("SELECT id, name FROM categories")
 	if err != nil {
 		return nil, err
 	}
@@ -159,16 +207,41 @@ func FetchPostCategories(postID int) ([]structs.Category, error) {
 	return categories, nil
 }
 
-// FetchProfileData retrieves the profile data for a given username
-func FetchProfileData(username string) (structs.ProfileData, error) {
-	var profileData structs.ProfileData
-
-	// Example query to get the username and email
-	err := DB.QueryRow("SELECT username, email FROM users WHERE username = ?", username).Scan(&profileData.Username, &profileData.Email)
+func FetchAllPosts() ([]map[string]interface{}, error) {
+	// Use your specific columns here
+	query := `SELECT id, title, body, COALESCE(user_id, 0) AS user_id, created_at FROM posts ORDER BY created_at DESC`
+	rows, err := DB.Query(query)
 	if err != nil {
-		return profileData, err
+		log.Printf("Error executing SQL query: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Prepare a slice to store posts
+	var posts []map[string]interface{}
+
+	// Scan each row and add it to the slice
+	for rows.Next() {
+		var id, userID int
+		var title, body, createdAt string
+
+		// Scan the row into variables
+		if err := rows.Scan(&id, &title, &body, &userID, &createdAt); err != nil {
+			log.Printf("Error scanning post row: %v", err)
+			return nil, err
+		}
+
+		// Prepare a map to hold post data
+		post := map[string]interface{}{
+			"ID":        id,
+			"Title":     title,
+			"Body":      body,
+			"UserID":    userID,
+			"CreatedAt": createdAt,
+		}
+		posts = append(posts, post)
 	}
 
-	// Fetch other profile-related data if needed, like user posts, etc.
-	return profileData, nil
+	// Return all posts
+	return posts, nil
 }

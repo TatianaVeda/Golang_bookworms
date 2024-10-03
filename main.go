@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -32,9 +33,10 @@ func GenerateHash(password string) string {
 
 func main() {
 	log.Println("Starting database initialization...")
-	dsn := "./forum.db" // defining the path to the database
+	//dsn := "./forum.db" // defining the path to the database
 
-	err := database.InitDB(dsn)
+	err := database.InitDB("./forum.db")
+
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
@@ -50,7 +52,7 @@ func main() {
 	})))
 
 	http.Handle("/posts", StripTrailingSlash(http.HandlerFunc(controllers.ShowPosts)))
-	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePost)))
+	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePostHandler)))
 	http.HandleFunc("/logout", controllers.LogoutHandler)
 	http.HandleFunc("/posts/comment", controllers.CreateComment)
 	http.HandleFunc("/myposts", controllers.MyPostsHandler)
@@ -78,6 +80,14 @@ func main() {
 	// http.HandleFunc("/profile", controllers.ProfileHandler(templates))
 	// http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
+	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	defer file.Close()
+
+	//log.SetOutput(file)
+
 	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
 	err = http.ListenAndServe(":8080", nil)
@@ -100,13 +110,13 @@ func rootHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 	}
 }
 
-// HomeHandler handles the homepage logic
 func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *template.Template) {
 	log.Printf("Received request with method: %s", r.Method)
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
 	if r.Method == http.MethodPost {
 		r.ParseForm()
 		action := r.FormValue("action")
@@ -119,7 +129,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			return
 		}
 	} else if r.Method == http.MethodGet {
-		// Render home page for GET requests
+		//Render home page for GET requests
 		cookie, err := r.Cookie("session_id")
 		isLoggedIn := false
 		if err == nil {
@@ -128,7 +138,13 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			controllers.SessionMutex.Unlock()
 			if sessionExists {
 				isLoggedIn = true
+			} else {
+				// Ensure that invalid sessions are treated correctly
+				isLoggedIn = false
 			}
+		} else {
+			// No session found, treat as not logged in
+			isLoggedIn = false
 		}
 
 		csrfToken, err := controllers.GenerateAndSetCSRFToken(w, r)
@@ -137,16 +153,50 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			return
 		}
 
-		// Render the homepage with modal
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html", "views/create_post.html", "views/categories.html", "views/add_category.html"))
-		//tmpl := template.Must(template.ParseGlob("views/*.html"))
+		rows, err := db.Query("SELECT id, name FROM categories")
+		if err != nil {
+			log.Printf("Error fetching categories: %v", err) // Log the exact database error
+			utils.RenderErrorPage(w, http.StatusInternalServerError, fmt.Sprintf("Error fetching categories: %v", err))
+			return
+		}
+
+		defer rows.Close()
+
+		var categories []map[string]interface{}
+		for rows.Next() {
+			var id int
+			var name string
+			if err := rows.Scan(&id, &name); err != nil {
+				utils.RenderErrorPage(w, http.StatusInternalServerError, "Error scanning categories.")
+				return
+			}
+			categories = append(categories, map[string]interface{}{
+				"ID":   id,
+				"Name": name,
+			})
+		}
+
+		// Pass the categories and other data to the template
 		data := map[string]interface{}{
 			"IsLoggedIn": isLoggedIn,
 			"CsrfToken":  csrfToken,
+			"Categories": categories, // Include categories in the template data
 		}
+
+		// Render the homepage with modal
+		tmpl := template.Must(template.ParseFiles(
+			"views/home.html",
+			"views/auth.html",
+			"views/create_post.html",
+			"views/categories.html",
+			"views/add_category.html",
+		))
+
 		if err := tmpl.Execute(w, data); err != nil {
-			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering homepage.")
+			log.Printf("Template execution error: %v", err) // Log the exact template error
+			utils.RenderErrorPage(w, http.StatusInternalServerError, fmt.Sprintf("Error rendering template: %v", err))
 		}
+
 	}
 }
 
@@ -176,9 +226,37 @@ func CauseInternalServerError(w http.ResponseWriter, r *http.Request) {
 }
 
 func CategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	// Serve the categories.html view
+	// Fetch categories from the database
+	rows, err := database.DB.Query("SELECT id, name FROM categories")
+	if err != nil {
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching categories.")
+		return
+	}
+	defer rows.Close()
+
+	var categories []map[string]interface{}
+	for rows.Next() {
+		var id int
+		var name string
+		if err := rows.Scan(&id, &name); err != nil {
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error scanning categories.")
+			return
+		}
+		categories = append(categories, map[string]interface{}{
+			"ID":   id,
+			"Name": name,
+		})
+	}
+
+	// Pass the categories data to the template
+	data := map[string]interface{}{
+		"Categories": categories,
+	}
+
+	// Serve the categories.html view with data
 	tmpl := template.Must(template.ParseFiles("views/categories.html"))
-	if err := tmpl.Execute(w, nil); err != nil {
-		http.Error(w, "Error rendering categories section", http.StatusInternalServerError)
+	if err := tmpl.Execute(w, data); err != nil {
+		log.Printf("Template execution error: %v", err) // Log the exact template error
+		utils.RenderErrorPage(w, http.StatusInternalServerError, fmt.Sprintf("Error rendering template: %v", err))
 	}
 }

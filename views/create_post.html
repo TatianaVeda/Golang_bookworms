@@ -1,33 +1,33 @@
 {{define "create_post"}}
-    <div class="container">
-    <div class="posts-section">
+<div class="container">
+  <div class="posts-section">
     <h1>Create New Post</h1>
     <div class="post">
-    <form action="/posts/create" method="POST">
+      <form action="/posts/create" method="POST">
         <div class="form-group">
-            <label for="post-title" class="form-label">Title:</label><br>
-            <input type="text" id="title" name="title" class="form-input" required><br><br>
+          <label for="post-title" class="form-label">Title:</label><br>
+          <input type="text" id="title" name="title" class="form-input" required><br><br>
         </div>
         <div class="form-group">
-            <label for="post-content" class="form-label">Body:</label><br>
-            <textarea type="text" id="body" name="body" class="form-textarea" required></textarea><br><br>
-        </div>
-              <!--   <p class="post-title">Bookcrossing shelves at trains stations</p>
-              <p class="post-content">I once found and incredible book there</p> -->
-       <div class="form-group">
-        <label for="category">Category:</label>
-            <select id="category" name="category_id" required>
-                <option value="">Select a Category</option>
-                {{range .Categories}}
-                    <option value="{{.ID}}">{{.Name}}</option>
-                {{end}}
-            </select>
+          <label for="post-content" class="form-label">Body:</label><br>
+          <textarea type="text" id="body" name="body" class="form-textarea" required></textarea><br><br>
         </div>
 
-              <div class="form-group">
-              <input type="submit" value="Create Post" class="form-button">
+        <div class="form-group">
+          <label for="category">Category:</label>
+          <select id="category" name="category_id" required>
+            <option value="">Select a Category</option>
+            {{range .Categories}}
+                <option value="{{.ID}}">{{.Name}}</option>
+            {{end}}
+          </select>
         </div>
-        </form>
+
+        <div class="form-group">
+          <input type="submit" value="Create Post" class="form-button">
+        </div>
+      </form>
     </div>
-
+  </div>
+</div>
 {{end}}

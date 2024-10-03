@@ -15,20 +15,56 @@ var (
 	SessionStore = make(map[string]int) // Session store to map session IDs to user IDs
 )
 
-// InitDB initializes the SQLite database connection
-func InitDB(dataSourceName string) error {
+func InitDB(dsn string) error {
 	var err error
 
-	DB, err = sql.Open("sqlite3", dataSourceName)
+	// Open the SQLite database with the provided DSN (data source name)
+	DB, err = sql.Open("sqlite3", dsn)
 	if err != nil {
+		log.Fatalf("Failed to open the database: %v", err)
 		return err
 	}
 
-	if err = DB.Ping(); err != nil {
+	// Set journal mode to WAL (write-ahead logging) to support concurrent reads and writes.
+	_, err = DB.Exec("PRAGMA journal_mode = WAL;")
+	if err != nil {
+		log.Fatalf("Failed to set journal mode to WAL: %v", err)
 		return err
 	}
 
-	log.Println("Database connection established.")
+	// Set a busy timeout to avoid "database is locked" errors when SQLite is under heavy load.
+	_, err = DB.Exec("PRAGMA busy_timeout = 5000;") // Set a 5-second timeout
+	if err != nil {
+		log.Fatalf("Failed to set busy timeout: %v", err)
+		return err
+	}
+
+	log.Println("Database connection initialized successfully with WAL journal mode and busy timeout.")
+	return nil
+}
+
+var WriteDB *sql.DB
+
+func InitWriteDB(dsn string) error {
+	var err error
+	WriteDB, err = sql.Open("sqlite3", dsn)
+	if err != nil {
+		log.Fatalf("Failed to open the write database: %v", err)
+		return err
+	}
+
+	WriteDB.SetMaxOpenConns(1) // Single write connection
+	WriteDB.SetMaxIdleConns(1) // Keep only 1 idle write connection
+	_, err = WriteDB.Exec("PRAGMA journal_mode = WAL;")
+	if err != nil {
+		log.Fatalf("Failed to set WAL mode on write DB: %v", err)
+		return err
+	}
+	_, err = WriteDB.Exec("PRAGMA busy_timeout = 10000;")
+	if err != nil {
+		log.Fatalf("Failed to set busy timeout on write DB: %v", err)
+		return err
+	}
 	return nil
 }
 
@@ -86,6 +122,16 @@ func createSchema() error {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY(user_id) REFERENCES users(id),
 			FOREIGN KEY(post_id) REFERENCES posts(id)
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS comment_likes (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			comment_id INTEGER NOT NULL,
+			like BOOLEAN NOT NULL DEFAULT 1,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(user_id) REFERENCES users(id),
+			FOREIGN KEY(comment_id) REFERENCES comments(id)
 		);`,
 
 		`PRAGMA foreign_keys = ON;`, // Ensure foreign keys are enforced.

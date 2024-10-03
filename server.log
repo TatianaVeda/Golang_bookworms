@@ -1,0 +1,10 @@
+2024/10/03 13:44:19 Starting server on http://localhost:8080/
+2024/10/03 13:45:34 Received request with method: GET
+2024/10/03 13:45:35 Received request with method: GET
+2024/10/03 13:45:36 Received request with method: GET
+2024/10/03 13:46:10 Starting server on http://localhost:8080/
+2024/10/03 13:46:13 Received request with method: GET
+2024/10/03 14:11:29 Starting server on http://localhost:8080/
+2024/10/03 14:11:48 Received request with method: GET
+2024/10/03 14:11:48 Template execution error: html/template:home.html:50:23: no such template "create_post"
+2024/10/03 14:17:15 Starting server on http://localhost:8080/

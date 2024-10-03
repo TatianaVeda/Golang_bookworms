@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"literary-lions/database"
+	"literary-lions/structs"
 	"literary-lions/utils"
 
 	"github.com/google/uuid"
@@ -130,9 +131,27 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			renderModalWithError(w, r, "Error registering user", true)
 			return
 		}
-		// On success, render the modal with a success message
-		renderModalWithError(w, r, "Registration successful. Please log in.", false)
 
+		// Set session cookie and redirect to home page
+		var userID sql.NullInt64
+		err = database.DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&userID)
+		if err != nil {
+			renderModalWithError(w, r, "Error retrieving user after registration.", true)
+			return
+		}
+
+		sessionID, err := CreateSession(int(userID.Int64)) // Convert to int
+		if err != nil {
+			renderModalWithError(w, r, "Error creating session.", true)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:  "session_id",
+			Value: sessionID,
+			Path:  "/",
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to the home page
 	}
 }
 
@@ -169,14 +188,10 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 		return err
 	}
 
-	fmt.Println("\n Before adding to SessionStore: ", SessionStore)
-	// Store the session ID with the userID
 	SessionMutex.Lock()
 	SessionStore[sessionID] = userID
 	SessionMutex.Unlock()
-	fmt.Println("\n After adding to SessionStore: ", SessionStore)
 
-	// Set the session ID in a cookie
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sessionID,
@@ -196,29 +211,47 @@ func CheckPasswordHash(password, hashedPassword string) error {
 	return nil
 }
 
-func GetSession(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		return "", fmt.Errorf("session cookie not found")
+func CreateSession(userID int) (string, error) {
+	sessionID := uuid.New().String()
+
+	// Set session expiration time (e.g., 24 hours from creation)
+	expirationTime := time.Now().Add(24 * time.Hour)
+
+	// Create session data
+	sessionData := structs.SessionData{
+		UserID:    userID,
+		ExpiresAt: expirationTime,
 	}
 
-	fmt.Println("\n current sessionStore : ", SessionStore)
+	// Store session in the session store
+	SessionMutex.Lock()
+	SessionStore[sessionID] = sessionData.UserID // Update session management here
+	SessionMutex.Unlock()
+
+	log.Printf("CreateSession: Session created for user ID %d with session ID %s", userID, sessionID)
+	return sessionID, nil
+}
+
+func GetSession(r *http.Request) (int, error) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		return 0, fmt.Errorf("session cookie not found")
+	}
+
+	// Retrieve session ID from the cookie
 	sessionID := cookie.Value
+
+	// Lock the session store before accessing
 	SessionMutex.Lock()
 	userID, exists := SessionStore[sessionID]
 	SessionMutex.Unlock()
 
 	if !exists {
-		return "", fmt.Errorf("invalid session ID")
+		return 0, fmt.Errorf("invalid session ID")
 	}
 
-	username, err := database.GetUsernameByID(userID)
-	if err != nil {
-		fmt.Println("Error while getting username by ID: ", err)
-		return "", fmt.Errorf("error while getting username by ID")
-	}
-
-	return username, nil
+	// Return the user ID from the session
+	return userID, nil
 }
 
 func LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -256,14 +289,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		err = row.Scan(&id, &storedHashedPassword)
 		if err == sql.ErrNoRows {
 			log.Println("LoginUser: No such user")
-			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
-			data := map[string]interface{}{
-				"LoginError":    "Invalid email or password.",
-				"CsrfToken":     formToken,
-				"ShowModal":     true,
-				"IsRegistering": false,
-			}
-			tmpl.Execute(w, data)
+			http.Redirect(w, r, "/?login_error=Invalid email or password.", http.StatusSeeOther)
 			return
 		} else if err != nil {
 			log.Printf("LoginUser: Error retrieving user: %v", err)
@@ -275,48 +301,28 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		log.Println("LoginUser: Checking password")
 		if CheckPasswordHash(password, storedHashedPassword) != nil {
 			log.Println("LoginUser: Incorrect password")
-			tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
-			data := map[string]interface{}{
-				"LoginError":    "Invalid email or password.",
-				"CsrfToken":     formToken,
-				"ShowModal":     true,
-				"IsRegistering": false,
-			}
-			tmpl.Execute(w, data)
+			http.Redirect(w, r, "/?login_error=Invalid email or password.", http.StatusSeeOther)
 			return
 		}
 
 		log.Printf("LoginUser: Login successful for user ID %d", id)
 
+		// Create session using the new function and set the session cookie
+		sessionID, err := CreateSession(id)
+		if err != nil {
+			log.Printf("LoginUser: Error creating session: %v", err)
+			utils.HandleError(w, http.StatusInternalServerError, "Error creating session")
+			return
+		}
+
 		// Set session cookie on successful login
-		err = SetSessionCookie(w, id)
-		if err != nil {
-			log.Printf("LoginUser: Error setting session cookie: %v", err)
-			utils.HandleError(w, http.StatusInternalServerError, "Error setting session cookie")
-			return
-		}
-		fmt.Printf("This is sessionStore: %v", w)
-
-		tmpl := template.Must(template.ParseFiles("views/home.html", "views/auth.html"))
-		data := map[string]interface{}{
-			"LoginSuccess": true,
-			"IsLoggedIn":   true,
-			"CsrfToken":    formToken,
-			"ShowModal":    false,
-		}
-		tmpl.Execute(w, data)
-	} else if r.Method == http.MethodGet {
-		csrfToken, err := GenerateAndSetCSRFToken(w, r)
-		if err != nil {
-			log.Println("LoginUser: Error generating CSRF token")
-			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-			return
-		}
-
-		tmpl := template.Must(template.ParseFiles("views/login.html"))
-		tmpl.Execute(w, map[string]interface{}{
-			"CsrfToken": csrfToken,
+		http.SetCookie(w, &http.Cookie{
+			Name:  "session_id",
+			Value: sessionID,
+			Path:  "/",
 		})
+
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 

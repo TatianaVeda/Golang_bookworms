@@ -1,5 +1,10 @@
 package structs
 
+import (
+	"database/sql"
+	"time"
+)
+
 // Post represents a post in the system
 type Post struct {
 	ID         int
@@ -7,6 +12,7 @@ type Post struct {
 	Body       string
 	CreatedAt  string
 	Categories []Category
+	UserID     sql.NullInt64
 }
 
 // Comment represents a comment in the system
@@ -38,4 +44,9 @@ type ProfileData struct {
 	CanChangePassword bool
 	Error             string
 	Success           string
+}
+
+type SessionData struct {
+	UserID    int
+	ExpiresAt time.Time
 }
