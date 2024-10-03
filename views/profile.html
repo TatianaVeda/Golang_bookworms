@@ -9,28 +9,28 @@
   <h2>Your Posts</h2>
 <ul>
     {{range .ProfileData.Posts}}
-    <li>{{.Title}} - {{.Timestamp}}</li>
+    <li>{{.Title}} - {{.CreatedAt}}</li> <!-- Fixed Timestamp -->
     {{end}}
 </ul>
 
 <h2>Your Liked Posts</h2>
 <ul>
     {{range .ProfileData.LikedPosts}}
-    <li>{{.Title}} by {{.Poster}}</li>
+    <li>{{.Title}}</li> <!-- Removed Poster if not available -->
     {{end}}
 </ul>
 
 <h2>Your Comments</h2>
 <ul>
     {{range .ProfileData.Comments}}
-    <li>{{.Comment}} on {{.Title}} by {{.Poster}}</li>
+    <li>{{.Body}} on {{.Title}}</li> <!-- Fixed .Comment to .Body -->
     {{end}}
 </ul>
 
 <h2>Your Liked Comments</h2>
 <ul>
     {{range .ProfileData.LikedComments}}
-    <li>{{.Comment}} on {{.Title}} by {{.Poster}}</li>
+    <li>{{.Body}} on {{.Title}}</li> <!-- Fixed .Comment to .Body -->
     {{end}}
 </ul>
 </body>
