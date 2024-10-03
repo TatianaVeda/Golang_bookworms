@@ -14,19 +14,19 @@ VALUES
     (3, 'user2@example.com', 'user2', 'hashedpassword3', 0);
 
 -- Insert data into categories table
-INSERT INTO categories (name) 
+INSERT INTO categories (id, name) 
 VALUES 
-    ('Technology'),
-    ('Literature'),
-    ('Music'),
-    ('Art');
+    (1, 'Technology'),
+    (2, 'Literature'),
+    (3, 'Music'),
+    (4, 'Art');
 
 -- Insert data into posts table
-INSERT INTO posts (title, body, user_id, category_id) 
+INSERT INTO posts (id, title, body, user_id, category_id) 
 VALUES 
-    ('First Post on Technology', 'This is a post about technology.', 2, 1),
-    ('Exploring Literature', 'A post discussing modern literature.', 1, 2),
-    ('The Beauty of Classical Music', 'This post is all about classical music.', 2, 3);
+    (1, 'First Post on Technology', 'This is a post about technology.', 2, 1),
+    (2, 'Exploring Literature', 'A post discussing modern literature.', 1, 2),
+    (3, 'The Beauty of Classical Music', 'This post is all about classical music.', 2, 3);
 
 -- Insert data into post_categories table
 INSERT INTO post_categories (post_id, category_id) VALUES (1, 2);
@@ -34,11 +34,11 @@ INSERT INTO post_categories (post_id, category_id) VALUES (1, 3);
 
 
 -- Insert data into comments table
-INSERT INTO comments (body, post_id, user_id) 
+INSERT INTO comments (id, body, post_id, user_id) 
 VALUES 
-    ('Great post! I love technology too.', 1, 1),
-    ('I disagree with some points.', 2, 1),
-    ('Amazing read on classical music!', 3, 2);
+    (1, 'Great post! I love technology too.', 1, 1),
+    (2, 'I disagree with some points.', 2, 1),
+    (3, 'Amazing read on classical music!', 3, 2);
 
 -- Insert data into likes_dislikes table (posts)
 INSERT INTO likes_dislikes (user_id, post_id, like_type) 

@@ -320,6 +320,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 				}
 				likedCommentsConverted = append(likedCommentsConverted, comment)
 			}
+			fmt.Println("Gaga:", len(likedCommentsConverted))
 			profileData.LikedComments = likedCommentsConverted
 		}
 
