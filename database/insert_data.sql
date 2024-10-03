@@ -4,6 +4,7 @@ DELETE FROM likes_dislikes;
 DELETE FROM posts;
 DELETE FROM categories;
 DELETE FROM users;
+DELETE FROM comment_likes;
 
 
 -- Insert data into users table
