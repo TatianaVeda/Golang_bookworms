@@ -114,7 +114,7 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 
 	var comments []map[string]interface{}
 	for rows.Next() {
-		var id, postID int64
+		var id, postID int
 		var body string
 		err := rows.Scan(&id, &body, &postID)
 		if err != nil {
