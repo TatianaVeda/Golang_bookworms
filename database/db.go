@@ -68,6 +68,15 @@ func InitWriteDB(dsn string) error {
 	return nil
 }
 
+func ConnectDB() *sql.DB {
+	// Connect to the SQLite database
+	db, err := sql.Open("sqlite3", "./forum.db")
+	if err != nil {
+		log.Fatal("Error connecting to the database:", err)
+	}
+	return db
+}
+
 // createSchema defines and executes the SQL schema to create the necessary tables
 func createSchema() error {
 	queries := []string{

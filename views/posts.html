@@ -1,4 +1,3 @@
-<!--posts.html-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,25 +10,28 @@
     <div class="container">
         <div class="posts-section">
             <h1>All Posts</h1>
-            <a href="/posts/create">Create New Post🖋️</a>
-            
-            {{if .Posts}}
-            {{ range .Posts }}
-            <h2>{{.Title}}</h2>
-            <p>{{.Body}}</p>
-            <form action="/posts/like" method="POST">
-                <input type="hidden" name="post_id" value="{{.ID}}">
-                <button type="submit">Like🤩</button>
-            </form>
-            <form action="/posts/dislike" method="POST">
-                <input type="hidden" name="post_id" value="{{.ID}}">
-                <button type="submit">Dislike👿</button>
-            </form>
-            <p>🤩: {{.LikeCount}} | 👿: {{.DislikeCount}}</p>
-        {{ end }}
-        
-            {{else}}
-                <p>No posts found.</p>
+            <a href="/posts/create">Create New Post 🖋️</a>
+            {{range .Posts }}
+            <div class="post">
+                <h2>{{.Title}}</h2>
+                <p>{{.Body}}</p>
+                <p><strong>Category:</strong> {{.CategoryName}}</p>
+                <p><strong>Likes:</strong> {{.LikeCount}} | <strong>Dislikes:</strong> {{.DislikeCount}}</p>
+
+                <!-- Like and Dislike buttons -->
+                <div class="reaction-buttons">
+                    <form action="/posts/like" method="POST">
+                        <input type="hidden" name="post_id" value="{{.ID}}">
+                        <button type="submit">Like 🤩</button>
+                    </form>
+                    <form action="/posts/dislike" method="POST">
+                        <input type="hidden" name="post_id" value="{{.ID}}">
+                        <button type="submit">Dislike 👿</button>
+                    </form>
+                </div>
+                <p>🤩: {{.LikeCount}} | 👿: {{.DislikeCount}}</p>
+            </div>
+            <hr>
             {{end}}
         </div>
     </div>

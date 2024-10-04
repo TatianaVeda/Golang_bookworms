@@ -13,75 +13,44 @@
         <div class="header">
             <img src="static/images/lion-icon.png" alt="Logo" class="logo">
             <h1> Feeling your inner-r-rr-rrr lion?</h1>
-            <p class="welcome-message">
-                Welcome to Literary Lions Forum! Here you can embrace the power of online discussions, fostering deeper connections, enriching their reading journeys, and ensuring the book club roars with literary passion ;-))
-            </p>
+
+            <p class="welcome-message">Welcome to Literary Lions Forum! Here you can embrace the power of online discussions, fostering deeper connections, enriching their reading journeys, and ensuring the book club roars with literary passion ;-))</p>
         </div>
-
-        <!-- Search Form (Always visible) -->
-        <form action="/search" method="GET">
-            <input type="text" name="query" placeholder="Search posts..." required>
-            <button type="submit">Search</button>
-        </form>
-
-        <!-- Authentication and User Section -->
         {{if not .IsLoggedIn}}
-            <!-- If not logged in, show the auth template (e.g., login/register options) -->
-            {{template "auth" .}}
-        {{else}}
-            <!-- If logged in, display the user's message and options -->
+
+        {{template "auth" .}} <!-- Include the auth template here -->
+
+            {{else}}
             {{if .LoginSuccessMessage}}
                 <div class="success-message">
                     {{.LoginSuccessMessage}}
                 </div>
             {{end}}
 
-            <p>You are logged in! Feel free to comment, like, <a href="/posts/create">create a post</a>, or go to your <a href="/profile">profile</a>.</p>
-            
-            <br>
-            <p class="message">
-                You are logged in! Feel free to comment💬, like👍, or <a href="/posts/create">create a post📝</a> or go to your <a href="/profile">profile</a>.
-            </p>
+            <br><p class="message">You are logged in! Feel free to comment💬, like👍, or <a href="/posts/create">create a post📝</a> or go to your <a href="/profile">profile</a>.</p>
             <form action="/logout" method="POST">
-                <button type="submit">Log Out</button>
+                <button type="submit"class="logout-button">Log Out 🔓</button>
             </form>
 
-            <!-- Create Post Section (Visible if user is logged in) -->
-            {{template "create_post" }}
+            <!-- Create Post Section -->
+            {{template "create_post" .}}
         {{end}}
 
         <!-- Categories Section -->
         <h2>Sort by Category📚</h2>
-{{if .Categories}}
-    <div class="category-section">
-        <ul class="category-list">
-            {{range .Categories}}
-                <li class="category-item">
-                    <a href="/posts?category_id={{.ID}}">{{.Name}}</a>
-                </li>
-            {{else}}
-                <li>No categories available</li>
-            {{end}}
-        </ul>
-    </div>
-{{else}}
-    <p>No categories found.</p>
-{{end}}
+        {{template "categories" .}}
 
         <!-- Published Posts Section -->
         <div class="posts-section">
             <h2>Published Posts📜</h2>
-            {{if .Posts}}
-                {{range .Posts}}
-                    <div class="post">
-                        <h3 class="post-title">{{.Title}}</h3>
-                        <p class="post-category">Category: {{.CategoryName}}</p>
-                        <p class="post-content">{{.Body}}</p>
-                    </div>
-                {{end}}
-            {{else}}
-                <p>No posts found yet.</p>
-            {{end}}
+            <div class="post">
+                <p class="post-title">Bookcrossing shelves at trains stations</p>
+                <p class="post-content">I once found and incredible book there</p>
+            </div>
+            <div class="post">
+                <p class="post-title">Understanding Modern Poetry</p>
+                <p class="post-content">Nope...</p>
+            </div>
         </div>
 
         <!-- Footer Section -->

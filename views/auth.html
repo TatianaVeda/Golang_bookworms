@@ -40,45 +40,27 @@
                     <input type="email" id="login-email" name="email" required autocomplete="off"><br><br>
                     <label for="login-password">Password:</label><br>
                     <input type="password" id="login-password" name="password" required autocomplete="off"><br><br>
-                    <button type="submit">Login</button>
-                </form>                
+                    <input type="submit" value="Login">
+                </form>
             </div>
-<div id="register-form" class="auth-form">
-    <h3>Register</h3>
-    
-    <!-- Conditionally show error messages -->
-    {{ if .ErrorMessage }}
-        <p style="color: red;">{{ .ErrorMessage }}</p>
-    {{ end }}
 
-    <form action="/" method="POST">
-        <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
-        <input type="hidden" name="action" value="register">
-        
-        <label for="username">Username:</label><br>
-        <input type="text" id="username" name="username" required>
-        {{ if .UsernameError }}
-            <p style="color: red;">{{ .UsernameError }}</p>
-        {{ end }}
-        <br>
-
-        <label for="register-email">Email:</label><br>
-        <input type="email" id="register-email" name="email" required autocomplete="off">
-        {{ if .EmailError }}
-            <p style="color: red;">{{ .EmailError }}</p>
-        {{ end }}
-        <br>
-
-        <label for="register-password">Password:</label><br>
-        <input type="password" id="register-password" name="password" required autocomplete="off">
-        {{ if .PasswordError }}
-            <p style="color: red;">{{ .PasswordError }}</p>
-        {{ end }}
-        <br>
-        
-        <input type="submit" value="Register">
-    </form>
-</div>
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form">
+                <h3>Register</h3>
+                {{if .RegistrationError}}
+                <p style="color: red;">{{.RegistrationError}}</p>
+                {{end}}
+                <form action="/" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                    <input type="hidden" name="action" value="register">
+                    <label for="username">Username:</label><br>
+                    <input type="text" id="username" name="username" required><br>
+                    <label for="register-email">Email:</label><br>
+                    <input type="email" id="register-email" name="email" required autocomplete="off"><br>
+                    <label for="register-password">Password:</label><br>
+                    <input type="password" id="register-password" name="password" required autocomplete="off"><br>
+                    <input type="submit" value="Register">
+                </form>
             </div>
         </div>
     </div>

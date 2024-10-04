@@ -1,17 +1,12 @@
-{{define "category_posts"}}
+{{define "categories"}}
 <div class="container">
-    <h1>Posts in Category: {{.CategoryName}}</h1>
-    {{if .Posts}}
-        <div class="posts-section">
-            {{range .Posts}}
-                <div class="post">
-                    <h2 class="post-title">{{.Title}}</h2>
-                    <p class="post-content">{{.Body}}</p>
-                </div>
-            {{end}}
-        </div>
-    {{else}}
-        <p>No posts found for this category.</p>
-    {{end}}
+    <h1>Choose a Category</h1>
+    <ul class="categories">
+        <li><a href="/posts?category=1">Literature</a></li>
+        <li><a href="/posts?category=2">Poetry</a></li>
+        <li><a href="/posts?category=3">Non-fiction</a></li>
+        <li><a href="/posts?category=4">Short Stories</a></li>
+    </ul>
 </div>
+
 {{end}}

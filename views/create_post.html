@@ -1,33 +1,31 @@
-{{define "create_post"}}
+{{ define "create_post" }}
 <div class="container">
-  <div class="posts-section">
     <h1>Create New Post</h1>
     <div class="post">
-      <form action="/posts/create" method="POST">
-        <div class="form-group">
-          <label for="post-title" class="form-label">Title:</label><br>
-          <input type="text" id="title" name="title" class="form-input" required><br><br>
-        </div>
-        <div class="form-group">
-          <label for="post-content" class="form-label">Body:</label><br>
-          <textarea type="text" id="body" name="body" class="form-textarea" required></textarea><br><br>
-        </div>
-
-        <div class="form-group">
-          <label for="category">Category:</label>
-          <select id="category" name="category_id" required>
-            <option value="">Select a Category</option>
-            {{range .Categories}}
-                <option value="{{.ID}}">{{.Name}}</option>
-            {{end}}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <input type="submit" value="Create Post" class="form-button">
-        </div>
-      </form>
+        <form action="/posts/create" method="POST">
+            <div class="form-group">
+                <label for="post-title" class="form-label">Title:</label><br>
+                <input type="text" id="title" name="title" class="form-input" required><br><br>
+            </div>
+            <div class="form-group">
+                <label for="post-content" class="form-label">Body:</label><br>
+                <textarea type="text" id="body" name="body" class="form-textarea" required></textarea><br><br>
+            </div>
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <select id="category" name="category_id" required>
+                    <option value="">Select a Category</option>
+                    <!-- Hardcoded Categories Directly in the Template -->
+                    <option value="1">Literature</option>
+                    <option value="2">Poetry</option>
+                    <option value="3">Non-fiction</option>
+                    <option value="4">Short Stories</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create Post" class="form-button">
+            </div>
+        </form>
     </div>
-  </div>
 </div>
-{{end}}
+{{ end }}

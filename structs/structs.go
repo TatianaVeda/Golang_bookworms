@@ -1,18 +1,19 @@
 package structs
 
 import (
-	"database/sql"
 	"time"
 )
 
-// Post represents a post in the system
 type Post struct {
-	ID         int
-	Title      string
-	Body       string
-	CreatedAt  string
-	Categories []Category
-	UserID     sql.NullInt64
+	ID           int
+	Title        string
+	Body         string
+	CreatedAt    string
+	Categories   []Category
+	UserID       int
+	LikeCount    int
+	DislikeCount int
+	CategoryName string
 }
 
 // Comment represents a comment in the system
@@ -49,4 +50,9 @@ type ProfileData struct {
 type SessionData struct {
 	UserID    int
 	ExpiresAt time.Time
+}
+
+type TemplateData struct {
+	Categories []Category
+	Title      string
 }

@@ -189,21 +189,32 @@ func FetchProfileData(username string) (structs.ProfileData, error) {
 	return profileData, nil
 }
 
+// FetchCategories retrieves all categories from the database.
 func FetchCategories() ([]structs.Category, error) {
 	rows, err := DB.Query("SELECT id, name FROM categories")
 	if err != nil {
+		log.Printf("FetchCategories: Error executing query: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
 
+	// Create a slice to store categories
 	var categories []structs.Category
+
+	// Iterate over rows and populate categories slice
 	for rows.Next() {
 		var category structs.Category
 		if err := rows.Scan(&category.ID, &category.Name); err != nil {
+			log.Printf("FetchCategories: Error scanning row: %v", err)
 			return nil, err
 		}
 		categories = append(categories, category)
 	}
+
+	// Log the fetched categories for debugging
+	log.Printf("FetchCategories: Retrieved categories: %+v", categories)
+
+	// Return the categories
 	return categories, nil
 }
 

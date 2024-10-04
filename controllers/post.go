@@ -12,14 +12,6 @@ import (
 	"strconv"
 )
 
-type Post struct {
-	ID        int
-	Title     string
-	Body      string // Change Content to Body
-	UserID    int
-	CreatedAt string
-}
-
 func PostsHandler(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Use a simpler approach for debugging first
@@ -49,57 +41,89 @@ func PostsHandler(templates *template.Template) http.HandlerFunc {
 }
 
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
-	categoryID := r.URL.Query().Get("category_id")
-	var err error
-	var posts = []map[string]interface{}{
-		{"ID": 1, "Title": "Sample Post", "Body": "This is a test post.", "CategoryName": "Test Category", "LikeCount": 3, "DislikeCount": 1},
-		{"ID": 2, "Title": "Another Post", "Body": "Another test body", "CategoryName": "General", "LikeCount": 5, "DislikeCount": 0},
-	}
-	data := map[string]interface{}{
-		"Posts": posts,
-	}
-
-	if categoryID != "" {
-		// Retrieve posts by category
-		posts, err = database.FetchPostsByCategory(categoryID)
-	} else {
-		// Retrieve all posts
-		posts, err = database.FetchAllPosts()
-	}
-
+	rows, err := database.DB.Query(`
+        SELECT posts.id, posts.title, posts.body, posts.created_at, users.id, 
+               categories.name, COALESCE(like_count, 0) AS like_count, COALESCE(dislike_count, 0) AS dislike_count
+        FROM posts
+        JOIN users ON posts.user_id = users.id
+        JOIN categories ON posts.category_id = categories.id
+        LEFT JOIN (
+            SELECT post_id, 
+                   SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END) AS like_count,
+                   SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END) AS dislike_count
+            FROM likes_dislikes
+            GROUP BY post_id
+        ) ld ON ld.post_id = posts.id
+        ORDER BY posts.created_at DESC
+    `)
 	if err != nil {
 		log.Printf("Error retrieving posts: %v", err)
-		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error retrieving posts.")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	defer rows.Close()
 
+	// Retrieve the posts and populate into the structs.Post slice
+	var posts []structs.Post
+	for rows.Next() {
+		var post structs.Post
+		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt, &post.UserID, &post.CategoryName, &post.LikeCount, &post.DislikeCount)
+		if err != nil {
+			log.Printf("Error scanning post: %v", err)
+			continue
+		}
+		posts = append(posts, post)
+	}
+
+	// Debug: Check the contents of the posts slice
+	log.Printf("Fetched Posts: %+v", posts)
+
+	// Render posts.html with posts slice
 	tmpl := template.Must(template.ParseFiles("views/posts.html"))
-	if err := tmpl.Execute(w, data); err != nil {
-		log.Printf("Template execution error: %v", err) // Log the exact template error
-		utils.RenderErrorPage(w, http.StatusInternalServerError, fmt.Sprintf("Error rendering template: %v", err))
+	if err := tmpl.Execute(w, map[string]interface{}{
+		"Posts": posts,
+	}); err != nil {
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func GetUserIDFromSession(r *http.Request) (int, error) {
-	cookie, err := r.Cookie("session_id")
+	sessionID, err := r.Cookie("session_id")
 	if err != nil {
-		log.Println("No session cookie found")
+		log.Printf("GetUserIDFromSession: No session ID found in cookies: %v", err)
+		return 0, fmt.Errorf("no session ID")
+	}
+
+	userID, err := GetUserIDFromSessionID(sessionID.Value)
+	if err != nil {
+		log.Printf("GetUserIDFromSession: Invalid session ID %s: %v", sessionID.Value, err)
+		return 0, fmt.Errorf("invalid session")
+	}
+
+	return userID, nil
+}
+
+// GetUserIDFromSessionID takes a session ID and retrieves the corresponding user ID from the sessions table.
+func GetUserIDFromSessionID(sessionID string) (int, error) {
+	var userID int
+
+	// Query the database for the user ID associated with the given session ID
+	err := database.DB.QueryRow("SELECT user_id FROM sessions WHERE session_id = ?", sessionID).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// If no user is found for the session ID, log and return a not found error
+			log.Printf("GetUserIDFromSessionID: No user found for session ID: %s", sessionID)
+			return 0, nil
+		}
+		// Log and return any other errors encountered during the query
+		log.Printf("GetUserIDFromSessionID: Error querying database: %v", err)
 		return 0, err
 	}
 
-	sessionID := cookie.Value
-	log.Printf("Session ID from cookie: %s", sessionID)
+	// Log the retrieved user ID for debugging
+	log.Printf("GetUserIDFromSessionID: Retrieved user ID %d for session ID %s", userID, sessionID)
 
-	SessionMutex.Lock() // Lock the mutex before accessing the session store
-	userID, ok := database.SessionStore[sessionID]
-	SessionMutex.Unlock() // Unlock the mutex after access
-
-	if !ok {
-		log.Println("Invalid session ID")
-		return 0, fmt.Errorf("invalid session ID")
-	}
-
-	log.Printf("User ID from session: %d", userID)
 	return userID, nil
 }
 
@@ -359,14 +383,9 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		// Retrieve and validate the session
-		userID, err := GetUserIDFromSession(r)
-		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
+		userID := 13 // Hardcoded user ID for testing (should be dynamic in production)
 
-		// Get form values
+		// Retrieve form values
 		title := r.FormValue("title")
 		body := r.FormValue("body")
 		categoryID := r.FormValue("category_id")
@@ -376,42 +395,38 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Convert category ID to integer
-		categoryIDInt, err := strconv.Atoi(categoryID)
+		// Insert post into the database
+		_, err := database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", title, body, userID, categoryID)
 		if err != nil {
-			http.Error(w, "Invalid category ID", http.StatusBadRequest)
+			log.Printf("Error inserting new post: %v", err)
+			http.Error(w, "Unable to create post", http.StatusInternalServerError)
 			return
 		}
 
-		// Insert the post into the database
-		_, err = database.DB.Exec("INSERT INTO posts (user_id, title, body, category_id) VALUES (?, ?, ?, ?)", userID, title, body, categoryIDInt)
-		if err != nil {
-			log.Printf("CreatePostHandler: Error executing query: %v", err)
-			http.Error(w, "Error creating post", http.StatusInternalServerError)
-			return
-		}
+		log.Printf("Post created successfully: Title: %s | Body: %s | CategoryID: %s", title, body, categoryID)
 
+		// Redirect to /posts after successful creation
 		http.Redirect(w, r, "/posts", http.StatusSeeOther)
 	} else {
-		// Fetch categories to render in the form
-		categories, err := database.FetchCategories()
-		if err != nil {
-			log.Printf("CreatePostHandler: Error fetching categories: %v", err)
-			http.Error(w, "Error fetching categories", http.StatusInternalServerError)
-			return
+		// Render the create post page if method is GET
+		categories := []struct {
+			ID   int
+			Name string
+		}{
+			{1, "Literature"},
+			{2, "Poetry"},
+			{3, "Non-fiction"},
+			{4, "Short Stories"},
 		}
 
-		// Debugging log to check if categories are populated
-		log.Printf("Fetched categories: %+v", categories)
-
-		// Render the create post form with categories
-		tmpl := template.Must(template.ParseFiles("views/create_post.html"))
-		err = tmpl.Execute(w, map[string]interface{}{
+		data := map[string]interface{}{
 			"Categories": categories,
-		})
-		if err != nil {
-			log.Printf("CreatePostHandler: Error rendering template: %v", err)
-			http.Error(w, "Error rendering create post form", http.StatusInternalServerError)
+		}
+
+		tmpl := template.Must(template.ParseFiles("views/create_post.html"))
+		if err := tmpl.Execute(w, data); err != nil {
+			log.Printf("Template execution error: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}
 }
