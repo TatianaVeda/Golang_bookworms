@@ -5,12 +5,13 @@ DELETE FROM posts;
 DELETE FROM categories;
 DELETE FROM users;
 DELETE FROM comment_likes;
+-- ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0; 
 
 
 -- Insert data into users table
 INSERT INTO users (id, email, username, password, is_admin) 
 VALUES 
-    (1, 'ana@banana.na', 'ana', '$2a$10$qbhPlUJoTbgRUatWdMq9m.iVdIyuYm1sWQMytH86EZxwdtkqHYNTa', 1), -- bob is an admin
+    (1, 'ana@banana.na', 'ana', '$2a$10$qbhPlUJoTbgRUatWdMq9m.iVdIyuYm1sWQMytH86EZxwdtkqHYNTa', 1), -- ana is an admin
     (2, 'user1@example.com', 'user1', 'hashedpassword2', 0),
     (3, 'user2@example.com', 'user2', 'hashedpassword3', 0);
 
@@ -42,15 +43,15 @@ VALUES
     (3, 'Amazing read on classical music!', 3, 2);
 
 -- Insert data into likes_dislikes table (posts)
-INSERT INTO likes_dislikes (user_id, post_id, like_type) 
+INSERT INTO likes_dislikes (id, user_id, post_id, like_type) 
 VALUES 
-    (1, 1, 1),  -- Ana likes first post
-    (2, 2, 1),  -- user1 likes second post
-    (3, 1, -1); -- user2 dislikes the first post
+    (1, 1, 1, 1),  -- Ana likes first post
+    (2, 2, 2, 1),  -- user1 likes second post
+    (3, 3, 1, -1); -- user2 dislikes the first post
 
 -- Insert data into comment_likes table (comments)
-INSERT INTO comment_likes (user_id, comment_id, like) 
+INSERT INTO comment_likes (id, user_id, comment_id, like) 
 VALUES 
-    (1, 1, 1),  -- Ana likes first comment
-    (2, 2, 1),  -- user1 likes second comment
-    (3, 3, 1);  -- user2 likes third comment
+    (1, 1, 1, 1),  -- Ana likes first comment
+    (2, 2, 2, 1),  -- user1 likes second comment
+    (3, 3, 3, 1);  -- user2 likes third comment
