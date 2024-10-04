@@ -87,17 +87,20 @@ func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 	}
 }
 
-// ShowPosts displays posts filtered by category.
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
-	// Retrieve category ID from the query parameters (e.g., /posts?category=1)
 	categoryID := r.URL.Query().Get("category")
-
 	var rows *sql.Rows
 	var err error
 	var categoryName string
+	isLoggedIn := false
+
+	// Check if user is logged in by verifying the session cookie
+	_, err = r.Cookie("session_id")
+	if err == nil {
+		isLoggedIn = true // User is logged in
+	}
 
 	if categoryID != "" {
-		// Convert the category ID to an integer
 		categoryIDInt, err := strconv.Atoi(categoryID)
 		if err != nil {
 			log.Printf("Invalid category ID: %s", categoryID)
@@ -105,7 +108,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Fetch posts for the specific category
+		// Query posts for a specific category
 		rows, err = database.DB.Query(`
 			SELECT posts.id, posts.title, posts.body, users.username, categories.name
 			FROM posts
@@ -114,7 +117,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			WHERE categories.id = ?
 			ORDER BY posts.created_at DESC`, categoryIDInt)
 
-		// Fetch the category name for display
+		// Get the category name for the display
 		err = database.DB.QueryRow("SELECT name FROM categories WHERE id = ?", categoryIDInt).Scan(&categoryName)
 		if err != nil {
 			log.Printf("Error fetching category name: %v", err)
@@ -122,7 +125,6 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		// Fetch all posts if no category is specified
 		rows, err = database.DB.Query(`
 			SELECT posts.id, posts.title, posts.body, users.username, categories.name
 			FROM posts
@@ -151,18 +153,18 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 		posts = append(posts, post)
 	}
 
-	// Check for errors encountered during iteration
 	if err = rows.Err(); err != nil {
 		log.Printf("Error iterating through posts: %v", err)
 		http.Error(w, "Error processing posts", http.StatusInternalServerError)
 		return
 	}
 
-	// Render the posts template with the filtered posts
+	// Pass the data, including login status, to the template
 	tmpl := template.Must(template.ParseFiles("views/posts.html"))
 	err = tmpl.Execute(w, map[string]interface{}{
 		"Posts":        posts,
 		"CategoryName": categoryName,
+		"IsLoggedIn":   isLoggedIn,
 	})
 	if err != nil {
 		log.Printf("Template execution error: %v", err)

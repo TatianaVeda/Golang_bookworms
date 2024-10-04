@@ -10,9 +10,12 @@
     <div class="container">
         <div class="posts-section">
             <h1>All Posts in Category: {{.CategoryName}}</h1>
-            <a href="/posts/create">Create New Post🖋️</a>
-            
-            <!-- Iterate through the posts -->
+            {{if .IsLoggedIn}}
+                <a href="/posts/create">Create New Post🖋️</a>
+            {{else}}
+                <p>Log in to create new posts or interact with posts!</p>
+            {{end}}
+
             {{if .Posts}}
                 {{range .Posts}}
                 <div class="post">
@@ -21,26 +24,28 @@
                     <p>Posted by: {{.UserName}}</p>
                     <p>Category: {{.CategoryName}}</p>
                     <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
-                    
-                    <!-- Like and Dislike Buttons -->
-                    <form action="/posts/like" method="POST" style="display:inline;">
-                        <input type="hidden" name="post_id" value="{{.ID}}">
-                        <button type="submit">Like🤩</button>
-                    </form>
-                    
-                    <form action="/posts/dislike" method="POST" style="display:inline;">
-                        <input type="hidden" name="post_id" value="{{.ID}}">
-                        <button type="submit">Dislike👿</button>
-                    </form>
-                    
+
+                    <!-- Conditionally display like and dislike buttons based on login status -->
+                    {{if $.IsLoggedIn}}
+                        <form action="/posts/like" method="POST" style="display:inline;">
+                            <input type="hidden" name="post_id" value="{{.ID}}">
+                            <button type="submit">Like🤩</button>
+                        </form>
+
+                        <form action="/posts/dislike" method="POST" style="display:inline;">
+                            <input type="hidden" name="post_id" value="{{.ID}}">
+                            <button type="submit">Dislike👿</button>
+                        </form>
+                    {{else}}
+                        <p class="disabled-message">Log in to like or dislike posts.</p>
+                    {{end}}
+
                     <hr>
                 </div>
                 {{end}}
             {{else}}
-                <!-- Fallback message when no posts are found -->
                 <p>No posts found in this category. Please create a new post to get started!</p>
             {{end}}
-
         </div>
     </div>
     <div class="footer">
