@@ -3,40 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Posts</title>
+    <title>Posts in {{.CategoryName}}</title>
     <link rel="stylesheet" href="static/home.css">
 </head>
 <body>
     <div class="container">
         <div class="posts-section">
-            <h1>All Posts</h1>
-            <a href="/posts/create">Create New Post 🖋️</a>
-            {{range .Posts }}
-            <div class="post">
-                <h2>{{.Title}}</h2>
-                <p>{{.Body}}</p>
-                <p><strong>Category:</strong> {{.CategoryName}}</p>
-                <p><strong>Likes:</strong> {{.LikeCount}} | <strong>Dislikes:</strong> {{.DislikeCount}}</p>
-
-                <!-- Like and Dislike buttons -->
-                <div class="reaction-buttons">
-                    <form action="/posts/like" method="POST">
+            <h1>All Posts in Category: {{.CategoryName}}</h1>
+            <a href="/posts/create">Create New Post🖋️</a>
+            
+            <!-- Iterate through the posts -->
+            {{if .Posts}}
+                {{range .Posts}}
+                <div class="post">
+                    <h2>{{.Title}}</h2>
+                    <p>{{.Body}}</p>
+                    <p>Posted by: {{.UserName}}</p>
+                    <p>Category: {{.CategoryName}}</p>
+                    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+                    
+                    <!-- Like and Dislike Buttons -->
+                    <form action="/posts/like" method="POST" style="display:inline;">
                         <input type="hidden" name="post_id" value="{{.ID}}">
-                        <button type="submit">Like 🤩</button>
+                        <button type="submit">Like🤩</button>
                     </form>
-                    <form action="/posts/dislike" method="POST">
+                    
+                    <form action="/posts/dislike" method="POST" style="display:inline;">
                         <input type="hidden" name="post_id" value="{{.ID}}">
-                        <button type="submit">Dislike 👿</button>
+                        <button type="submit">Dislike👿</button>
                     </form>
+                    
+                    <hr>
                 </div>
-                <p>🤩: {{.LikeCount}} | 👿: {{.DislikeCount}}</p>
-            </div>
-            <hr>
+                {{end}}
+            {{else}}
+                <!-- Fallback message when no posts are found -->
+                <p>No posts found in this category. Please create a new post to get started!</p>
             {{end}}
+
         </div>
     </div>
-
-    <!-- Footer Section -->
     <div class="footer">
         <p>&copy; 2024 Literary Lions Forum</p>
     </div>

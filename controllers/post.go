@@ -12,95 +12,181 @@ import (
 	"strconv"
 )
 
-func PostsHandler(templates *template.Template) http.HandlerFunc {
+// PostsHandler displays posts for a specific category based on the 'category' query parameter.
+func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Use a simpler approach for debugging first
-		tmpl := template.Must(template.ParseFiles("views/posts.html", "views/create_post.html"))
-
-		// Hardcoded sample data
-		samplePosts := []map[string]interface{}{
-			{"ID": 1, "Title": "Test Post 1", "Body": "Sample body for Post 1", "CategoryName": "Literature", "LikeCount": 10, "DislikeCount": 1},
-			{"ID": 2, "Title": "Test Post 2", "Body": "Sample body for Post 2", "CategoryName": "Non-fiction", "LikeCount": 5, "DislikeCount": 0},
+		// Retrieve the category ID from the URL query parameter
+		categoryID := r.URL.Query().Get("category")
+		if categoryID == "" {
+			log.Println("Category ID is missing in the request")
+			utils.RenderErrorPage(w, http.StatusBadRequest, "Category ID is required for filtering.")
+			return
 		}
 
-		sampleCategories := []map[string]interface{}{
-			{"ID": 1, "Name": "Literature"},
-			{"ID": 2, "Name": "Non-fiction"},
+		// Convert the category ID to an integer
+		categoryIDInt, err := strconv.Atoi(categoryID)
+		if err != nil {
+			log.Printf("Invalid category ID: %s", categoryID)
+			utils.RenderErrorPage(w, http.StatusBadRequest, "Invalid Category ID.")
+			return
 		}
 
-		// Pass the hardcoded values to the template to test rendering
-		err := tmpl.Execute(w, map[string]interface{}{
-			"Posts":      samplePosts,
-			"Categories": sampleCategories,
+		// Define the SQL query to filter posts based on the given category ID
+		query := `
+			SELECT posts.id, posts.title, posts.body, users.username, posts.created_at, categories.name 
+			FROM posts
+			JOIN users ON posts.user_id = users.id
+			JOIN categories ON posts.category_id = categories.id
+			WHERE categories.id = ?
+			ORDER BY posts.created_at DESC
+		`
+
+		// Execute the query and check for errors
+		rows, err := db.Query(query, categoryIDInt)
+		if err != nil {
+			log.Printf("Error fetching posts for category %d: %v", categoryIDInt, err)
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching posts.")
+			return
+		}
+		defer rows.Close()
+
+		// Prepare a slice to store the retrieved posts
+		var posts []structs.Post
+		for rows.Next() {
+			var post structs.Post
+			err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserName, &post.CreatedAt, &post.CategoryName)
+			if err != nil {
+				log.Printf("Error scanning post for category '%s': %v", categoryID, err)
+				continue
+			}
+
+			// Append each post to the posts slice
+			posts = append(posts, post)
+		}
+
+		// Check for any errors encountered during iteration
+		if err = rows.Err(); err != nil {
+			log.Printf("Error iterating through posts for category '%s': %v", categoryID, err)
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error processing posts.")
+			return
+		}
+
+		// Debug output to check the retrieved posts
+		log.Printf("Filtered Posts for category '%s': %+v", categoryID, posts)
+
+		// Render the posts template with the filtered posts
+		tmpl := template.Must(template.ParseFiles("views/posts.html"))
+		err = tmpl.Execute(w, map[string]interface{}{
+			"Posts":        posts,
+			"CategoryName": categoryID, // Display the category name if needed
 		})
 		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-			http.Error(w, "Error rendering template", http.StatusInternalServerError)
+			log.Printf("Template execution error for category '%s': %v", categoryID, err)
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering posts template.")
 		}
 	}
 }
 
+// ShowPosts displays posts filtered by category.
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query(`
-        SELECT posts.id, posts.title, posts.body, posts.created_at, users.id, 
-               categories.name, COALESCE(like_count, 0) AS like_count, COALESCE(dislike_count, 0) AS dislike_count
-        FROM posts
-        JOIN users ON posts.user_id = users.id
-        JOIN categories ON posts.category_id = categories.id
-        LEFT JOIN (
-            SELECT post_id, 
-                   SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END) AS like_count,
-                   SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END) AS dislike_count
-            FROM likes_dislikes
-            GROUP BY post_id
-        ) ld ON ld.post_id = posts.id
-        ORDER BY posts.created_at DESC
-    `)
+	// Retrieve category ID from the query parameters (e.g., /posts?category=1)
+	categoryID := r.URL.Query().Get("category")
+
+	var rows *sql.Rows
+	var err error
+	var categoryName string
+
+	if categoryID != "" {
+		// Convert the category ID to an integer
+		categoryIDInt, err := strconv.Atoi(categoryID)
+		if err != nil {
+			log.Printf("Invalid category ID: %s", categoryID)
+			http.Error(w, "Invalid Category ID", http.StatusBadRequest)
+			return
+		}
+
+		// Fetch posts for the specific category
+		rows, err = database.DB.Query(`
+			SELECT posts.id, posts.title, posts.body, users.username, categories.name
+			FROM posts
+			JOIN users ON posts.user_id = users.id
+			JOIN categories ON posts.category_id = categories.id
+			WHERE categories.id = ?
+			ORDER BY posts.created_at DESC`, categoryIDInt)
+
+		// Fetch the category name for display
+		err = database.DB.QueryRow("SELECT name FROM categories WHERE id = ?", categoryIDInt).Scan(&categoryName)
+		if err != nil {
+			log.Printf("Error fetching category name: %v", err)
+			http.Error(w, "Category not found", http.StatusNotFound)
+			return
+		}
+	} else {
+		// Fetch all posts if no category is specified
+		rows, err = database.DB.Query(`
+			SELECT posts.id, posts.title, posts.body, users.username, categories.name
+			FROM posts
+			JOIN users ON posts.user_id = users.id
+			JOIN categories ON posts.category_id = categories.id
+			ORDER BY posts.created_at DESC`)
+		categoryName = "All Categories"
+	}
+
 	if err != nil {
-		log.Printf("Error retrieving posts: %v", err)
+		log.Printf("Error fetching posts: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	// Retrieve the posts and populate into the structs.Post slice
+	// Prepare a slice to store the retrieved posts
 	var posts []structs.Post
 	for rows.Next() {
 		var post structs.Post
-		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt, &post.UserID, &post.CategoryName, &post.LikeCount, &post.DislikeCount)
+		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserName, &post.CategoryName)
 		if err != nil {
-			log.Printf("Error scanning post: %v", err)
+			log.Printf("Error scanning post data: %v", err)
 			continue
 		}
 		posts = append(posts, post)
 	}
 
-	// Debug: Check the contents of the posts slice
-	log.Printf("Fetched Posts: %+v", posts)
+	// Check for errors encountered during iteration
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating through posts: %v", err)
+		http.Error(w, "Error processing posts", http.StatusInternalServerError)
+		return
+	}
 
-	// Render posts.html with posts slice
+	// Render the posts template with the filtered posts
 	tmpl := template.Must(template.ParseFiles("views/posts.html"))
-	if err := tmpl.Execute(w, map[string]interface{}{
-		"Posts": posts,
-	}); err != nil {
+	err = tmpl.Execute(w, map[string]interface{}{
+		"Posts":        posts,
+		"CategoryName": categoryName,
+	})
+	if err != nil {
 		log.Printf("Template execution error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func GetUserIDFromSession(r *http.Request) (int, error) {
-	sessionID, err := r.Cookie("session_id")
+	// Retrieve session ID from the cookie
+	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
 		log.Printf("GetUserIDFromSession: No session ID found in cookies: %v", err)
-		return 0, fmt.Errorf("no session ID")
+		return 0, fmt.Errorf("no session ID found")
 	}
 
-	userID, err := GetUserIDFromSessionID(sessionID.Value)
+	// Query the sessions table to get the associated user ID
+	var userID int
+	err = database.DB.QueryRow("SELECT user_id FROM sessions WHERE session_id = ?", sessionCookie.Value).Scan(&userID)
 	if err != nil {
-		log.Printf("GetUserIDFromSession: Invalid session ID %s: %v", sessionID.Value, err)
+		log.Printf("GetUserIDFromSession: Error querying database: %v", err)
 		return 0, fmt.Errorf("invalid session")
 	}
 
+	log.Printf("GetUserIDFromSession: Retrieved user ID %d for session ID %s", userID, sessionCookie.Value)
 	return userID, nil
 }
 
@@ -538,57 +624,118 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func FilterPostsByCategory(w http.ResponseWriter, r *http.Request) {
-	// Get category ID from the URL query parameters
-	categoryID := r.URL.Query().Get("category_id")
+func GetCategoryName(categoryID int) string {
+	var categoryName string
+	query := `SELECT name FROM categories WHERE id = ?`
 
-	// Define the query to get posts for a specific category ID
-	query := `
-        SELECT posts.id, posts.title, posts.body, categories.name
-        FROM posts
-        JOIN categories ON posts.category_id = categories.id
-        WHERE categories.id = ?
-    `
-
-	// Execute the query to retrieve posts based on the specified category
-	rows, err := database.DB.Query(query, categoryID)
+	err := database.DB.QueryRow(query, categoryID).Scan(&categoryName)
 	if err != nil {
-		http.Error(w, "Error fetching posts by category", http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			log.Printf("Category with ID %d not found.", categoryID)
+			return ""
+		}
+		log.Printf("Error retrieving category name for ID %d: %v", categoryID, err)
+		return ""
+	}
+
+	log.Printf("Retrieved category name for ID %d: %s", categoryID, categoryName)
+	return categoryName
+}
+
+// FilterPostsByCategory handles requests to view posts in a specific category.
+func FilterPostsByCategory(w http.ResponseWriter, r *http.Request) {
+	// Retrieve and validate the category ID from the URL query parameter
+	categoryID := r.URL.Query().Get("category")
+	log.Printf("Category ID Received from URL: %s", categoryID)
+
+	categoryIDInt, err := strconv.Atoi(categoryID)
+	if err != nil {
+		log.Printf("Invalid category ID: %s", categoryID)
+		utils.RenderErrorPage(w, http.StatusBadRequest, "Invalid Category ID.")
+		return
+	}
+
+	// Debugging: Log the incoming category ID
+	log.Printf("Received request to filter posts for category ID: %d", categoryIDInt)
+
+	query := `
+    SELECT posts.id, posts.title, posts.body, users.username, posts.created_at, categories.name 
+    FROM posts
+    JOIN users ON posts.user_id = users.id
+    JOIN categories ON posts.category_id = categories.id
+`
+	log.Printf("Executing SQL query: %s with category ID: %d", query, categoryIDInt)
+
+	// Execute the query and fetch results
+	rows, err := database.DB.Query(query, categoryIDInt)
+	if err != nil {
+		log.Printf("Database query error for category '%d': %v", categoryIDInt, err)
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error retrieving posts.")
 		return
 	}
 	defer rows.Close()
 
-	// Prepare a slice to store posts
-	var posts []map[string]interface{}
-	var categoryName string
+	// Prepare a slice to store the retrieved posts
+	var posts []structs.Post
 
-	// Iterate over the results and add them to the posts slice
 	for rows.Next() {
-		var id int
-		var title, body string
+		var post structs.Post
+		var username, categoryName string
 
-		err := rows.Scan(&id, &title, &body, &categoryName)
+		log.Printf("Attempting to scan row for category ID: %d", categoryIDInt)
+
+		err := rows.Scan(&post.ID, &post.Title, &post.Body, &username, &post.CreatedAt, &categoryName)
 		if err != nil {
-			http.Error(w, "Error scanning posts", http.StatusInternalServerError)
-			return
+			log.Printf("Error scanning post data for category '%d': %v", categoryIDInt, err)
+			continue
 		}
 
-		post := map[string]interface{}{
-			"ID":           id,
-			"Title":        title,
-			"Body":         body,
-			"CategoryName": categoryName,
-		}
+		log.Printf("Successfully scanned Post: ID=%d, Title=%s, Body=%s, Username=%s, CategoryName=%s",
+			post.ID, post.Title, post.Body, username, categoryName)
+
+		post.UserName = username
+		post.CategoryName = categoryName
 		posts = append(posts, post)
 	}
 
-	// Render the category-specific posts using a dedicated template (ensure the file exists)
-	tmpl := template.Must(template.ParseFiles("views/category_posts.html"))
-	err = tmpl.Execute(w, map[string]interface{}{
-		"CategoryName": categoryName,
-		"Posts":        posts,
-	})
+	log.Printf("Total Posts for category ID %d: %d", categoryIDInt, len(posts))
+
+	// Check for errors after iteration
+	if err = rows.Err(); err != nil {
+		log.Printf("Error encountered during rows iteration: %v", err)
+	}
+
+	// Debug: Print the retrieved posts and their count
+	log.Printf("Number of Posts Retrieved for Category '%d': %d", categoryIDInt, len(posts))
+	for _, post := range posts {
+		log.Printf("Post: ID=%d, Title=%s, Body=%s, Username=%s, CategoryName=%s",
+			post.ID, post.Title, post.Body, post.UserName, post.CategoryName)
+	}
+	log.Printf("Filtered Posts for category '%d': %+v", categoryIDInt, posts)
+
+	categoryName := GetCategoryName(categoryIDInt)
+	log.Printf("CategoryName fetched: %s", categoryName)
+	if categoryName == "" {
+		categoryName = "Unknown Category"
+	}
+
+	// Debug the category name
+	log.Printf("Category Name Retrieved: %s", categoryName)
+
+	// Create the template data
+	tmplData := structs.TemplateData{
+		Posts:        posts,
+		CategoryName: categoryName,
+	}
+
+	// Debug: Log the complete template data
+	log.Printf("Template Data Prepared: %+v", tmplData)
+
+	// Render the template with the filtered posts
+	tmpl := template.Must(template.ParseFiles("views/posts.html"))
+	err = tmpl.Execute(w, tmplData)
 	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		log.Printf("Template execution error for category '%d': %v", categoryIDInt, err)
+		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering posts template.")
 	}
 }

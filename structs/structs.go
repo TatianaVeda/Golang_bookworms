@@ -8,9 +8,10 @@ type Post struct {
 	ID           int
 	Title        string
 	Body         string
-	CreatedAt    string
+	CreatedAt    time.Time
 	Categories   []Category
 	UserID       int
+	UserName     string
 	LikeCount    int
 	DislikeCount int
 	CategoryName string
@@ -53,6 +54,10 @@ type SessionData struct {
 }
 
 type TemplateData struct {
-	Categories []Category
-	Title      string
+	Categories   []Category
+	Title        string
+	Posts        []Post // Slice to store the list of posts
+	CategoryName string // Store the name of the category being viewed
+	LoggedUser   string
+	IsLoggedIn   bool
 }
