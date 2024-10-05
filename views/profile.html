@@ -7,55 +7,66 @@
     <link rel="stylesheet" href="static/profile.css">
 </head>
 <body>
-<div class="tab-container">
 
-    <!-- Radio Buttons to switch between tabs -->
-    <input type="radio" id="posts-tab" name="tab-control" checked>
-    <input type="radio" id="liked-posts-tab" name="tab-control">
-    <input type="radio" id="liked-comments-tab" name="tab-control">
-    <input type="radio" id="comments-tab" name="tab-control">
+    <div class="profile-container">
+        <div class="profile-picture">
+            <img src="static/images/babylion.jpg" alt="User Profile Picture">
+        </div>
+        <div class="profile-info">
+            <h2 class="profile-name">{{.ProfileData.Username}}</h2>
+            <p class="profile-username">@{{.ProfileData.Username}}</p>
+        </div>
+    </div>  
 
-    <ul class="tab-labels">
-        <li><label for="posts-tab">Posts</label></li>
-        <li><label for="liked-posts-tab">Liked Posts</label></li>
-        <li><label for="liked-comments-tab">Liked Comments</label></li>
-        <li><label for="comments-tab">Comments</label></li>
-    </ul>
+    <div class="tab-container">
 
-    <!-- Content for each tab -->
-    <div class="tab-content">
-        <section id="posts-content">
-        <h2>Your Posts</h2>
-        <ul>
-            {{range .ProfileData.Posts}}
-            <li>{{.Title}} - {{.CreatedAt}}</li> <!-- Fixed Timestamp -->
-            {{end}}
-        </ul></section>
+        <!-- Radio Buttons to switch between tabs -->
+        <input type="radio" id="posts-tab" name="tab-control" checked>
+        <input type="radio" id="liked-posts-tab" name="tab-control">
+        <input type="radio" id="liked-comments-tab" name="tab-control">
+        <input type="radio" id="comments-tab" name="tab-control">
 
-        <section id="liked-posts-content">
-        <h2>Your Liked Posts</h2>
-        <ul>
-            {{range .ProfileData.LikedPosts}}
-            <li>{{.Title}}</li> <!-- Removed Poster if not available -->
-            {{end}}
-        </ul></section>
-        
-        <section id="comments-content">
-        <h2>Your Comments</h2>
-        <ul>
-            {{range .ProfileData.Comments}}
-            <li>{{.Body}}</li> <!-- Fixed .Comment to .Body -->
-            {{end}}
-        </ul></section>
+        <ul class="tab-labels">
+            <li><label for="posts-tab">My posts</label></li>
+            <li><label for="liked-posts-tab">Liked posts</label></li>
+            <li><label for="liked-comments-tab">Liked comments</label></li>
+            <li><label for="comments-tab">My comments</label></li>
+        </ul>
 
-        <section id="liked-comments-content">
-        <h2>Your Liked Comments</h2>
-        <ul>
-            {{range .ProfileData.LikedComments}}
-            <li>{{.Body}}</li> <!-- Fixed .Comment to .Body -->
-            {{end}}
-        </ul></section>
+        <!-- Content for each tab -->
+        <div class="tab-content">
+            <section id="posts-content">
+            <h2>Your Posts</h2>
+            <ul>
+                {{range .ProfileData.Posts}}
+                <li>{{.Title}} - {{.CreatedAt}}</li> <!-- Fixed Timestamp -->
+                {{end}}
+            </ul></section>
+
+            <section id="liked-posts-content">
+            <h2>Your Liked Posts</h2>
+            <ul>
+                {{range .ProfileData.LikedPosts}}
+                <li>{{.Title}}</li> <!-- Removed Poster if not available -->
+                {{end}}
+            </ul></section>
+            
+            <section id="comments-content">
+            <h2>Your Comments</h2>
+            <ul>
+                {{range .ProfileData.Comments}}
+                <li>{{.Body}}</li> <!-- Fixed .Comment to .Body -->
+                {{end}}
+            </ul></section>
+
+            <section id="liked-comments-content">
+            <h2>Your Liked Comments</h2>
+            <ul>
+                {{range .ProfileData.LikedComments}}
+                <li>{{.Body}}</li> <!-- Fixed .Comment to .Body -->
+                {{end}}
+            </ul></section>
+        </div>
     </div>
-</div>
 </body>
 </html>
