@@ -308,15 +308,11 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			profileData.LikedPosts = likedPostsConverted
 
 			// Fetch liked comments
-			fmt.Println("Fetching liked posts and comments for user ID:", userID)
 			likedComments, err := database.FetchLikedComments(userID)
 			if err != nil {
-				fmt.Println("Error fetching liked comments:", err) // Add this line for debugging
 				http.Error(w, "Error fetching liked comments", http.StatusInternalServerError)
 				return
 			}
-
-			fmt.Println("Fetched liked comments:", likedComments) // Add this to see if comments are fetched
 
 			// Convert []map[string]interface{} to []structs.Comment
 			var likedCommentsConverted []structs.Comment
@@ -328,7 +324,6 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 				}
 				likedCommentsConverted = append(likedCommentsConverted, comment)
 			}
-			fmt.Println("Gaga:", len(likedCommentsConverted))
 			profileData.LikedComments = likedCommentsConverted
 		}
 

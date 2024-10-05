@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"literary-lions/structs"
 	"log"
 )
@@ -134,7 +133,6 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 		return nil, err
 	}
 
-	fmt.Printf("Fetched liked comments: %+v\n", comments)
 	return comments, nil
 }
 
