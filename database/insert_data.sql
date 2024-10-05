@@ -26,7 +26,7 @@ VALUES
 -- Insert data into posts table
 INSERT INTO posts (id, title, body, user_id, category_id) 
 VALUES 
-    (1, 'First Post on Technology', 'This is a post about technology.', 2, 1),
+    (1, 'First Post on Technology', 'This is a post about technology.', 1, 1),
     (2, 'Exploring Literature', 'A post discussing modern literature.', 1, 2),
     (3, 'The Beauty of Classical Music', 'This post is all about classical music.', 2, 3);
 

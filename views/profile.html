@@ -23,14 +23,14 @@
         <!-- Radio Buttons to switch between tabs -->
         <input type="radio" id="posts-tab" name="tab-control" checked>
         <input type="radio" id="liked-posts-tab" name="tab-control">
-        <input type="radio" id="liked-comments-tab" name="tab-control">
         <input type="radio" id="comments-tab" name="tab-control">
+        <input type="radio" id="liked-comments-tab" name="tab-control">
 
         <ul class="tab-labels">
             <li><label for="posts-tab">My posts</label></li>
             <li><label for="liked-posts-tab">Liked posts</label></li>
-            <li><label for="liked-comments-tab">Liked comments</label></li>
             <li><label for="comments-tab">My comments</label></li>
+            <li><label for="liked-comments-tab">Liked comments</label></li>
         </ul>
 
         <!-- Content for each tab -->
@@ -39,7 +39,11 @@
             <h2>Your Posts</h2>
             <ul>
                 {{range .ProfileData.Posts}}
-                <li>{{.Title}} - {{.CreatedAt}}</li> <!-- Fixed Timestamp -->
+                <li>
+                    <h3>{{.Title}}</h3>
+                    <p>{{.Body}}</p>
+                    {{.CreatedAt}} {{.Poster}}
+                </li> 
                 {{end}}
             </ul></section>
 
