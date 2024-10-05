@@ -271,6 +271,14 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			return
 		}
 
+		// Fetch user posts
+		userPosts, err := database.FetchUserPosts(userID)
+		if err != nil {
+			http.Error(w, "Error fetching user posts", http.StatusInternalServerError)
+			return
+		}
+		profileData.Posts = userPosts
+
 		// Fetch user comments
 		comments, err := database.FetchUserComments(profileUserID)
 		if err != nil {
