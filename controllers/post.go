@@ -11,10 +11,18 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
-// PostsHandler displays posts for a specific category based on the 'category' query parameter.
-func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
+type Post struct {
+	ID        int
+	Title     string
+	Body      string // Change Content to Body
+	UserID    int
+	CreatedAt time.Time
+}
+
+func PostsHandler(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the category ID from the URL query parameter
 		categoryID := r.URL.Query().Get("category")

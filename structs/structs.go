@@ -23,7 +23,7 @@ type Comment struct {
 	ID        int
 	Body      string
 	PostID    int
-	CreatedAt string
+	CreatedAt time.Time
 	Poster    string
 	Title     string
 }

@@ -40,9 +40,9 @@
             <ul>
                 {{range .ProfileData.Posts}}
                 <li>
-                    <h3>{{.Title}}</h3>
+                    <h2>{{.Title}}</h2>
                     <p>{{.Body}}</p>
-                    {{.CreatedAt}} {{.Poster}}
+                    <p>{{.CreatedAt}} by {{.Poster}}</p>
                 </li> 
                 {{end}}
             </ul></section>
@@ -50,9 +50,11 @@
             <section id="liked-posts-content">
             <h2>Your Liked Posts</h2>
             <ul>
-                {{range .ProfileData.LikedPosts}}
-                <li>{{.Title}}</li> <!-- Removed Poster if not available -->
-                {{end}}
+                <li>
+                    <h2>{{.Title}}</h2>
+                    <p>{{.Body}}</p>
+                    <p>{{.CreatedAt}} by {{.Poster}}</p>
+                </li> 
             </ul></section>
             
             <section id="comments-content">
