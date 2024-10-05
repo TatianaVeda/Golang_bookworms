@@ -1,0 +1,49 @@
+/* General layout */
+.tab-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.tab-labels {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    justify-content: space-around;
+    border-bottom: 2px solid #ccc;
+}
+
+.tab-labels li label {
+    padding: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.tab-labels li label:hover {
+    color: #007bff;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+/* Tabs selected state */
+input:checked + label {
+    border-bottom: 2px solid #007bff;
+    font-weight: bold;
+}
+
+/* Content sections */
+.tab-content section {
+    display: none;
+    padding: 20px;
+}
+
+/* When a tab is selected, display the related content */
+#posts-tab:checked ~ .tab-content #posts-content,
+#liked-posts-tab:checked ~ .tab-content #liked-posts-content,
+#liked-comments-tab:checked ~ .tab-content #liked-comments-content,
+#comments-tab:checked ~ .tab-content #comments-content {
+    display: block;
+}
