@@ -5,17 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Posts in {{.CategoryName}}</title>
     <link rel="stylesheet" href="static/home.css">
+    <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
     <div class="container">
         <div class="posts-section">
             <h1>All Posts in Category: {{.CategoryName}}</h1>
+            
+            <!-- Debug output to check IsLoggedIn value -->
+            <p>Debug - IsLoggedIn value: {{.IsLoggedIn}}</p>
+
+            <!-- Create New Post link should only be visible if logged in -->
             {{if .IsLoggedIn}}
                 <a href="/posts/create">Create New Post🖋️</a>
             {{else}}
                 <p>Log in to create new posts or interact with posts!</p>
             {{end}}
 
+            <!-- Render posts only if available -->
             {{if .Posts}}
                 {{range .Posts}}
                 <div class="post">
@@ -23,10 +30,10 @@
                     <p>{{.Body}}</p>
                     <p>Posted by: {{.UserName}}</p>
                     <p>Category: {{.CategoryName}}</p>
-                    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
 
-                    <!-- Conditionally display like and dislike buttons based on login status -->
+                    <!-- Remove like/dislike counts and buttons completely when not logged in -->
                     {{if $.IsLoggedIn}}
+                        <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
                         <form action="/posts/like" method="POST" style="display:inline;">
                             <input type="hidden" name="post_id" value="{{.ID}}">
                             <button type="submit">Like🤩</button>
@@ -36,10 +43,8 @@
                             <input type="hidden" name="post_id" value="{{.ID}}">
                             <button type="submit">Dislike👿</button>
                         </form>
-                    {{else}}
-                        <p class="disabled-message">Log in to like or dislike posts.</p>
                     {{end}}
-
+                    <!-- If not logged in, don't show like/dislike buttons or counts at all -->
                     <hr>
                 </div>
                 {{end}}

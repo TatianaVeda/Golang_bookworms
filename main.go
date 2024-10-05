@@ -104,6 +104,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *template.Template) {
+
 	log.Printf("Received request with method: %s", r.Method)
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)

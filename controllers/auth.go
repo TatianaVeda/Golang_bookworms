@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"literary-lions/database"
-	"literary-lions/structs"
 	"literary-lions/utils"
 
 	"github.com/google/uuid"
@@ -212,23 +211,19 @@ func CheckPasswordHash(password, hashedPassword string) error {
 }
 
 func CreateSession(userID int) (string, error) {
+	// Generate a new session ID using UUID
 	sessionID := uuid.New().String()
-
-	// Set session expiration time (e.g., 24 hours from creation)
 	expirationTime := time.Now().Add(24 * time.Hour)
 
-	// Create session data
-	sessionData := structs.SessionData{
-		UserID:    userID,
-		ExpiresAt: expirationTime,
+	// Insert the session into the sessions table in the database
+	_, err := database.DB.Exec("INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)",
+		sessionID, userID, expirationTime)
+	if err != nil {
+		log.Printf("CreateSession: Error inserting session into database: %v", err)
+		return "", err
 	}
 
-	// Store session in the session store
-	SessionMutex.Lock()
-	SessionStore[sessionID] = sessionData.UserID // Update session management here
-	SessionMutex.Unlock()
-
-	log.Printf("CreateSession: Session created for user ID %d with session ID %s", userID, sessionID)
+	log.Printf("CreateSession: Session created successfully for user ID %d with session ID %s", userID, sessionID)
 	return sessionID, nil
 }
 

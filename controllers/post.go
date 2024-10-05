@@ -95,10 +95,13 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	isLoggedIn := false
 
 	// Check if user is logged in by verifying the session cookie
-	_, err = r.Cookie("session_id")
+	_, err = r.Cookie("session_id") // Check if session cookie exists to determine login status
 	if err == nil {
-		isLoggedIn = true // User is logged in
+		isLoggedIn = true // Set `isLoggedIn` to true if the session cookie exists
 	}
+
+	// Debugging: Print IsLoggedIn value in server logs
+	log.Printf("IsLoggedIn value in handler: %v", isLoggedIn)
 
 	if categoryID != "" {
 		categoryIDInt, err := strconv.Atoi(categoryID)
@@ -164,7 +167,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	err = tmpl.Execute(w, map[string]interface{}{
 		"Posts":        posts,
 		"CategoryName": categoryName,
-		"IsLoggedIn":   isLoggedIn,
+		"IsLoggedIn":   isLoggedIn, // Pass login status to the template
 	})
 	if err != nil {
 		log.Printf("Template execution error: %v", err)
