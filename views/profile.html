@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Profile</title>
-</head>
-<body>
-  <h2>Your Posts</h2>
+{{define "title"}}Profile - Literary Lions Forum{{end}}
+{{define "content"}}
+<h2>Your Posts</h2>
 <ul>
     {{range .ProfileData.Posts}}
     <li>{{.Title}} - {{.Timestamp}}</li>
@@ -26,12 +20,4 @@
     <li>{{.Comment}} on {{.Title}} by {{.Poster}}</li>
     {{end}}
 </ul>
-
-<h2>Your Liked Comments</h2>
-<ul>
-    {{range .ProfileData.LikedComments}}
-    <li>{{.Comment}} on {{.Title}} by {{.Poster}}</li>
-    {{end}}
-</ul>
-</body>
-</html>
+{{end}}
