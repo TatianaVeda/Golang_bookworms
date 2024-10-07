@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"literary-lions/database"
-	"literary-lions/structs"
 	"literary-lions/utils"
 
 	"github.com/google/uuid"
@@ -88,6 +87,7 @@ func GetCSRFCookie(r *http.Request) (string, error) {
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
+			log.Println("RegisterUser: Unable to parse form data") // Additional logging
 			renderModalWithError(w, r, "Unable to parse form data", true)
 			return
 		}
@@ -96,6 +96,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
+			log.Println("RegisterUser: CSRF token validation failed") // Detailed error logging
 			renderModalWithError(w, r, "Invalid CSRF token", true)
 			return
 		}
@@ -105,53 +106,68 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		// Validation checks
+		// Validate email and password
 		if !isValidEmail(email) {
+			log.Println("RegisterUser: Invalid email format")
 			renderModalWithError(w, r, "Invalid email format", true)
 			return
 		}
 		if len(password) < 8 {
+			log.Println("RegisterUser: Password too short")
 			renderModalWithError(w, r, "Password must be at least 8 characters long", true)
 			return
 		}
 
+		// Hash password
 		hashedPassword, err := HashPassword(password)
 		if err != nil {
+			log.Printf("RegisterUser: Error hashing password: %v", err)
 			renderModalWithError(w, r, "Error hashing password", true)
 			return
 		}
 
+		// Insert user into the database
+		log.Printf("RegisterUser: Inserting user - Email: %s, Username: %s", email, username)
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
+			log.Printf("RegisterUser: Database insertion error: %v", err)
 			if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.Code == sqlite3.ErrConstraint {
 				renderModalWithError(w, r, "The email or username already exists. Please try again.", true)
 				return
 			}
-
 			renderModalWithError(w, r, "Error registering user", true)
 			return
 		}
 
-		// Set session cookie and redirect to home page
+		// Retrieve the newly inserted user ID
 		var userID sql.NullInt64
 		err = database.DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&userID)
 		if err != nil {
+			log.Printf("RegisterUser: Error retrieving user ID after registration: %v", err)
 			renderModalWithError(w, r, "Error retrieving user after registration.", true)
 			return
 		}
 
+		// Create a new session for the user
 		sessionID, err := CreateSession(int(userID.Int64)) // Convert to int
 		if err != nil {
+			log.Printf("RegisterUser: Error creating session: %v", err)
 			renderModalWithError(w, r, "Error creating session.", true)
 			return
 		}
 
+		// Set the session cookie
+		log.Printf("RegisterUser: Setting session cookie for user ID %d", userID.Int64)
 		http.SetCookie(w, &http.Cookie{
-			Name:  "session_id",
-			Value: sessionID,
-			Path:  "/",
+			Name:     "session_id",
+			Value:    sessionID,
+			Path:     "/",
+			HttpOnly: true,
 		})
-		http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to the home page
+
+		// Redirect to the home page after successful registration
+		log.Printf("RegisterUser: Successfully registered and logged in user ID %d", userID.Int64)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
@@ -213,19 +229,19 @@ func CheckPasswordHash(password, hashedPassword string) error {
 
 func CreateSession(userID int) (string, error) {
 	sessionID := uuid.New().String()
-
-	// Set session expiration time (e.g., 24 hours from creation)
 	expirationTime := time.Now().Add(24 * time.Hour)
 
-	// Create session data
-	sessionData := structs.SessionData{
-		UserID:    userID,
-		ExpiresAt: expirationTime,
+	// Insert the session into the database
+	log.Printf("CreateSession: Inserting session for user ID %d with session ID %s", userID, sessionID)
+	_, err := database.DB.Exec("INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)", sessionID, userID, expirationTime)
+	if err != nil {
+		log.Printf("CreateSession: Error inserting session into database: %v", err)
+		return "", err
 	}
 
-	// Store session in the session store
+	// Store the session in the in-memory session store
 	SessionMutex.Lock()
-	SessionStore[sessionID] = sessionData.UserID // Update session management here
+	SessionStore[sessionID] = userID
 	SessionMutex.Unlock()
 
 	log.Printf("CreateSession: Session created for user ID %d with session ID %s", userID, sessionID)
