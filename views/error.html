@@ -1,7 +1,16 @@
-{{define "title"}}Error - Literary Lions Forum{{end}}
-{{define "content"}}
-<h1>Oops! Something went wrong. (Error {{.StatusCode}})</h1>
-<p>{{if eq .StatusCode 404}}The page you are looking for doesn't exist.{{else if eq .StatusCode 500}}There was a server error.{{else}}An unexpected error occurred.{{end}}</p>
-<p>{{.Message}}</p>
-<a href="/">Go Back to Home</a> or <a href="/contact">Contact Support</a> if the issue persists.
-{{end}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error {{.StatusCode}}</title>
+</head>
+<body>
+    <h1>Oops! Something went wrong. (Error {{.StatusCode}})</h1>
+    <p>{{if eq .StatusCode 404}}The page you are looking for doesn't exist.{{else if eq .StatusCode 500}}There was a server error.{{else}}An unexpected error occurred.{{end}}</p>
+    <p>{{.Message}}</p>
+    
+    <!-- Helpful action -->
+    <a href="/">Go Back to Home</a> or <a href="/contact">Contact Support</a> if the issue persists.
+</body>
+</html>
