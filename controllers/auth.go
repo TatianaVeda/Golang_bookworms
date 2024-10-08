@@ -343,21 +343,26 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the session cookie and clear it
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		utils.HandleError(w, http.StatusBadRequest, "Session not found or already expired.")
+		http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home if cookie is not found
 		return
 	}
 
+	// Lock and delete the session from the in-memory store
 	SessionMutex.Lock()
 	delete(SessionStore, cookie.Value)
 	SessionMutex.Unlock()
 
+	// Set the cookie to expire immediately
 	http.SetCookie(w, &http.Cookie{
 		Name:   "session_id",
 		Value:  "",
-		MaxAge: -1,
 		Path:   "/",
+		MaxAge: -1, // Expire immediately
 	})
+
+	// Redirect to the homepage or login page after logout
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

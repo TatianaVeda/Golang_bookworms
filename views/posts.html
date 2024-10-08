@@ -4,17 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Posts in {{.CategoryName}}</title>
-    <link rel="stylesheet" href="static/home.css">
+    <link rel="stylesheet" href="/static/home.css">
     <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
-
 </head>
 <body>
     <div class="container">
         <div class="posts-section">
             <h1>All Posts in Category: {{.CategoryName}}</h1>
-            
-            <!-- Debug output to check IsLoggedIn value -->
-            <p>Debug - IsLoggedIn value: {{.IsLoggedIn}}</p>
 
             <!-- Create New Post link should only be visible if logged in -->
             {{if .IsLoggedIn}}
@@ -32,7 +28,7 @@
                     <p>Posted by: {{.UserName}}</p>
                     <p>Category: {{.CategoryName}}</p>
 
-                    <!-- Remove like/dislike counts and buttons completely when not logged in -->
+                    <!-- Show likes/dislikes only if logged in -->
                     {{if $.IsLoggedIn}}
                         <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
                         <form action="/posts/like" method="POST" style="display:inline;">
@@ -44,8 +40,9 @@
                             <input type="hidden" name="post_id" value="{{.ID}}">
                             <button type="submit">Dislike👿</button>
                         </form>
+                    {{else}}
+                        <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
                     {{end}}
-                    <!-- If not logged in, don't show like/dislike buttons or counts at all -->
                     <hr>
                 </div>
                 {{end}}

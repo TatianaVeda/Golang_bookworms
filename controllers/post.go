@@ -94,14 +94,13 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	var categoryName string
 	isLoggedIn := false
 
-	// Check if user is logged in by verifying the session cookie
+	// Check if the user is logged in by verifying the session cookie
 	_, err = r.Cookie("session_id") // Check if session cookie exists to determine login status
 	if err == nil {
 		isLoggedIn = true // Set `isLoggedIn` to true if the session cookie exists
 	}
 
-	// Debugging: Print IsLoggedIn value in server logs
-	log.Printf("IsLoggedIn value in handler: %v", isLoggedIn)
+	log.Printf("ShowPosts: IsLoggedIn = %v, CategoryID = %s", isLoggedIn, categoryID)
 
 	if categoryID != "" {
 		categoryIDInt, err := strconv.Atoi(categoryID)
@@ -113,14 +112,14 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 
 		// Query posts for a specific category
 		rows, err = database.DB.Query(`
-			SELECT posts.id, posts.title, posts.body, users.username, categories.name
-			FROM posts
-			JOIN users ON posts.user_id = users.id
-			JOIN categories ON posts.category_id = categories.id
-			WHERE categories.id = ?
-			ORDER BY posts.created_at DESC`, categoryIDInt)
+            SELECT posts.id, posts.title, posts.body, users.username, categories.name
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            JOIN categories ON posts.category_id = categories.id
+            WHERE categories.id = ?
+            ORDER BY posts.created_at DESC`, categoryIDInt)
 
-		// Get the category name for the display
+		// Get the category name for display
 		err = database.DB.QueryRow("SELECT name FROM categories WHERE id = ?", categoryIDInt).Scan(&categoryName)
 		if err != nil {
 			log.Printf("Error fetching category name: %v", err)
@@ -128,17 +127,18 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
+		// Retrieve all posts if no category is specified
 		rows, err = database.DB.Query(`
-			SELECT posts.id, posts.title, posts.body, users.username, categories.name
-			FROM posts
-			JOIN users ON posts.user_id = users.id
-			JOIN categories ON posts.category_id = categories.id
-			ORDER BY posts.created_at DESC`)
+            SELECT posts.id, posts.title, posts.body, users.username, categories.name
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            JOIN categories ON posts.category_id = categories.id
+            ORDER BY posts.created_at DESC`)
 		categoryName = "All Categories"
 	}
 
 	if err != nil {
-		log.Printf("Error fetching posts: %v", err)
+		log.Printf("ShowPosts: Error fetching posts: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -150,17 +150,21 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 		var post structs.Post
 		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserName, &post.CategoryName)
 		if err != nil {
-			log.Printf("Error scanning post data: %v", err)
+			log.Printf("ShowPosts: Error scanning post data: %v", err)
 			continue
 		}
 		posts = append(posts, post)
 	}
 
 	if err = rows.Err(); err != nil {
-		log.Printf("Error iterating through posts: %v", err)
+		log.Printf("ShowPosts: Error iterating through posts: %v", err)
 		http.Error(w, "Error processing posts", http.StatusInternalServerError)
 		return
 	}
+
+	// Debug log for final output
+	log.Printf("ShowPosts: Retrieved posts = %v", posts)
+	log.Printf("ShowPosts: Final isLoggedIn value being passed to template = %v", isLoggedIn)
 
 	// Pass the data, including login status, to the template
 	tmpl := template.Must(template.ParseFiles("views/posts.html"))
@@ -170,7 +174,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 		"IsLoggedIn":   isLoggedIn, // Pass login status to the template
 	})
 	if err != nil {
-		log.Printf("Template execution error: %v", err)
+		log.Printf("ShowPosts: Template execution error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
