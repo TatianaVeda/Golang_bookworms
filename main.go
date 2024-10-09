@@ -35,7 +35,7 @@ var templates *template.Template
 
 func init() {
 	// Ensure all templates are parsed together
-	templates = template.Must(template.ParseFiles("views/home.html", "views/posts.html", "views/create_post.html", "views/error.html"))
+	templates = template.Must(template.ParseFiles("views/home.html", "views/posts.html", "views/create_post.html", "views/error.html", "views/myposts.html"))
 }
 
 func main() {

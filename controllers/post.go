@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"literary-lions/database"
@@ -88,20 +89,29 @@ func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 }
 
 func ShowPosts(w http.ResponseWriter, r *http.Request) {
+	log.Printf("ShowPosts: Request Path = %s, Method = %s", r.URL.Path, r.Method)
+	log.Printf("ShowPosts: Headers = %v", r.Header)
+
 	categoryID := r.URL.Query().Get("category")
 	var rows *sql.Rows
 	var err error
 	var categoryName string
 	isLoggedIn := false
 
-	// Check if the user is logged in by verifying the session cookie
-	_, err = r.Cookie("session_id") // Check if session cookie exists to determine login status
-	if err == nil {
-		isLoggedIn = true // Set `isLoggedIn` to true if the session cookie exists
+	// Use a separate variable to handle session-related errors
+	sessErr := r.ParseForm()
+	sessionCookie, sessErr := r.Cookie("session_id")
+	if sessErr == nil {
+		isLoggedIn = true
+		log.Printf("ShowPosts: Session cookie found: %v", sessionCookie)
+	} else {
+		log.Printf("ShowPosts: Session cookie not found or invalid: %v", sessErr)
+		isLoggedIn = false // Explicitly mark as not logged in
 	}
 
 	log.Printf("ShowPosts: IsLoggedIn = %v, CategoryID = %s", isLoggedIn, categoryID)
 
+	// Handle category-based filtering
 	if categoryID != "" {
 		categoryIDInt, err := strconv.Atoi(categoryID)
 		if err != nil {
@@ -110,41 +120,51 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Query posts for a specific category
+		// Query to fetch posts for a specific category
 		rows, err = database.DB.Query(`
-            SELECT posts.id, posts.title, posts.body, users.username, categories.name
-            FROM posts
-            JOIN users ON posts.user_id = users.id
-            JOIN categories ON posts.category_id = categories.id
-            WHERE categories.id = ?
-            ORDER BY posts.created_at DESC`, categoryIDInt)
+			SELECT posts.id, posts.title, posts.body, users.username, categories.name
+			FROM posts
+			JOIN users ON posts.user_id = users.id
+			JOIN categories ON posts.category_id = categories.id
+			WHERE categories.id = ?
+			ORDER BY posts.created_at DESC`, categoryIDInt)
 
-		// Get the category name for display
-		err = database.DB.QueryRow("SELECT name FROM categories WHERE id = ?", categoryIDInt).Scan(&categoryName)
 		if err != nil {
-			log.Printf("Error fetching category name: %v", err)
+			log.Printf("ShowPosts: Error fetching posts for category %d: %v", categoryIDInt, err)
+			http.Error(w, "Error fetching posts for the specified category", http.StatusInternalServerError)
+			return
+		}
+
+		// Fetch the category name for display purposes
+		err = database.DB.QueryRow("SELECT name FROM categories WHERE id = ?", categoryIDInt).Scan(&categoryName)
+		if err == sql.ErrNoRows {
+			log.Printf("ShowPosts: Category with ID %d not found", categoryIDInt)
 			http.Error(w, "Category not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.Printf("ShowPosts: Error fetching category name: %v", err)
+			http.Error(w, "Error fetching category name", http.StatusInternalServerError)
 			return
 		}
 	} else {
-		// Retrieve all posts if no category is specified
+		// If no category ID is provided, show all posts
 		rows, err = database.DB.Query(`
-            SELECT posts.id, posts.title, posts.body, users.username, categories.name
-            FROM posts
-            JOIN users ON posts.user_id = users.id
-            JOIN categories ON posts.category_id = categories.id
-            ORDER BY posts.created_at DESC`)
+			SELECT posts.id, posts.title, posts.body, users.username, categories.name
+			FROM posts
+			JOIN users ON posts.user_id = users.id
+			JOIN categories ON posts.category_id = categories.id
+			ORDER BY posts.created_at DESC`)
 		categoryName = "All Categories"
 	}
 
 	if err != nil {
-		log.Printf("ShowPosts: Error fetching posts: %v", err)
+		log.Printf("ShowPosts: Error executing query: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	// Prepare a slice to store the retrieved posts
+	// Read posts into the slice
 	var posts []structs.Post
 	for rows.Next() {
 		var post structs.Post
@@ -157,21 +177,19 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = rows.Err(); err != nil {
-		log.Printf("ShowPosts: Error iterating through posts: %v", err)
+		log.Printf("ShowPosts: Error during row iteration: %v", err)
 		http.Error(w, "Error processing posts", http.StatusInternalServerError)
 		return
 	}
 
-	// Debug log for final output
-	log.Printf("ShowPosts: Retrieved posts = %v", posts)
-	log.Printf("ShowPosts: Final isLoggedIn value being passed to template = %v", isLoggedIn)
+	log.Printf("Retrieved Posts: %+v", posts)
 
-	// Pass the data, including login status, to the template
+	// Pass the data to the template
 	tmpl := template.Must(template.ParseFiles("views/posts.html"))
 	err = tmpl.Execute(w, map[string]interface{}{
 		"Posts":        posts,
 		"CategoryName": categoryName,
-		"IsLoggedIn":   isLoggedIn, // Pass login status to the template
+		"IsLoggedIn":   isLoggedIn,
 	})
 	if err != nil {
 		log.Printf("ShowPosts: Template execution error: %v", err)
@@ -360,63 +378,70 @@ func RequireSession(next http.Handler) http.Handler {
 }
 
 func LikePostHandler(w http.ResponseWriter, r *http.Request) {
-	// Get the session user ID instead of username
-	userID, err := GetSession(r) // Get the `userID` directly
-	if err != nil {
-		http.Error(w, "Unauthorized. Please log in.", http.StatusUnauthorized)
-		return
-	}
-
-	postID := r.FormValue("post_id")
-
-	// Check if the user has already liked or disliked the post
-	var likeType int
-	err = database.DB.QueryRow("SELECT like_type FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID).Scan(&likeType)
-
-	if err == sql.ErrNoRows {
-		// No existing like/dislike, insert a new like
-		_, err = database.DB.Exec("INSERT INTO likes_dislikes (post_id, user_id, like_type) VALUES (?, ?, 1)", postID, userID)
-		if err != nil {
-			http.Error(w, "Error liking post", http.StatusInternalServerError)
-			return
-		}
-	} else if likeType == -1 {
-		// If disliked, change it to a like
-		_, err = database.DB.Exec("UPDATE likes_dislikes SET like_type = 1 WHERE post_id = ? AND user_id = ?", postID, userID)
-		if err != nil {
-			http.Error(w, "Error updating like", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// Redirect back to the posts page
-	http.Redirect(w, r, "/posts", http.StatusSeeOther)
-}
-
-func DislikePostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		userID, err := GetUserIDFromSession(r)
+		userID, err := GetSession(r)
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
-		r.ParseForm()
 		postID := r.FormValue("post_id")
-
-		var count int
-		err = database.DB.QueryRow("SELECT COUNT(*) FROM likes_dislikes WHERE post_id = ? AND user_id = ? AND like_type = -1", postID, userID).Scan(&count)
-		if err != nil {
-			utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		if postID == "" {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
 			return
 		}
 
-		if count == 0 {
-			_, err = database.DB.Exec("INSERT INTO likes_dislikes (user_id, post_id, like_type) VALUES (?, ?, -1)", userID, postID)
-			if err != nil {
-				utils.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-				return
-			}
+		// Check if the user already liked/disliked the post
+		var existingLikeType int
+		err = database.DB.QueryRow("SELECT like_type FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID).Scan(&existingLikeType)
+		if err == sql.ErrNoRows {
+			// No existing like/dislike, insert a new like
+			_, err = database.DB.Exec("INSERT INTO likes_dislikes (post_id, user_id, like_type) VALUES (?, ?, 1)", postID, userID)
+		} else if existingLikeType == -1 {
+			// Previously disliked, change to like
+			_, err = database.DB.Exec("UPDATE likes_dislikes SET like_type = 1 WHERE post_id = ? AND user_id = ?", postID, userID)
+		} else if existingLikeType == 1 {
+			// Already liked, remove like
+			_, err = database.DB.Exec("DELETE FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID)
+		}
+
+		if err != nil {
+			http.Error(w, "Error processing like action", http.StatusInternalServerError)
+			return
+		}
+
+		// Redirect to the posts page after processing the like
+		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+	}
+}
+
+func DislikePostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		userID, err := GetSession(r)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		postID := r.FormValue("post_id")
+		if postID == "" {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+
+		var existingLikeType int
+		err = database.DB.QueryRow("SELECT like_type FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID).Scan(&existingLikeType)
+		if err == sql.ErrNoRows {
+			_, err = database.DB.Exec("INSERT INTO likes_dislikes (post_id, user_id, like_type) VALUES (?, ?, -1)", postID, userID)
+		} else if existingLikeType == 1 {
+			_, err = database.DB.Exec("UPDATE likes_dislikes SET like_type = -1 WHERE post_id = ? AND user_id = ?", postID, userID)
+		} else if existingLikeType == -1 {
+			_, err = database.DB.Exec("DELETE FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID)
+		}
+
+		if err != nil {
+			http.Error(w, "Error processing dislike action", http.StatusInternalServerError)
+			return
 		}
 
 		http.Redirect(w, r, "/posts", http.StatusSeeOther)
@@ -746,5 +771,84 @@ func FilterPostsByCategory(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Template execution error for category '%d': %v", categoryIDInt, err)
 		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering posts template.")
+	}
+}
+
+// UpdateLikeDislikeHandler handles like/dislike updates via AJAX requests.
+func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Only handle POST requests
+		if r.Method != http.MethodPost {
+			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Retrieve the session user ID instead of username
+		userID, err := GetSession(r) // Use `GetSession` to get the user ID
+		if err != nil {
+			http.Error(w, "Unauthorized. Please log in.", http.StatusUnauthorized)
+			return
+		}
+
+		// Parse the form values
+		postIDStr := r.FormValue("post_id")
+		likeTypeStr := r.FormValue("like_type") // like_type: 1 for like, -1 for dislike
+
+		// Convert post ID and like type to integers
+		postID, err := strconv.Atoi(postIDStr)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+		likeType, err := strconv.Atoi(likeTypeStr)
+		if err != nil || (likeType != 1 && likeType != -1) {
+			http.Error(w, "Invalid like type", http.StatusBadRequest)
+			return
+		}
+
+		// Check if the user has already liked or disliked the post
+		var existingLikeType int
+		err = db.QueryRow("SELECT like_type FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID).Scan(&existingLikeType)
+
+		if err == sql.ErrNoRows {
+			// No existing like/dislike, insert a new like or dislike
+			_, err = db.Exec("INSERT INTO likes_dislikes (post_id, user_id, like_type) VALUES (?, ?, ?)", postID, userID, likeType)
+			if err != nil {
+				http.Error(w, "Error inserting like/dislike", http.StatusInternalServerError)
+				return
+			}
+		} else if existingLikeType != likeType {
+			// User is switching from like to dislike or vice-versa
+			_, err = db.Exec("UPDATE likes_dislikes SET like_type = ? WHERE post_id = ? AND user_id = ?", likeType, postID, userID)
+			if err != nil {
+				http.Error(w, "Error updating like/dislike", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			// User clicked the same button again, remove the like/dislike
+			_, err = db.Exec("DELETE FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID)
+			if err != nil {
+				http.Error(w, "Error removing like/dislike", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Retrieve the updated like/dislike counts for the post
+		var likeCount, dislikeCount int
+		err = db.QueryRow("SELECT SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END) AS likes, SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END) AS dislikes FROM likes_dislikes WHERE post_id = ?", postID).Scan(&likeCount, &dislikeCount)
+		if err != nil {
+			http.Error(w, "Error fetching like/dislike counts", http.StatusInternalServerError)
+			return
+		}
+
+		// Send the updated counts as a JSON response
+		responseData := map[string]int{"likes": likeCount, "dislikes": dislikeCount}
+		jsonData, err := json.Marshal(responseData)
+		if err != nil {
+			http.Error(w, "Error creating JSON response", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonData)
 	}
 }

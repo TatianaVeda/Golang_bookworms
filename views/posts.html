@@ -28,21 +28,21 @@
                     <p>Posted by: {{.UserName}}</p>
                     <p>Category: {{.CategoryName}}</p>
 
-                    <!-- Show likes/dislikes only if logged in -->
                     {{if $.IsLoggedIn}}
-                        <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
-                        <form action="/posts/like" method="POST" style="display:inline;">
-                            <input type="hidden" name="post_id" value="{{.ID}}">
-                            <button type="submit">Like🤩</button>
-                        </form>
+    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+    <form action="/posts/like" method="POST" style="display:inline;">
+        <input type="hidden" name="post_id" value="{{.ID}}">
+        <button type="submit">Like🤩</button>
+    </form>
 
-                        <form action="/posts/dislike" method="POST" style="display:inline;">
-                            <input type="hidden" name="post_id" value="{{.ID}}">
-                            <button type="submit">Dislike👿</button>
-                        </form>
-                    {{else}}
-                        <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
-                    {{end}}
+    <form action="/posts/dislike" method="POST" style="display:inline;">
+        <input type="hidden" name="post_id" value="{{.ID}}">
+        <button type="submit">Dislike👿</button>
+    </form>
+{{else}}
+    <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
+{{end}}
+
                     <hr>
                 </div>
                 {{end}}
