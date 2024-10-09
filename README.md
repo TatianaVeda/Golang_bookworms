@@ -1,328 +1,191 @@
-# :cloud: Air - Live reload for Go apps
 
-[![Go](https://github.com/air-verse/air/actions/workflows/release.yml/badge.svg)](https://github.com/air-verse/air/actions?query=workflow%3AGo+branch%3Amaster) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/dcb95264cc504cad9c2a3d8b0795a7f8)](https://www.codacy.com/gh/air-verse/air/dashboard?utm_source=github.com&utm_medium=referral&utm_content=air-verse/air&utm_campaign=Badge_Grade) [![Go Report Card](https://goreportcard.com/badge/github.com/air-verse/air)](https://goreportcard.com/report/github.com/air-verse/air) [![codecov](https://codecov.io/gh/air-verse/air/branch/master/graph/badge.svg)](https://codecov.io/gh/air-verse/air)
 
-![air](docs/air.png)
+# __Literary Lions Forum__
 
-English | [简体中文](README-zh_cn.md) | [繁體中文](README-zh_tw.md)
-
-## Motivation
-
-When I started developing websites in Go and using [gin](https://github.com/gin-gonic/gin) framework, it was a pity
-that gin lacked a live-reloading function. So I searched around and tried [fresh](https://github.com/pilu/fresh), it seems not much
-flexible, so I intended to rewrite it better. Finally, Air's born.
-In addition, great thanks to [pilu](https://github.com/pilu), no fresh, no air :)
-
-Air is yet another live-reloading command line utility for developing Go applications. Run `air` in your project root directory, leave it alone,
-and focus on your code.
-
-Note: This tool has nothing to do with hot-deploy for production.
+## Introduction
+The Literary Lions Forum is designed to help book club enthusiasts to engage in meaningful discussions, share insights, and explore deeper literary themes. Users can create posts, leave comments, categorize discussions, like/dislike content, and filter posts. The forum utilized SQLite as the database, and is containerized using Docker.
 
 ## Features
 
-- Colorful log output
-- Customize build or any command
-- Support excluding subdirectories
-- Allow watching new directories after Air started
-- Better building process
+### User Registration and Authentication:
 
-### Overwrite specify configuration from arguments
+- Users can register with a unique email, username, and password.
+- Login is based on email and password.
+- Session management is handled using cookies.
+#### Passwords are stored securely using encryption.
 
-Support air config fields as arguments:
+### Database interaction:
+User registration data is stored in forum.db.
+Interaction with the database is out of using SQL queries SELECT, CREATE and INSERT.
+#### Database Schema
+consists of the following tables:
+- Users: Stores user information (email, username, password hash).
+- Posts: Contains posts made by users.
+- Comments: Stores comments on posts.
+- Categories: Defines categories for posts (Literature, Poetry, Non-fiction, Short Stories).
 
-If you want to config build command and run command, you can use like the following command without the config file:
+### Post and Comment System:
 
-```shell
-air --build.cmd "go build -o bin/api cmd/run.go" --build.bin "./bin/api"
+Registered users can create posts and comments.
+Posts can be associated with specific categories (Literature, Poetry, Non-fiction, Short Stories).
+Only registered users can create, like or dislike posts and comments.
+The number of likes/dislikes is visible to users.
+
+
+
+## Project Structure
+![pic of structure](/image.png "Picture of structure")
+
+literary-lions-forum/
+│
+├── main.go                      # Application entry point
+│                
+├── controllers/                 # Application logic
+│   ├── auth.go/                 # Authentication and session management
+│   ├── post.go/                 # Post, comment and categories management
+│ 
+│── database/                    # Database models (Users, Posts, Categories, Comments)
+│   ├── db.go                    # SQLite interaction and schema
+│
+│── forum.db                     # Database storage
+│
+├── static/                      # Static style files (CSS, images)
+│   ├── images/lion-icon.png 
+│   ├── home.css
+│   ├── modal.css     
+│
+├── views/                       # HTML templates
+│
+├── Dockerfile                   # Dockerfile for containerizing the app
+├── .dockerignore                # File for ignoring while containerizing the app
+│
+│
+├── cookies.txt                  ???  
+│
+├── .idea/                       ??? 
+│
+├── go.sum                      # Go modules file for dependencies
+├── go.mod                  
+└── README.md                   # Project documentation
+
+### Technologies & Prerequisites
+- Backend: Go (Golang 1.20 or later)
+- Database: SQLite with go-sqlite3 driver
+- Frontend: HTML, CSS, Go
+- Containerization: Docker
+
+## Getting Started
+
+### Installation
+Clone the repository:
+```
+git clone https://gitea.koodsisu.fi/juliageorgieva/literary-lions
+cd literary-lions
 ```
 
-Use a comma to separate items for arguments that take a list as input:
-
-```shell
-air --build.cmd "go build -o bin/api cmd/run.go" --build.bin "./bin/api" --build.exclude_dir "templates,build"
+Install Go dependencies if necessary:
+``` 
+go mod tidy
 ```
 
-## Installation
+Initialize SQLite database regarding https://pkg.go.dev/github.com/mattn/go-sqlite3
 
-### Via `go install` (Recommended)
+### Dockerization
+Follow the steps below to set up Docker, build the Docker image, run the container, and maintains a clean environment. 
 
-With go 1.23 or higher:
+1. Install Docker
+Before you begin, ensure that Docker is installed on your machine. Download Docker Desktop from [the Docker website.](https://docs.docker.com/get-started/get-docker/). If you use WSL: https://docs.docker.com/desktop/wsl/.
 
-```bash
-go install github.com/air-verse/air@latest
+* For Windows: After installation, start Docker Desktop and ensure it is running.
+* For macOS: Open the downloaded .dmg file and drag Docker to your Applications folder, launch and ensure it is running. 
+* For Linux: Follow the official Docker installation guide for your distribution: https://docs.docker.com/desktop/install/linux/
+
+Start the Docker service:
 ```
-
-### Via install.sh
-
-```shell
-# binary will be $(go env GOPATH)/bin/air
-curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
-
-# or install it into ./bin/
-curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh -s
-
-air -v
+sudo systemctl start docker
 ```
-
-### Via [goblin.run](https://goblin.run)
-
-```shell
-# binary will be /usr/local/bin/air
-curl -sSfL https://goblin.run/github.com/air-verse/air | sh
-
-# to put to a custom path
-curl -sSfL https://goblin.run/github.com/air-verse/air | PREFIX=/tmp sh
+Ensure Docker is running:
 ```
-
-### Docker/Podman
-
-Please pull this Docker image [cosmtrek/air](https://hub.docker.com/r/cosmtrek/air).
-
-```shell
-docker/podman run -it --rm \
-    -w "<PROJECT>" \
-    -e "air_wd=<PROJECT>" \
-    -v $(pwd):<PROJECT> \
-    -p <PORT>:<APP SERVER PORT> \
-    cosmtrek/air
-    -c <CONF>
+systemctl status docker
 ```
-
-#### Docker/Podman .${SHELL}rc
-
-if you want to use air continuously like a normal app, you can create a function in your ${SHELL}rc (Bash, Zsh, etc…)
-
-```shell
-air() {
-  podman/docker run -it --rm \
-    -w "$PWD" -v "$PWD":"$PWD" \
-    -p "$AIR_PORT":"$AIR_PORT" \
-    docker.io/cosmtrek/air "$@"
-}
+2. Navigate to the project directory and build the Docker image:
 ```
-
-`<PROJECT>` is your project path in container, eg: /go/example
-if you want to enter the container, Please add --entrypoint=bash.
-
-<details>
-  <summary>For example</summary>
-
-One of my project runs in Docker:
-
-```shell
-docker run -it --rm \
-  -w "/go/src/github.com/cosmtrek/hub" \
-  -v $(pwd):/go/src/github.com/cosmtrek/hub \
-  -p 9090:9090 \
-  cosmtrek/air
+docker build -t lions-forum-image .
 ```
-
-Another example:
-
-```shell
-cd /go/src/github.com/cosmtrek/hub
-AIR_PORT=8080 air -c "config.toml"
+3. Start the container using the built image:
 ```
+docker run -d -p 8080:8080 -v lions_volume:/literary-lions/ --name lions-forum lions-forum-image
+<!-- docker run -p 8080:8080 -v lions_db --name lions literary-lions-image
+docker run -p 8080:8080 -v lions_db:/app/data --name lions literary-lions-image -->
+```
+This command runs a container named <my-container> from the <my-image>,  mapping port 8080 on the host to port 8080 on the container.
+The application will be available at http://localhost:8080.
 
-this will replace `$PWD` with the current directory, `$AIR_PORT` is the port where to publish and `$@` is to accept arguments of the application itself for example -c
+4. Verify Container Operation. To verify that the container is running:
+```
+docker ps
+``` 
+Lists all running containers. 
+```
+docker images
+```
+Shows all images. You can check the logs of the running container:
+```
+docker logs lions-forum
+```
+5. To keep your Docker environment clean, remove unused objects.
+To stop container:
+```
+docker stop container_ID
+```
+Remove stopped containers: 
+```
+docker rm -f <container_name_or_id>
+``` 
+Remove image: 
+```
+docker rmi <image_name_or_id>
+docker image prune -a -f
+``` 
+for all unused images.
 
-</details>
+Remove unused volumes:
+```
+docker volume prune -f
+```
+Remove unused networks: 
+```
+docker network prune -f
+```
+Full system cleanup (optional): 
+```
+docker system prune -a --volumes -f
+```
+This command removes all unused containers, images, volumes, and networks, providing a comprehensive cleanup.
+
+6. Check Disk Usage:
+```
+docker system df
+```
+to get a general idea of ​​how much space images, containers, networks, and volumes are taking up.
+
 
 ## Usage
 
-For less typing, you could add `alias air='~/.air'` to your `.bashrc` or `.zshrc`.
+Once the forum is up and running:
 
-First enter into your project
+1. Register a new account.
+1. Log in to create posts and comments.
+1. Browse the forum by posts and interact with other users by likes and comments.
+1. Filter posts by different categories and participate in discussions.
 
-```shell
-cd /path/to/your_project
-```
+#### Future Enhancements
+- Search functionality: Add a search bar to allow users to search for specific posts or comments.
+- User profile page: Add a page where users can view their posts, liked posts, and personal information.
+- File uploads: Allow users to upload images or other files in their posts and comments.
 
-The simplest usage is run
+### Contributors:
 
-```shell
-# firstly find `.air.toml` in current directory, if not found, use defaults
-air -c .air.toml
-```
+Julia Georgieva Georgieva, Mariia Melnikova, Tatiana Vedishcheva.
+Hit us up in Discord if you have any questions!
 
-You can initialize the `.air.toml` configuration file to the current directory with the default settings running the following command.
-
-```shell
-air init
-```
-
-After this, you can just run the `air` command without additional arguments, and it will use the `.air.toml` file for configuration.
-
-```shell
-air
-```
-
-For modifying the configuration refer to the [air_example.toml](air_example.toml) file.
-
-### Runtime arguments
-
-You can pass arguments for running the built binary by adding them after the air command.
-
-```shell
-# Will run ./tmp/main bench
-air bench
-
-# Will run ./tmp/main server --port 8080
-air server --port 8080
-```
-
-You can separate the arguments passed for the air command and the built binary with `--` argument.
-
-```shell
-# Will run ./tmp/main -h
-air -- -h
-
-# Will run air with custom config and pass -h argument to the built binary
-air -c .air.toml -- -h
-```
-
-### Docker Compose
-
-```yaml
-services:
-  my-project-with-air:
-    image: cosmtrek/air
-    # working_dir value has to be the same of mapped volume
-    working_dir: /project-package
-    ports:
-      - <any>:<any>
-    environment:
-      - ENV_A=${ENV_A}
-      - ENV_B=${ENV_B}
-      - ENV_C=${ENV_C}
-    volumes:
-      - ./project-relative-path/:/project-package/
-```
-
-### Debug
-
-`air -d` prints all logs.
-
-## Installation and Usage for Docker users who don't want to use air image
-
-`Dockerfile`
-
-```Dockerfile
-# Choose whatever you want, version >= 1.16
-FROM golang:1.23-alpine
-
-WORKDIR /app
-
-RUN go install github.com/air-verse/air@latest
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-CMD ["air", "-c", ".air.toml"]
-```
-
-`docker-compose.yaml`
-
-```yaml
-version: "3.8"
-services:
-  web:
-    build:
-      context: .
-      # Correct the path to your Dockerfile
-      dockerfile: Dockerfile
-    ports:
-      - 8080:3000
-    # Important to bind/mount your codebase dir to /app dir for live reload
-    volumes:
-      - ./:/app
-```
-
-## Q&A
-
-### "command not found: air" or "No such file or directory"
-
-```shell
-export GOPATH=$HOME/xxxxx
-export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-export PATH=$PATH:$(go env GOPATH)/bin <---- Confirm this line in you profile!!!
-```
-
-### Error under wsl when ' is included in the bin
-
-Should use `\` to escape the `' in the bin. related issue: [#305](https://github.com/air-verse/air/issues/305)
-
-### Question: how to do hot compile only and do not run anything?
-
-[#365](https://github.com/air-verse/air/issues/365)
-
-```toml
-[build]
-  cmd = "/usr/bin/true"
-```
-
-### How to Reload the Browser Automatically on Static File Changes
-
-Refer to issue [#512](https://github.com/air-verse/air/issues/512) for additional details.
-
-- Ensure your static files in `include_dir`, `include_ext`, or `include_file`.
-- Ensure your HTML has a `</body>` tag
-- Activate the proxy by configuring the following config:
-
-```toml
-[proxy]
-  enabled = true
-  proxy_port = <air proxy port>
-  app_port = <your server port>
-```
-
-## Development
-
-Please note that it requires Go 1.16+ since I use `go mod` to manage dependencies.
-
-```shell
-# Fork this project
-
-# Clone it
-mkdir -p $GOPATH/src/github.com/cosmtrek
-cd $GOPATH/src/github.com/cosmtrek
-git clone git@github.com:<YOUR USERNAME>/air.git
-
-# Install dependencies
-cd air
-make ci
-
-# Explore it and happy hacking!
-make install
-```
-
-Pull requests are welcome.
-
-### Release
-
-```shell
-# Checkout to master
-git checkout master
-
-# Add the version that needs to be released
-git tag v1.xx.x
-
-# Push to remote
-git push origin v1.xx.x
-
-# The CI will process and release a new version. Wait about 5 min, and you can fetch the latest version
-```
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=air-verse/air&type=Date)](https://star-history.com/#air-verse/air&Date)
-
-## Sponsor
-
-[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/default-orange.png)](https://www.buymeacoffee.com/cosmtrek)
-
-Give huge thanks to lots of supporters. I've always been remembering your kindness.
-
-## License
-
-[GNU General Public License v3.0](LICENSE)
