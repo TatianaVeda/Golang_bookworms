@@ -436,6 +436,8 @@ func DislikePostHandler(w http.ResponseWriter, r *http.Request) {
 
 func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("UpdateLikeDislikeHandler: Received a request")
+
 		if r.Method != http.MethodPost {
 			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 			return
@@ -445,6 +447,7 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 		userID, err := GetSession(r)
 		if err != nil {
 			http.Error(w, "Unauthorized. Please log in.", http.StatusUnauthorized)
+			log.Println("Unauthorized request - session not found")
 			return
 		}
 
@@ -453,22 +456,28 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 		likeTypeStr := r.FormValue("like_type")
 		categoryIDStr := r.FormValue("category_id")
 
-		// Validate and convert post ID, like type, and category ID
+		log.Printf("Incoming form values: post_id=%s, like_type=%s, category_id=%s", postIDStr, likeTypeStr, categoryIDStr)
+
+		// Validate post ID and like type
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			log.Println("Invalid post ID:", postIDStr, "Error:", err)
 			return
 		}
 
 		likeType, err := strconv.Atoi(likeTypeStr)
 		if err != nil || (likeType != 1 && likeType != -1) {
 			http.Error(w, "Invalid like type", http.StatusBadRequest)
+			log.Println("Invalid like type:", likeTypeStr, "Error:", err)
 			return
 		}
 
+		// Validate category ID
 		categoryID, err := strconv.Atoi(categoryIDStr)
 		if err != nil || categoryID <= 0 {
 			http.Error(w, "Category ID is required", http.StatusBadRequest)
+			log.Println("Invalid category ID:", categoryIDStr, "Error:", err)
 			return
 		}
 
@@ -479,20 +488,44 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 		if err == sql.ErrNoRows {
 			// No existing like/dislike, insert a new record
 			_, err = db.Exec("INSERT INTO likes_dislikes (post_id, user_id, like_type) VALUES (?, ?, ?)", postID, userID, likeType)
+			if err != nil {
+				http.Error(w, "Error inserting new like/dislike", http.StatusInternalServerError)
+				log.Println("Error inserting new like/dislike:", err)
+				return
+			}
 		} else if existingLikeType != likeType {
 			// Update existing like/dislike
 			_, err = db.Exec("UPDATE likes_dislikes SET like_type = ? WHERE post_id = ? AND user_id = ?", likeType, postID, userID)
+			if err != nil {
+				http.Error(w, "Error updating like/dislike", http.StatusInternalServerError)
+				log.Println("Error updating like/dislike:", err)
+				return
+			}
 		} else {
 			// Remove like/dislike if user clicks the same button again
 			_, err = db.Exec("DELETE FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID)
+			if err != nil {
+				http.Error(w, "Error removing like/dislike", http.StatusInternalServerError)
+				log.Println("Error removing like/dislike:", err)
+				return
+			}
 		}
 
+		// Retrieve the updated like and dislike counts for the post
+		var likeCount, dislikeCount int
+		err = db.QueryRow(`
+			SELECT IFNULL(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS likes,
+			       IFNULL(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislikes
+			FROM likes_dislikes
+			WHERE post_id = ?`, postID).Scan(&likeCount, &dislikeCount)
 		if err != nil {
-			http.Error(w, "Error updating like/dislike", http.StatusInternalServerError)
+			http.Error(w, "Error fetching like/dislike counts", http.StatusInternalServerError)
+			log.Println("Error fetching like/dislike counts:", err)
 			return
 		}
 
-		// Redirect back to the appropriate category
+		// Pass the updated counts back to the ShowPosts handler for the correct category
+		log.Printf("Updated counts for post %d: Likes = %d, Dislikes = %d\n", postID, likeCount, dislikeCount)
 		http.Redirect(w, r, fmt.Sprintf("/posts?category=%d", categoryID), http.StatusSeeOther)
 	}
 }
@@ -552,7 +585,12 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		userID := 13 // Hardcoded user ID for testing (should be dynamic in production)
+		// Retrieve the user ID from session
+		userID, err := GetUserIDFromSession(r)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
 
 		// Retrieve form values
 		title := r.FormValue("title")
@@ -565,7 +603,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Insert post into the database
-		_, err := database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", title, body, userID, categoryID)
+		_, err = database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", title, body, userID, categoryID)
 		if err != nil {
 			log.Printf("Error inserting new post: %v", err)
 			http.Error(w, "Unable to create post", http.StatusInternalServerError)
@@ -574,8 +612,8 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("Post created successfully: Title: %s | Body: %s | CategoryID: %s", title, body, categoryID)
 
-		// Redirect to /posts after successful creation
-		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+		// Redirect to the category-specific page instead of "All Posts"
+		http.Redirect(w, r, fmt.Sprintf("/posts?category=%s", categoryID), http.StatusSeeOther)
 	} else {
 		// Render the create post page if method is GET
 		categories := []struct {
