@@ -15,6 +15,7 @@ type Post struct {
 	LikeCount    int
 	DislikeCount int
 	CategoryName string
+	CategoryID   int
 }
 
 // Comment represents a comment in the system

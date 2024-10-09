@@ -68,6 +68,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/posts/like", controllers.LikePostHandler)
 	http.HandleFunc("/posts/dislike", controllers.DislikePostHandler)
+	http.HandleFunc("/posts/update_like_dislike", controllers.UpdateLikeDislikeHandler(database.DB))
 	http.HandleFunc("/404", NotFoundHandler)
 	http.HandleFunc("/500", InternalServerErrorHandler)
 	http.HandleFunc("/test-error", CauseInternalServerError)

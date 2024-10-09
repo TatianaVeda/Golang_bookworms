@@ -12,40 +12,43 @@
         <div class="posts-section">
             <h1>All Posts in Category: {{.CategoryName}}</h1>
 
-            <!-- Create New Post link should only be visible if logged in -->
             {{if .IsLoggedIn}}
                 <a href="/posts/create">Create New Post🖋️</a>
             {{else}}
                 <p>Log in to create new posts or interact with posts!</p>
             {{end}}
 
-            <!-- Render posts only if available -->
             {{if .Posts}}
-                {{range .Posts}}
-                <div class="post">
-                    <h2>{{.Title}}</h2>
-                    <p>{{.Body}}</p>
-                    <p>Posted by: {{.UserName}}</p>
-                    <p>Category: {{.CategoryName}}</p>
-
-                    {{if $.IsLoggedIn}}
-    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
-    <form action="/posts/like" method="POST" style="display:inline;">
-        <input type="hidden" name="post_id" value="{{.ID}}">
-        <button type="submit">Like🤩</button>
-    </form>
-
-    <form action="/posts/dislike" method="POST" style="display:inline;">
-        <input type="hidden" name="post_id" value="{{.ID}}">
-        <button type="submit">Dislike👿</button>
-    </form>
-{{else}}
-    <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
-{{end}}
-
-                    <hr>
-                </div>
+            {{range .Posts}}
+            <div class="post">
+                <h2>{{.Title}}</h2>
+                <p>{{.Body}}</p>
+                <p>Posted by: {{.UserName}}</p>
+                <p>Category: {{.CategoryName}}</p>
+            
+                {{if $.IsLoggedIn}}
+                    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+            
+                    <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
+                        <input type="hidden" name="post_id" value="{{.ID}}">
+                        <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
+                        <input type="hidden" name="like_type" value="1">
+                        <button type="submit" value="like">Like🤩</button>
+                    </form>
+                    
+                    <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
+                        <input type="hidden" name="post_id" value="{{.ID}}">
+                        <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
+                        <input type="hidden" name="like_type" value="-1">
+                        <button type="submit" value="dislike">Dislike👿</button>
+                    </form>              
+                {{else}}
+                    <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
                 {{end}}
+                <hr>
+            </div>
+            {{end}}
+            
             {{else}}
                 <p>No posts found in this category. Please create a new post to get started!</p>
             {{end}}
