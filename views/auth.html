@@ -5,7 +5,6 @@
 <!-- Modal Trigger Button -->
 <label for="modal-toggle" class="modal-open" style="display: inline-block;">Login or Register🦁🔑</label>
 
-
 <!-- The Modal -->
 <div class="modal">
     <!-- Background clickable area -->
@@ -16,9 +15,9 @@
         <h2>Welcome 🦁!</h2>
         <p>Select a tab to login or register🔑</p>
 
-       <!-- Tab Radio Buttons -->
-       <input type="radio" id="login-tab" name="auth-tab" {{if not .RegistrationError}}checked{{else}}class="hidden"{{end}} {{if .LoginError}}checked{{end}}>
-       <input type="radio" id="register-tab" name="auth-tab" {{if .RegistrationError}}checked{{else}}class="hidden"{{end}} {{if not .LoginError}}checked{{end}}>
+        <!-- Tab Radio Buttons -->
+        <input type="radio" id="login-tab" name="auth-tab" {{if not .IsRegistering}}checked{{else}}class="hidden"{{end}} {{if .LoginError}}checked{{end}}>
+        <input type="radio" id="register-tab" name="auth-tab" {{if .IsRegistering}}checked{{else}}class="hidden"{{end}} {{if not .LoginError}}checked{{end}}>
 
         <!-- Tab Labels -->
         <div class="tab-container">
@@ -47,23 +46,41 @@
             <!-- Register Form -->
             <div id="register-form" class="auth-form">
                 <h3>Register</h3>
-                {{if .RegistrationError}}
-                <p style="color: red;">{{.RegistrationError}}</p>
+
+                <!-- Display Success or Error Message -->
+                {{if .Message}}
+                <p style="color: {{.MessageColor}}; text-align: center;">{{.Message}}</p> <!-- Use dynamic message color -->
                 {{end}}
+
                 <form action="/" method="POST">
                     <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
                     <input type="hidden" name="action" value="register">
+
                     <label for="username">Username:</label><br>
-                    <input type="text" id="username" name="username" required><br>
+                    <input type="text" id="username" name="username" value="{{.Username}}" required>
+                    {{if .UsernameError}}
+                    <p style="color: red;">{{.UsernameError}}</p>
+                    {{end}}
+                    <br>
+
                     <label for="register-email">Email:</label><br>
-                    <input type="email" id="register-email" name="email" required autocomplete="off"><br>
+                    <input type="email" id="register-email" name="email" value="{{.Email}}" required autocomplete="off">
+                    {{if .EmailError}}
+                    <p style="color: red;">{{.EmailError}}</p>
+                    {{end}}
+                    <br>
+
                     <label for="register-password">Password:</label><br>
-                    <input type="password" id="register-password" name="password" required autocomplete="off"><br>
+                    <input type="password" id="register-password" name="password" required autocomplete="off">
+                    {{if .PasswordError}}
+                    <p style="color: red;">{{.PasswordError}}</p>
+                    {{end}}
+                    <br>
+
                     <input type="submit" value="Register">
                 </form>
             </div>
         </div>
     </div>
 </div>
-
 {{end}}
