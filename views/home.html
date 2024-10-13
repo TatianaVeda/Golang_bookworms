@@ -21,10 +21,10 @@
         <!-- Search Bar Section (Always visible) -->
         <div class="search-bar">
             <form action="/search" method="GET" class="search-form">
-                <input type="text" name="query" placeholder="Search posts, topics, or users..." class="search-input">
+                <input type="text" name="query" placeholder="Search posts, topics, or users..." class="search-input" required>
                 <button type="submit" class="search-button">Search 🔍</button>
             </form>
-        </div>                  
+        </div>                        
 
         {{if not .IsLoggedIn}}
         {{template "auth" .}} <!-- Include the auth template here -->
