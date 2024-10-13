@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results</title>
     <link rel="stylesheet" href="static/home.css">
+    <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
     <div class="container">
@@ -15,11 +16,13 @@
             <p class="welcome-message">Welcome to the Search Results Page!</p>
         </div>
 
-        <!-- Search Form (Always visible to allow a new search) -->
-        <form action="/search" method="GET" class="search-form">
-            <input type="text" name="query" placeholder="Search posts..." value="{{.Query}}" required>
-            <button type="submit">Search</button>
-        </form>
+        <!-- Centered Search Bar -->
+        <div class="search-bar">
+            <form action="/search" method="GET">
+                <input type="text" name="query" placeholder="Search posts, topics, or users..." class="search-input">
+                <button type="submit" class="search-button">Search 🔍</button>
+            </form>
+        </div>
 
         <!-- Display Search Results -->
         <div class="search-results">
