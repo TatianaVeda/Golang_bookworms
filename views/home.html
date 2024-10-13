@@ -19,7 +19,13 @@
             <p class="welcome-message">Welcome to Literary Lions Forum! Here you can embrace the power of online discussions, fostering deeper connections, enriching their reading journeys, and ensuring the book club roars with literary passion ;-))</p>
         </div>
         {{if not .IsLoggedIn}}
-
+<!-- Search Bar Section -->
+<div class="search-bar">
+    <form action="/search" method="GET">
+        <input type="text" name="query" placeholder="Search posts, topics, or users..." class="search-input">
+        <button type="submit" class="search-button">Search 🔍</button>
+    </form>
+</div>
         {{template "auth" .}} <!-- Include the auth template here -->
 
             {{else}}
