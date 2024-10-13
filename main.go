@@ -40,12 +40,12 @@ func init() {
 
 func main() {
 	log.Println("Starting database initialization...")
-	//dsn := "./forum.db" // defining the path to the database
+
+	// Initialize the database
 	database.DB = database.ConnectDB()
 	defer database.DB.Close()
 
 	err := database.InitDB("./forum.db")
-
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
@@ -56,10 +56,13 @@ func main() {
 		log.Fatalf("Failed to initialize config: %v", err)
 	}
 
+	// Handle routes
 	http.Handle("/", StripTrailingSlash(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rootHandler(w, r, cfg.DB, cfg.Templates)
 	})))
 
+	http.HandleFunc("/login", controllers.LoginUser)
+	http.HandleFunc("/register", controllers.RegisterUser)
 	http.Handle("/posts", StripTrailingSlash(http.HandlerFunc(controllers.ShowPosts)))
 	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePostHandler)))
 	http.HandleFunc("/logout", controllers.LogoutHandler)
@@ -74,13 +77,14 @@ func main() {
 	http.HandleFunc("/test-error", CauseInternalServerError)
 	http.HandleFunc("/search", controllers.SearchPosts)
 
+	// Logging setup
 	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
 	defer file.Close()
 
-	//log.SetOutput(file)
+	// log.SetOutput(file) // Enable if you want to log to a file
 
 	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
@@ -178,13 +182,11 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			"Categories": categories, // Include categories in the template data
 		}
 
-		// Render the homepage with modal
 		tmpl := template.Must(template.ParseFiles(
 			"views/home.html",
 			"views/auth.html",
 			"views/create_post.html",
 			"views/categories.html",
-			"views/add_category.html",
 		))
 
 		if err := tmpl.Execute(w, data); err != nil {

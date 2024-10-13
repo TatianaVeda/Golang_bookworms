@@ -1,3 +1,4 @@
+// posts.go
 package controllers
 
 import (

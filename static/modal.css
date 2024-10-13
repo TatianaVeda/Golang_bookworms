@@ -127,6 +127,10 @@ input[type="checkbox"]:checked ~ .modal {
     visibility: visible; /* Показываем фон при проверке чекбокса 
 }*/
 
+.modal.open {
+    display: flex; /* Show modal when 'open' class is applied */
+}
+
 .error-message {
     color: red;
     font-size: 1.1em;

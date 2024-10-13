@@ -1,3 +1,4 @@
+<!-- home.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,32 +14,24 @@
         <!-- Header Section -->
         <div class="header">
             <img src="static/images/lion-icon.png" alt="Logo" class="logo">
-            <h1>Feeling your inner-r-rr-rrr lion?</h1>
+            <h1> Feeling your inner-r-rr-rrr lion?</h1>
+
             <p class="welcome-message">Welcome to Literary Lions Forum! Here you can embrace the power of online discussions, fostering deeper connections, enriching their reading journeys, and ensuring the book club roars with literary passion ;-))</p>
         </div>
-
-        <!-- Search Bar Section -->
-        <div class="search-bar">
-            <form action="/search" method="GET">
-                <input type="text" name="query" placeholder="Search posts, topics, or users..." class="search-input">
-                <button type="submit" class="search-button">Search 🔍</button>
-            </form>
-        </div>
-
         {{if not .IsLoggedIn}}
-            {{template "auth" .}} <!-- Include the auth template here -->
-        {{else}}
+
+        {{template "auth" .}} <!-- Include the auth template here -->
+
+            {{else}}
             {{if .LoginSuccessMessage}}
-                <div class="success-message" style="color: green;">
+                <div class="success-message">
                     {{.LoginSuccessMessage}}
                 </div>
             {{end}}
-            <br>
-            <p class="message">
-                You are logged in! Feel free to comment💬, like👍, create a post below📝, or go to your <a href="/profile">profile</a>.
-            </p>
+
+            <br><p class="message">You are logged in! Feel free to comment💬, like👍, create a post below📝</a> or go to your <a href="/profile">profile</a>.</p>
             <form action="/logout" method="POST">
-                <button type="submit" class="logout-button">Log Out 🔓</button>
+                <button type="submit"class="logout-button">Log Out 🔓</button>
             </form>
 
             <!-- Create Post Section -->
@@ -52,17 +45,14 @@
         <!-- Published Posts Section -->
         <div class="posts-section">
             <h2>Published Posts📜</h2>
-            {{range .Posts}}
             <div class="post">
-                <p class="post-title">{{.Title}}</p>
-                <p class="post-content">{{.Body}}</p>
-                <p>Posted by: {{.UserName}}</p>
-                <p>Category: {{.CategoryName}}</p>
-                <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+                <p class="post-title">Bookcrossing shelves at trains stations</p>
+                <p class="post-content">I once found and incredible book there</p>
             </div>
-            {{else}}
-                <p>No posts available at the moment.</p>
-            {{end}}
+            <div class="post">
+                <p class="post-title">Understanding Modern Poetry</p>
+                <p class="post-content">Nope...</p>
+            </div>
         </div>
 
         <!-- Footer Section -->
@@ -72,35 +62,3 @@
     </div>
 </body>
 </html>
-
-<!-- Create Post Template -->
-{{define "create_post"}}
-<div class="create-post-section">
-    <h3>Create a New Post 📝</h3>
-    <form action="/posts/create" method="POST">
-        <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
-        <label for="post-title">Title:</label><br>
-        <input type="text" id="post-title" name="title" required><br>
-
-        <label for="post-content">Content:</label><br>
-        <textarea id="post-content" name="content" required></textarea><br>
-
-        <button type="submit">Create Post</button>
-    </form>
-</div>
-{{end}}
-
-<!-- Categories Template -->
-{{define "categories"}}
-<div class="categories-section">
-    <ul>
-        {{range .Categories}}
-        <li>
-            <a href="/posts?category={{.ID}}">{{.Name}}</a>
-        </li>
-        {{else}}
-        <p>No categories available.</p>
-        {{end}}
-    </ul>
-</div>
-{{end}}
