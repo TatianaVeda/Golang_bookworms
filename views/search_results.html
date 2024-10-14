@@ -13,7 +13,7 @@
         <div class="header">
             <img src="static/images/lion-icon.png" alt="Logo" class="logo">
             <h1>Literary Lions Forum</h1>
-            </div>
+        </div>
 
         <!-- Centered Search Bar -->
         <div class="search-bar">
@@ -22,7 +22,6 @@
                 <button type="submit" class="search-button">Search 🔍</button>
             </form>
         </div>
-             
 
         <!-- Display Search Results -->
         <div class="search-results">
@@ -37,7 +36,9 @@
                 <ul class="post-list">
                     {{range .Results}}
                         <li class="post-item">
-                            <h3>{{.Title}}</h3>
+                            <a href="/posts/{{.ID}}" class="post-link">
+                                <h3>{{.Title}}</h3>
+                            </a>
                             <p>By <strong>{{.Author}}</strong> on <em>{{.CreatedAt}}</em></p>
                             <div class="post-content">{{.Body}}</div>
                         </li>

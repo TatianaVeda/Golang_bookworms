@@ -62,3 +62,16 @@ type TemplateData struct {
 	LoggedUser   string
 	IsLoggedIn   bool
 }
+
+type SearchResult struct {
+	ID        int
+	Title     string
+	Author    string
+	CreatedAt time.Time
+	Body      string
+}
+
+type SearchPageData struct {
+	Query   string
+	Results []SearchResult
+}
