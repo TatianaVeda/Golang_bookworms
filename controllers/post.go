@@ -22,7 +22,7 @@ type Post struct {
 	CreatedAt time.Time
 }
 
-func PostsHandler(templates *template.Template) http.HandlerFunc {
+func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the category ID from the URL query parameter
 		categoryID := r.URL.Query().Get("category")

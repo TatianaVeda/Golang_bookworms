@@ -35,7 +35,7 @@ var templates *template.Template
 
 func init() {
 	// Ensure all templates are parsed together
-	templates = template.Must(template.ParseFiles("views/home.html", "views/posts.html", "views/create_post.html", "views/error.html", "views/myposts.html"))
+	templates = template.Must(template.ParseFiles("views/home.html", "views/posts.html", "views/create_post.html", "views/error.html", "views/myposts.html", "views/profile.html"))
 }
 
 func main() {
@@ -76,6 +76,7 @@ func main() {
 	http.HandleFunc("/500", InternalServerErrorHandler)
 	http.HandleFunc("/test-error", CauseInternalServerError)
 	http.HandleFunc("/search", controllers.SearchPosts)
+	http.HandleFunc("/profile", controllers.ProfileHandler(templates))
 
 	// Logging setup
 	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
