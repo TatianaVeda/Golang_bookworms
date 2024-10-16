@@ -8,9 +8,9 @@ body, h1, h2, h3, h4, h5, h6, p, input, button,
 .modal-content p,
 .modal-content input,
 .modal-content label,
-.modal-content button { 
-    font-family: 'Playfair Display', serif;  
-    font-size: 18px;  
+.modal-content button {  
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;  
     color: #8B0000; 
     letter-spacing: 1px;
 }
@@ -25,13 +25,17 @@ button,
 .button-class,
 .modal-content button {  
     background-color: #046871;  
-    color: white;  
+    color: white; 
     padding: 10px 20px;  
-    font-size: 16px;  
+    font-size: 16px; 
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+}
+
+.search-button {
+    width: 200px
 }
 
 /* Hover Effects (including for modal buttons) */
@@ -43,8 +47,8 @@ button:hover,
 .post-input:hover, 
 .button-class:hover,
 .modal-content button:hover {
-    background-color: #AA2D2D;  
-    color: white;  
+    background-color: #AA2D2D;   
+    color: white; 
 }
 
 /* Active State for Buttons */
@@ -63,7 +67,7 @@ button:active,
 /* Container Styling */
 .container {
     width: 100%;
-    max-width: 1100px;
+    max-width: 800px;
     margin: 0 auto;
     padding: 20px;
     box-sizing: border-box;
@@ -89,7 +93,7 @@ button:active,
 
 /* Welcome Message */
 .welcome-message, .message {
-    font-family: 'Mountains of Christmas', cursive;
+    font-family: 'Playfair Display', serif;
     color: #ff4500;
     font-size: 24px;
     font-weight: bold;
@@ -181,12 +185,16 @@ button:active,
 }
 
 /* Footer Styling */
-.footer {
+.footer, .footer * {
     text-align: center;
     padding: 10px;
-    background-color: #333;
-    color: white;
+    background-color: #046871;
+    color: white !important;
     margin-top: 20px;
+    width: 100%; 
+    max-width: 1100px; 
+    margin: 0 auto; 
+    box-sizing: border-box; 
 }
 
 /* Search Bar Styling */
@@ -210,7 +218,7 @@ button:active,
 .search-input {
     padding: 10px;
     flex-grow: 1;
-    width: 100%; /* Ensure it scales well */
+    width: 100%; 
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
