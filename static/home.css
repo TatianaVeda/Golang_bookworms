@@ -1,8 +1,12 @@
 /* General Styles */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
 
+body {
+    background-color: #f5f5f5;
+}
+
 /* Global Font Style */
-body, h1, h2, h3, h4, h5, h6, p, input, button,
+body, h2, h3, h4, h5, h6, p, input, button,
 .modal-content,  
 .modal-content h2,
 .modal-content p,
@@ -17,9 +21,7 @@ body, h1, h2, h3, h4, h5, h6, p, input, button,
 
 /* Global Button Styling (included modal buttons here too) */
 button, 
-.buttons, 
-.logout-button, 
-.search-button, 
+.buttons,  
 .auth-section button, 
 .post-input, 
 .button-class,
@@ -32,10 +34,30 @@ button,
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    margin-top: 15px;
+    box-shadow: none;
 }
 
-.search-button {
-    width: 200px
+.logout-container {
+    display: flex; /* Use flexbox to center the button */
+    justify-content: center; /* Center horizontally */
+    margin: 0; /* Remove extra margin */
+    padding: 0; /* Remove padding */
+    border: none; /* Remove any borders */
+    box-shadow: none; /* Remove any shadow */
+    background: none; /* Remove any background */
+}
+
+.logout-button {
+    display: inline-block; /* Make the button inline-block */
+    padding: 10px 20px;
+    background-color: #046871;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 /* Hover Effects (including for modal buttons) */
@@ -46,28 +68,33 @@ button:hover,
 .auth-section button:hover, 
 .post-input:hover, 
 .button-class:hover,
+.home-button:hover,
 .modal-content button:hover {
     background-color: #AA2D2D;   
     color: white; 
 }
 
-/* Active State for Buttons */
-button:active, 
-.buttons:active, 
-.logout-button:active, 
-.search-button:active, 
-.auth-section button:active, 
-.post-input:active, 
-.button-class:active,
-.modal-content button:active {
-    background-color: #046871;  
+.home-button {
+    display: block;
+    text-align: center;
+    padding: 12px 20px;
+    background-color: #046871; 
     color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    width: fit-content;
+    margin: 20px auto; 
+    transition: background-color 0.3s ease;
 }
 
 /* Container Styling */
 .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
     box-sizing: border-box;
@@ -94,9 +121,11 @@ button:active,
 /* Welcome Message */
 .welcome-message, .message {
     font-family: 'Playfair Display', serif;
-    color: #ff4500;
+    color: #8B0000;
     font-size: 24px;
     font-weight: bold;
+    text-align: justify; 
+    width: 100%;
 }
 
 /* User Registration and Login Section */
@@ -131,18 +160,67 @@ button:active,
     border-radius: 4px;
 }
 
+/* Apply the global font to all input, textarea, and select elements */
+input, textarea, select {
+    font-family: 'Playfair Display', serif;  
+    color: #046871; 
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    border-radius: 4px; 
+}
+
+/* Optionally: Customize the dropdown arrow for select elements */
+select {
+    -webkit-appearance: none; 
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    padding-right: 30px; 
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB...'); /* Custom arrow, replace with your preferred SVG */
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+}
+
+/* Styling the dropdown (select options) */
+select option {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: #8B0000;
+}
+
+/* Consistent text box styling for the Body textarea */
+textarea {
+    resize: vertical; 
+    min-height: 100px; 
+}
+
+/* Modify button styling to match the theme */
+button {
+    font-family: 'Playfair Display', serif;
+}
+
 /* Categories Section */
 .categories {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
+    margin-top: 30px;
+    max-width: 400px;
+    width: 100%; 
+    max-width: 100%;
+    text-align: justify;
 }
 
 .categories h2 {
     color: #444;
     text-align: center;
+    margin-bottom: 15px;
+}
+
+.categories ul {
+    list-style-type: none;
+    padding-left: 0;
 }
 
 .categories ul {
@@ -153,35 +231,147 @@ button:active,
 .categories li {
     background-color: #eee;
     margin: 10px 0;
-    padding: 10px;
+    padding: 15px 10px;
     border-radius: 4px;
     cursor: pointer;
+    text-align: justify;
+    margin-bottom: 10px
 }
 
 .categories li:hover {
     background-color: #ddd;
 }
 
+.category-name {
+    font-size: 28px;
+    color: #8B0000; /* Dark red or any color you prefer */
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
 /* Published Posts Section */
-.posts-section {
+.post {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin: 20px;
     padding: 10px;
+    max-width: 1200px;  
+    width: calc(100% - 40px);     
+    margin: 20px 0; 
 }
 
 .post-title {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
-    color: #333;
+    color: #333333;
+    margin-bottom: 10px;
 }
 
 .post-content {
     color: #555;
-    font-size: 16px;
+    font-size: 18px;
     margin-top: 5px;
+}
+
+.post-body {
+    font-size: 18px;
+    color: #555; 
+    margin-bottom: 10px;
+    max-width: 1200px;  
+}
+
+.post-user {
+    font-size: 16px;
+    color: #8B0000;
+    font-style: italic;
+}
+
+.post-category {
+    font-size: 16px;
+    font-weight: bold;
+    color: #8B0000;
+    margin-bottom: 15px;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+    .post {
+        width: 100%;  /* Full width for small screens */
+    }
+}
+
+/* General Container Styling for Forms */
+    .create-post-section {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
+    }
+    
+    .create-post-section input, 
+    .create-post-section textarea, 
+    .create-post-section select {
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+    
+    .create-post-section label {
+        font-size: 18px;
+        color: #8B0000;
+        margin-bottom: 10px;
+    }
+    
+    .create-post-section button {
+        padding: 12px 20px;
+        background-color: #046871;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: fit-content;
+        margin: 10px 0;
+    }
+    
+    .create-post-section button:hover {
+        background-color: #AA2D2D;
+    }    
+
+.like-button, .dislike-button {
+    background-color: #046871;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.like-button:hover, .dislike-button:hover {
+    background-color: #AA2D2D;
+}
+
+.create-post-link {
+    display: inline-block;
+    font-size: 18px;
+    color: #0066cc;
+    text-decoration: underline;
+    margin-bottom: 20px;
+}
+
+.create-post-link:hover {
+    color: #AA2D2D;
 }
 
 /* Footer Styling */
@@ -191,36 +381,68 @@ button:active,
     background-color: #046871;
     color: white !important;
     margin-top: 20px;
-    width: 100%; 
-    max-width: 1100px; 
+    width: 100%;  
     margin: 0 auto; 
     box-sizing: border-box; 
 }
 
-/* Search Bar Styling */
 .search-bar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background-color: #f5f5f5;
+    padding: 10px; /* Reduce padding */
+    border-radius: 8px; /* Smooth corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Single box shadow */
+    margin: 20px auto;
     width: 100%;
-    margin: 20px 0;
     max-width: 600px;
 }
 
 .search-form {
     display: flex;
     align-items: center;
-    justify-content: center;
     width: 100%;
     max-width: 500px;
 }
 
 .search-input {
     padding: 10px;
-    flex-grow: 1;
-    width: 100%; 
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
     margin-right: 10px;
+    height: 44px;
+    flex-grow: 1;
+}
+
+.search-button {
+    width: 200px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #046871;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.results-container {
+    text-align: left;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: none;
+    margin-top: 20px;
+}
+
+.results-container .no-results {
+    color: #AA2D2D;
+    font-size: 18px;
+    margin-top: 10px;
 }

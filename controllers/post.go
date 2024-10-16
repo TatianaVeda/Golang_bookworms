@@ -13,9 +13,14 @@ import (
 	"strconv"
 )
 
-// PostsHandler displays posts for a specific category based on the 'category' query parameter.
 func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Check if the user is logged in
+		isLoggedIn := false
+		if _, err := r.Cookie("session_id"); err == nil {
+			isLoggedIn = true
+		}
+
 		// Retrieve the category ID from the URL query parameter
 		categoryID := r.URL.Query().Get("category")
 		if categoryID == "" {
@@ -32,17 +37,26 @@ func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 			return
 		}
 
-		// Define the SQL query to filter posts based on the given category ID
-		query := `
-			SELECT posts.id, posts.title, posts.body, users.username, posts.created_at, categories.name 
-			FROM posts
-			JOIN users ON posts.user_id = users.id
-			JOIN categories ON posts.category_id = categories.id
-			WHERE categories.id = ?
-			ORDER BY posts.created_at DESC
-		`
+		// Fetch the category name based on the category ID
+		var categoryName string
+		err = db.QueryRow("SELECT name FROM categories WHERE id = ?", categoryIDInt).Scan(&categoryName)
+		if err != nil {
+			log.Printf("Error fetching category name for ID %d: %v", categoryIDInt, err)
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching category name.")
+			return
+		}
 
-		// Execute the query and check for errors
+		// Log the fetched category name for debugging
+		log.Printf("CategoryName: %s", categoryName)
+
+		// Fetch posts belonging to the category
+		query := `
+            SELECT posts.id, posts.title, posts.body, users.username, posts.created_at 
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            WHERE posts.category_id = ?
+            ORDER BY posts.created_at DESC
+        `
 		rows, err := db.Query(query, categoryIDInt)
 		if err != nil {
 			log.Printf("Error fetching posts for category %d: %v", categoryIDInt, err)
@@ -51,36 +65,35 @@ func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		// Prepare a slice to store the retrieved posts
+		// Prepare posts for rendering
 		var posts []structs.Post
 		for rows.Next() {
 			var post structs.Post
-			err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserName, &post.CreatedAt, &post.CategoryName)
+			err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserName, &post.CreatedAt)
 			if err != nil {
 				log.Printf("Error scanning post for category '%s': %v", categoryID, err)
 				continue
 			}
-
-			// Append each post to the posts slice
 			posts = append(posts, post)
 		}
 
-		// Check for any errors encountered during iteration
+		// Log posts for debugging
+		log.Printf("Posts: %+v", posts)
+
+		// Check for errors after iterating
 		if err = rows.Err(); err != nil {
 			log.Printf("Error iterating through posts for category '%s': %v", categoryID, err)
 			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error processing posts.")
 			return
 		}
 
-		// Debug output to check the retrieved posts
-		log.Printf("Filtered Posts for category '%s': %+v", categoryID, posts)
-
-		// Render the posts template with the filtered posts
-		tmpl := template.Must(template.ParseFiles("views/posts.html"))
-		err = tmpl.Execute(w, map[string]interface{}{
+		// Render the template with posts and login status
+		err = templates.ExecuteTemplate(w, "posts.html", map[string]interface{}{
 			"Posts":        posts,
-			"CategoryName": categoryID, // Display the category name if needed
+			"CategoryName": categoryName,
+			"IsLoggedIn":   isLoggedIn, // Pass login status for conditional display
 		})
+
 		if err != nil {
 			log.Printf("Template execution error for category '%s': %v", categoryID, err)
 			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering posts template.")

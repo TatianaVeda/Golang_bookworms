@@ -1,17 +1,15 @@
 {{ define "create_post" }}
 <div class="container">
     <h1>Create New Post</h1>
-    <div class="post">
-        <form action="/posts/create" method="POST">
-            <div class="form-group">
+    <div class="create-post-section">
+        <form action="posts/create" method="POST">           
+            
                 <label for="post-title" class="form-label">Title:</label><br>
                 <input type="text" id="title" name="title" class="form-input" required><br><br>
-            </div>
-            <div class="form-group">
+
                 <label for="post-content" class="form-label">Body:</label><br>
                 <textarea type="text" id="body" name="body" class="form-textarea" required></textarea><br><br>
-            </div>
-            <div class="form-group">
+            
                 <label for="category">Category:</label>
                 <select id="category" name="category_id" required>
                     <option value="">Select a Category</option>
@@ -19,8 +17,7 @@
                     <option value="{{.ID}}">{{.Name}}</option>
                     {{end}}
                 </select>
-                
-            </div>
+                            </div>
             <div class="form-group">
                 <input type="submit" value="Create Post" class="form-button">
             </div>

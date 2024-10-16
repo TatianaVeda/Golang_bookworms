@@ -24,7 +24,7 @@
                 <input type="text" name="query" placeholder="Search posts, topics, or users..." class="search-input" required>
                 <button type="submit" class="search-button">Search 🔍</button>
             </form>
-        </div>                        
+        </div>                                       
 
         {{if not .IsLoggedIn}}
         {{template "auth" .}} <!-- Include the auth template here -->
@@ -36,30 +36,16 @@
             {{end}}
 
             <br><p class="message">You are logged in! Feel free to comment💬, like👍, create a post below📝 or go to your <a href="/profile">profile</a>.</p>
-            <form action="/logout" method="POST">
+            <form action="/logout" method="POST" class="logout-container">
                 <button type="submit" class="logout-button">Log Out 🔓</button>
-            </form>
+            </form>            
 
             <!-- Create Post Section -->
             {{template "create_post" .}}
         {{end}}
 
         <!-- Categories Section -->
-        <h2>Sort by Category📚</h2>
         {{template "categories" .}}
-
-        <!-- Published Posts Section -->
-        <div class="posts-section">
-            <h2>Published Posts📜</h2>
-            <div class="post">
-                <p class="post-title">Bookcrossing shelves at train stations</p>
-                <p class="post-content">I once found an incredible book there</p>
-            </div>
-            <div class="post">
-                <p class="post-title">Understanding Modern Poetry</p>
-                <p class="post-content">Nope...</p>
-            </div>
-        </div>
 
         <!-- Footer Section -->
         <div class="footer">

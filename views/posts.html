@@ -8,47 +8,49 @@
     <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
+    <div class="back-home">
+        <a href="/" class="home-button">Home 🏠</a>
+    </div>
+
     <div class="container">
         <div class="posts-section">
-            <h1>All Posts in Category: {{.CategoryName}}</h1>
+            <!-- Category Name -->
+            <h1 class="category-name">All Posts in Category {{.CategoryName}}</h1>
 
-            {{if .IsLoggedIn}}
-                <a href="/posts/create">Create New Post🖋️</a>
-            {{else}}
-                <p>Log in to create new posts or interact with posts!</p>
-            {{end}}
-
+            <!-- Posts List -->
             {{if .Posts}}
             {{range .Posts}}
             <div class="post">
-                <h2>{{.Title}}</h2>
-                <p>{{.Body}}</p>
-                <p>Posted by: {{.UserName}}</p>
-                <p>Category: {{.CategoryName}}</p>
-            
+                <!-- Post Title -->
+                <h2 class="post-title">{{.Title}}</h2>
+                <!-- Post Body -->
+                <p class="post-body">{{.Body}}</p>
+                <!-- User who posted -->
+                <p class="post-user">Posted by: {{.UserName}}</p>
+                <!-- Category Name -->
+                <p class="post-category">Category: {{.CategoryName}}</p>
+
+                <!-- Likes and Dislikes -->
                 {{if $.IsLoggedIn}}
                     <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
-            
                     <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
                         <input type="hidden" name="post_id" value="{{.ID}}">
                         <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
                         <input type="hidden" name="like_type" value="1">
-                        <button type="submit" value="like">Like🤩</button>
+                        <button type="submit" class="like-button">Like🤩</button>
                     </form>
-                    
                     <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
                         <input type="hidden" name="post_id" value="{{.ID}}">
                         <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
                         <input type="hidden" name="like_type" value="-1">
-                        <button type="submit" value="dislike">Dislike👿</button>
-                    </form>              
+                        <button type="submit" class="dislike-button">Dislike👿</button>
+                    </form>
                 {{else}}
                     <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
                 {{end}}
                 <hr>
             </div>
             {{end}}
-            
             {{else}}
                 <p>No posts found in this category. Please create a new post to get started!</p>
             {{end}}
