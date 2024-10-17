@@ -255,80 +255,52 @@ func GetSession(r *http.Request) (int, error) {
 	return userID, nil
 }
 
+// Updated login handler
 func LoginUser(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received request with method: %s, URL: %s", r.Method, r.URL.Path)
-
-	if r.Method != http.MethodPost {
-		log.Printf("Invalid request method: %s. Redirecting to /", r.Method)
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
-	if err := r.ParseForm(); err != nil {
-		log.Printf("Error parsing form: %v", err)
-		renderModalWithMessage(w, r, "Unable to parse form data", false, false)
-		return
-	}
-
-	log.Println("Successfully parsed login form.")
-
 	if r.Method == http.MethodPost {
-		if err := r.ParseForm(); err != nil {
-			renderModalWithMessage(w, r, "Unable to parse form data", false, false)
+		err := r.ParseForm()
+		if err != nil {
+			log.Println("Error parsing form:", err)
+			http.Error(w, "Unable to parse form", http.StatusBadRequest)
 			return
 		}
 
-		// Validate CSRF token
+		// Get CSRF token and validate
 		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
-			renderModalWithMessage(w, r, "Invalid CSRF token.", false, false)
+			log.Println("Invalid CSRF token")
+			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 			return
 		}
 
-		// Extract form data
+		// Authenticate the user
 		email := r.FormValue("email")
 		password := r.FormValue("password")
-
-		// Check for empty fields
-		if email == "" || password == "" {
-			renderModalWithMessage(w, r, "Email and password cannot be empty.", false, false)
-			return
-		}
-
-		// Retrieve user info from database
-		row := database.DB.QueryRow(`SELECT id, password FROM users WHERE email = ?`, email)
-		var id int
-		var storedHashedPassword string
-		err = row.Scan(&id, &storedHashedPassword)
-		if err == sql.ErrNoRows {
-			renderModalWithMessage(w, r, "Invalid email or password.", false, false)
-			return
-		} else if err != nil {
-			renderModalWithMessage(w, r, "Error retrieving user. Please try again.", false, false)
-			return
-		}
-
-		// Check password
-		if err := bcrypt.CompareHashAndPassword([]byte(storedHashedPassword), []byte(password)); err != nil {
-			renderModalWithMessage(w, r, "Invalid email or password.", false, false)
-			return
-		}
-
-		// Successful login
-		sessionID, err := CreateSession(id)
+		userID, err := Authenticate(email, password)
 		if err != nil {
-			renderModalWithMessage(w, r, "Error creating session.", true, true)
+			log.Println("Authentication failed:", err)
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 			return
 		}
 
-		// Set session cookie and redirect
+		// Create session
+		sessionID, err := CreateSession(userID)
+		if err != nil {
+			log.Println("Error creating session:", err)
+			http.Error(w, "Error creating session", http.StatusInternalServerError)
+			return
+		}
+
+		// Set session cookie
 		http.SetCookie(w, &http.Cookie{
-			Name:  "session_id",
-			Value: sessionID,
-			Path:  "/",
+			Name:    "session_id",
+			Value:   sessionID,
+			Expires: time.Now().Add(24 * time.Hour),
+			Path:    "/",
 		})
 
+		// Redirect to homepage
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
@@ -337,16 +309,21 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Retrieve the session cookie and clear it
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home if cookie is not found
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	// Lock and delete the session from the in-memory store
+	sessionID := cookie.Value
+
+	// Attempt to lock and delete the session from the in-memory store
 	SessionMutex.Lock()
-	delete(SessionStore, cookie.Value)
+	_, sessionExists := SessionStore[sessionID]
+	if sessionExists {
+		delete(SessionStore, sessionID)
+	}
 	SessionMutex.Unlock()
 
-	// Set the cookie to expire immediately
+	// Always remove the session cookie, even if the session doesn't exist
 	http.SetCookie(w, &http.Cookie{
 		Name:   "session_id",
 		Value:  "",
@@ -356,4 +333,38 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to the homepage or login page after logout
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// Authenticate checks if the user's email and password are valid
+func Authenticate(email, password string) (int, error) {
+	var userID int
+	var storedPassword string
+
+	// Assuming database.DB is your DB connection
+	err := database.DB.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, errors.New("invalid credentials")
+		}
+		return 0, err
+	}
+
+	// Check if password matches (you'll likely use bcrypt for hashing)
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)); err != nil {
+		return 0, errors.New("invalid credentials")
+	}
+
+	return userID, nil
+}
+
+func VerifySession(sessionID string) (int, error) {
+	SessionMutex.Lock()
+	defer SessionMutex.Unlock()
+
+	userID, exists := SessionStore[sessionID]
+	if !exists {
+		return 0, errors.New("invalid session")
+	}
+
+	return userID, nil
 }

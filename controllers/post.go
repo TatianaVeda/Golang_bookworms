@@ -3,6 +3,7 @@ package controllers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"literary-lions/database"
@@ -11,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
@@ -109,8 +111,14 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	isLoggedIn := false
 
 	// Check if a valid session cookie is present
-	if _, sessErr := r.Cookie("session_id"); sessErr == nil {
-		isLoggedIn = true
+	cookie, sessErr := r.Cookie("session_id")
+	if sessErr == nil {
+		sessionID := cookie.Value
+		// Verify session ID is valid in session store
+		sessionUserID, sessionErr := VerifySession(sessionID)
+		if sessionErr == nil && sessionUserID > 0 {
+			isLoggedIn = true
+		}
 	}
 
 	// Default categoryID to 0 if not provided
@@ -139,11 +147,9 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
         GROUP BY post_id
     ) AS likes_table ON posts.id = likes_table.post_id`
 
-	// Apply filtering for category ID if provided
 	if categoryIDInt > 0 {
 		query += " WHERE posts.category_id = ? ORDER BY posts.created_at DESC"
 		rows, err = database.DB.Query(query, categoryIDInt)
-		// Check for errors before proceeding
 		if err != nil {
 			http.Error(w, "Error fetching posts", http.StatusInternalServerError)
 			log.Printf("Database query error: %v", err)
@@ -166,16 +172,8 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 		categoryName = "All Categories"
 	}
 
-	// Ensure rows is not nil
-	if rows == nil {
-		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
-		log.Printf("Query returned nil rows")
-		return
-	}
-
 	defer rows.Close()
 
-	// Read posts into the slice with their latest like/dislike counts
 	var posts []structs.Post
 	for rows.Next() {
 		var post structs.Post
@@ -186,39 +184,32 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Fetch comments for the post
-		log.Printf("Fetching comments for post ID: %d", post.ID)
-		commentRows, err := database.DB.Query("SELECT id, body, user_id FROM comments WHERE post_id = ?", post.ID)
+		commentRows, err := database.DB.Query("SELECT body, user_id FROM comments WHERE post_id = ?", post.ID)
 		if err != nil {
 			log.Printf("Error fetching comments for post ID %d: %v", post.ID, err)
 			continue
 		}
-
 		defer commentRows.Close()
 
 		var comments []structs.Comment
 		for commentRows.Next() {
 			var comment structs.Comment
-			err := commentRows.Scan(&comment.ID, &comment.Body, &comment.UserName)
+			err := commentRows.Scan(&comment.Body, &comment.UserName)
 			if err == nil {
-				log.Printf("Fetched comment for post ID %d: %v", post.ID, comment)
 				comments = append(comments, comment)
 			} else {
 				log.Printf("Error scanning comment for post ID %d: %v", post.ID, err)
 			}
 		}
 		post.Comments = comments
-		log.Printf("Total comments fetched for post ID %d: %d", post.ID, len(comments))
-
 		posts = append(posts, post)
 	}
 
-	// Handle any error that occurred during row iteration
 	if err = rows.Err(); err != nil {
 		http.Error(w, "Error processing posts", http.StatusInternalServerError)
 		return
 	}
 
-	// Pass the data to the template
 	tmpl := template.Must(template.ParseFiles("views/posts.html"))
 	err = tmpl.Execute(w, map[string]interface{}{
 		"Posts":        posts,
@@ -497,7 +488,8 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("UpdateLikeDislikeHandler: Received a request")
 
-		if r.Method != http.MethodPost {
+		// Ensure the request method is POST (or PUT for updating)
+		if r.Method != http.MethodPost && r.Method != http.MethodPut {
 			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 			return
 		}
@@ -643,34 +635,40 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		userID, err := GetUserIDFromSession(r)
-		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-
-		// Get form data
-		title := r.FormValue("title")
-		body := r.FormValue("body")
-		categoryID := r.FormValue("category_id")
-
-		// Validate form fields
-		if title == "" || body == "" || categoryID == "" {
-			http.Error(w, "Title, body, and category are required.", http.StatusBadRequest)
-			return
-		}
-
-		// Insert post into database
-		_, err = database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", title, body, userID, categoryID)
-		if err != nil {
-			http.Error(w, "Unable to create post.", http.StatusInternalServerError)
-			return
-		}
-
-		// Redirect to the category page
-		http.Redirect(w, r, fmt.Sprintf("/posts?category=%s", categoryID), http.StatusSeeOther)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
 	}
+
+	// Parse JSON body
+	var postData struct {
+		Title      string `json:"title"`
+		Body       string `json:"body"`
+		CategoryID int    `json:"category_id"`
+		UserID     int    `json:"user_id"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Validate fields
+	if postData.Title == "" || postData.Body == "" || postData.CategoryID == 0 {
+		http.Error(w, "Title, body, and category are required.", http.StatusBadRequest)
+		return
+	}
+
+	// Insert post into database
+	_, err = database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", postData.Title, postData.Body, postData.UserID, postData.CategoryID)
+	if err != nil {
+		http.Error(w, "Unable to create post.", http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect to the category page
+	http.Redirect(w, r, fmt.Sprintf("/posts?category=%d", postData.CategoryID), http.StatusSeeOther)
 }
 
 func CreateComment(w http.ResponseWriter, r *http.Request) {
@@ -884,4 +882,50 @@ func FilterPostsByCategory(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Template execution error for category '%d': %v", categoryIDInt, err)
 		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error rendering posts template.")
 	}
+}
+
+func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract post ID from the URL
+	postIDStr := strings.TrimPrefix(r.URL.Path, "/posts/delete/")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil || postID <= 0 {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the user ID from session to ensure the user can only delete their posts
+	userID, err := GetUserIDFromSession(r)
+	if err != nil {
+		http.Error(w, "Unauthorized. Please log in.", http.StatusUnauthorized)
+		return
+	}
+
+	// Verify that the post exists and belongs to the user
+	var ownerID int
+	err = database.DB.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&ownerID)
+	if err != nil {
+		http.Error(w, "Post not found or you don't have permission to delete", http.StatusForbidden)
+		return
+	}
+
+	// Only allow the owner to delete the post
+	if ownerID != userID {
+		http.Error(w, "You don't have permission to delete this post", http.StatusForbidden)
+		return
+	}
+
+	// Delete the post from the database
+	_, err = database.DB.Exec("DELETE FROM posts WHERE id = ?", postID)
+	if err != nil {
+		http.Error(w, "Unable to delete post", http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect to the posts list after deletion
+	http.Redirect(w, r, "/posts", http.StatusSeeOther)
 }
