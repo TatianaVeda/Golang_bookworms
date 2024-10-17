@@ -183,14 +183,18 @@ func AddPostCategory(postID, categoryID int) error {
 	return nil
 }
 
-func GetUsernameByID(userID int) (string, error) {
+func GetUserNameByID(userID int) string {
 	var username string
 	err := DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
 	if err != nil {
-		return "", fmt.Errorf("error fetching username: %v", err)
+		if err == sql.ErrNoRows {
+			log.Printf("No user found with ID %d", userID)
+			return "Unknown"
+		}
+		log.Printf("Error fetching username for user ID %d: %v", userID, err)
+		return "Unknown" // Return default "Unknown" if error occurs
 	}
-
-	return username, err
+	return username
 }
 
 func GetUserID(username string) (int, error) {

@@ -66,7 +66,7 @@ func main() {
 	http.Handle("/posts", StripTrailingSlash(http.HandlerFunc(controllers.ShowPosts)))
 	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePostHandler)))
 	http.HandleFunc("/logout", controllers.LogoutHandler)
-	http.HandleFunc("/posts/comment", controllers.CreateComment)
+	http.Handle("/posts/comment", controllers.RequireSession(http.HandlerFunc(controllers.CreateComment)))
 	http.HandleFunc("/myposts", controllers.MyPostsHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/posts/like", controllers.LikePostHandler)

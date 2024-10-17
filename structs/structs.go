@@ -16,6 +16,8 @@ type Post struct {
 	DislikeCount int
 	CategoryName string
 	CategoryID   int
+	Comments     []Comment
+	postID       int
 }
 
 // Comment represents a comment in the system
@@ -23,9 +25,11 @@ type Comment struct {
 	ID        int
 	Body      string
 	PostID    int
-	CreatedAt string
+	CreatedAt time.Time
 	Poster    string
 	Title     string
+	UserName  string
+	UserID    int
 }
 
 // Category represents a category for a post

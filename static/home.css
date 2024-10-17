@@ -257,7 +257,9 @@ button {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin: 20px;
     padding: 10px;
-    max-width: 1200px;  
+    width: 100% !important;  
+    max-width: 100% !important;
+    box-sizing: border-box;
     width: calc(100% - 40px);     
     margin: 20px 0; 
 }
@@ -301,6 +303,48 @@ button {
         width: 100%;  /* Full width for small screens */
     }
 }
+
+.comment {
+    margin-bottom: 10px; /* Adds space between comments */
+    font-size: 18px; /* Adjusts font size */
+    line-height: 1.5; /* Better line spacing */
+}
+
+.comments-section {
+    width: 100%; /* Make the comment section take the full width of the parent container */
+    max-width: 100%;
+    box-sizing: border-box; /* Ensure padding doesn't break the layout */
+    padding: 20px; /* Add some padding for spacing */
+    margin-top: 20px;
+}
+
+.comments-section textarea {
+    width: 100%;  /* Make the comment textarea full width */
+    max-width: 100%;
+    min-height: 120px; /* A reasonable height for writing comments */
+    box-sizing: border-box; /* Make sure padding is included in the total width */
+    padding: 10px; /* Add padding inside the textarea */
+    margin-bottom: 10px; /* Some space below the textarea */
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.comments-section button {
+    width: auto;  /* Keep the button size proportional */
+    padding: 10px 20px; /* Make the button more clickable */
+    background-color: #046871; /* Match the theme */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.comments-section button:hover {
+    background-color: #AA2D2D; /* Change the button color on hover */
+}
+
 
 /* General Container Styling for Forms */
     .create-post-section {
@@ -381,7 +425,7 @@ button {
     background-color: #046871;
     color: white !important;
     margin-top: 20px;
-    width: 100%;  
+    width: 1200px;  
     margin: 0 auto; 
     box-sizing: border-box; 
 }
