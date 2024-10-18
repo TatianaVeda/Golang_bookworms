@@ -8,7 +8,7 @@
 </head>
 <body>
     <a href="/" class="home-btn">Back to Homepage</a>
-    
+
     <div class="profile-container">
         <div class="profile-picture">
             <img src="static/images/babylion.jpg" alt="User Profile Picture">
@@ -39,13 +39,13 @@
             <section id="posts-content">
                 <h2>Your Posts</h2>
                 <ul>
-                    {{range .ProfileData.Posts}}
+                {{range .ProfileData.Posts}}
                     <li>
                         <h2>{{.Title}}</h2>
                         <p>{{.Body}}</p>
-                        <p>{{.CreatedAt}} by {{.Poster}}</p>
+                        <p>{{.CreatedAt}} by {{.UserName}}</p>
                     </li> 
-                    {{end}}
+                {{end}}
                 </ul>
             </section>
 

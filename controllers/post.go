@@ -302,7 +302,6 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 				http.Error(w, "Error fetching liked posts", http.StatusInternalServerError)
 				return
 			}
-			fmt.Println("len of liked posts", len(likedPosts))
 
 			// Convert []map[string]interface{} to []structs.Post
 			var likedPostsConverted []structs.Post
@@ -315,7 +314,6 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 				likedPostsConverted = append(likedPostsConverted, post)
 			}
 			profileData.LikedPosts = likedPostsConverted
-			fmt.Println("len of profileData liked posts", len(profileData.LikedPosts))
 
 			// Fetch liked comments
 			likedComments, err := database.FetchLikedComments(userID)
@@ -336,6 +334,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			}
 			profileData.LikedComments = likedCommentsConverted
 		}
+		fmt.Println("userPosts len at the end", len(profileData.Posts))
 
 		// Render the profile template
 		templates.ExecuteTemplate(w, "profile.html", map[string]interface{}{
