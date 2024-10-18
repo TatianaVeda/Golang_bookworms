@@ -15,6 +15,8 @@ import (
 	"strings"
 )
 
+var db *sql.DB
+
 func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the user is logged in
@@ -76,6 +78,12 @@ func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 				log.Printf("Error scanning post for category '%s': %v", categoryID, err)
 				continue
 			}
+			// getting comments for posts
+			post.Comments, err = FetchCommentsForPost(db, post.ID) // fetching comments
+			if err != nil {
+				log.Printf("Error fetching comments for post ID %d: %v", post.ID, err)
+			}
+
 			posts = append(posts, post)
 		}
 
@@ -88,6 +96,22 @@ func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error processing posts.")
 			return
 		}
+		/* 	// Логика для получения постов
+		posts, err = database.FetchAllPosts() // функция для получения всех постов
+		if err != nil {
+			http.Error(w, "Unable to fetch posts", http.StatusInternalServerError)
+			return
+		}
+
+		// Для каждого поста нужно получить комментарии
+		for i, post := range posts {
+			comments, err := FetchCommentsForPost(db, post.ID)
+			if err != nil {
+				http.Error(w, "Unable to fetch comments", http.StatusInternalServerError)
+				return
+			}
+			posts[i].Comments = comments // Добавляем комментарии к каждому посту
+		} */
 
 		// Render the template with posts and login status
 		err = templates.ExecuteTemplate(w, "posts.html", map[string]interface{}{
@@ -446,41 +470,69 @@ func LikePostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Redirect back to the same page
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		// Handle redirect back to the category or the referring page
+		categoryID := r.URL.Query().Get("category")
+		if categoryID != "" {
+			log.Printf("Redirecting back to category page with category ID: %s", categoryID)
+			http.Redirect(w, r, "/posts?category="+categoryID, http.StatusSeeOther)
+		} else {
+			log.Println("Redirecting back to the referring page")
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		}
 	}
 }
 
 func DislikePostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
+		// Check if the user is logged in
 		userID, err := GetSession(r)
 		if err != nil {
+			log.Println("LikePostHandler: User not logged in, redirecting to login.")
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
+		// Retrieve the post ID from the form
 		postID := r.FormValue("post_id")
 		if postID == "" {
+			log.Println("DislikePostHandler: Invalid post ID received.")
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
 			return
 		}
+		log.Printf("DislikePostHandler: Received post_id = %s for user_id = %d", postID, userID)
 
+		// Check if the user has already liked or disliked the post
 		var existingLikeType int
 		err = database.DB.QueryRow("SELECT like_type FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID).Scan(&existingLikeType)
 		if err == sql.ErrNoRows {
+			log.Println("DislikePostHandler:: No previous like/dislike found, inserting a new like.")
+			// No existing like/dislike, insert a new like
 			_, err = database.DB.Exec("INSERT INTO likes_dislikes (post_id, user_id, like_type) VALUES (?, ?, -1)", postID, userID)
 		} else if existingLikeType == 1 {
+			log.Println("DislikePostHandler:: Already liked, removing like.")
+			// Remove like if the same button is clicked
 			_, err = database.DB.Exec("UPDATE likes_dislikes SET like_type = -1 WHERE post_id = ? AND user_id = ?", postID, userID)
 		} else if existingLikeType == -1 {
+			log.Println("DislikePostHandler:: Previously disliked, changing to like.")
+			// If disliked, change it to a like
 			_, err = database.DB.Exec("DELETE FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID)
 		}
 
 		if err != nil {
+			log.Printf("DislikePostHandler:: Error modifying like/dislike: %v", err)
 			http.Error(w, "Error processing dislike action", http.StatusInternalServerError)
 			return
 		}
 
-		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+		// Handle redirect back to the category or the referring page
+		categoryID := r.URL.Query().Get("category")
+		if categoryID != "" {
+			log.Printf("Redirecting back to category page with category ID: %s", categoryID)
+			http.Redirect(w, r, "/posts?category="+categoryID, http.StatusSeeOther)
+		} else {
+			log.Println("Redirecting back to the referring page")
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		}
 	}
 }
 
@@ -505,9 +557,9 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 		// Retrieve form values for post_id, like_type, and category_id
 		postIDStr := r.FormValue("post_id")
 		likeTypeStr := r.FormValue("like_type")
-		categoryIDStr := r.FormValue("category_id")
+		//categoryIDStr := r.FormValue("category_id") remove category checking
 
-		log.Printf("Incoming form values: post_id=%s, like_type=%s, category_id=%s", postIDStr, likeTypeStr, categoryIDStr)
+		log.Printf("Incoming form values: post_id=%s, like_type=%s", postIDStr, likeTypeStr) //, categoryIDStr, category_id=%s
 
 		// Validate post ID and like type
 		postID, err := strconv.Atoi(postIDStr)
@@ -524,13 +576,12 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Validate category ID
-		categoryID, err := strconv.Atoi(categoryIDStr)
+		/* categoryID, err := strconv.Atoi(categoryIDStr)
 		if err != nil || categoryID <= 0 {
 			http.Error(w, "Category ID is required", http.StatusBadRequest)
 			log.Println("Invalid category ID:", categoryIDStr, "Error:", err)
 			return
-		}
+		} */
 
 		// Check if the user has already liked or disliked the post
 		var existingLikeType int
@@ -575,9 +626,19 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		categoryID := r.URL.Query().Get("category")
 		// Pass the updated counts back to the ShowPosts handler for the correct category
 		log.Printf("Updated counts for post %d: Likes = %d, Dislikes = %d\n", postID, likeCount, dislikeCount)
-		http.Redirect(w, r, fmt.Sprintf("/posts?category=%d", categoryID), http.StatusSeeOther)
+
+		// Logic for redirection depending on the presence of the category
+		if categoryID != "" {
+			log.Printf("Redirecting back to category page with category ID: %s", categoryID)
+			http.Redirect(w, r, fmt.Sprintf("/posts?category=%s", categoryID), http.StatusSeeOther)
+		} else {
+			log.Println("Redirecting back to the referring page")
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			//http.Redirect(w, r, "/posts?category=%d", http.StatusSeeOther)
+		}
 	}
 }
 
@@ -685,20 +746,86 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 
 		// Validate form inputs
 		if postID == "" || commentBody == "" {
-			http.Error(w, "Post ID and comment body cannot be empty.", http.StatusBadRequest)
+			http.Error(w, "Post ID and comment body cannot be empty", http.StatusBadRequest)
+			return
+		}
+
+		// Convert post ID to an integer for database use
+		postIDInt, err := strconv.Atoi(postID)
+		if err != nil {
+			http.Error(w, "Invalid PostID, error converting postID to int", http.StatusBadRequest)
 			return
 		}
 
 		// Insert the comment into the database
-		_, err = database.DB.Exec("INSERT INTO comments (user_id, post_id, body) VALUES (?, ?, ?)", userID, postID, commentBody)
+		//_, err = database.DB.Exec("INSERT INTO comments (user_id, post_id, body) VALUES (?, ?, ?)", userID, postID, commentBody)
+		_, err = database.WriteDB.Exec("INSERT INTO comments (user_id, post_id, body, created_at, likes, dislikes) VALUES (?, ?, ?, ?, ?)", userID, postIDInt, commentBody)
 		if err != nil {
 			http.Error(w, "Error posting comment.", http.StatusInternalServerError)
+			log.Printf("Error posting comment: %v", err)
 			return
 		}
 
 		// Redirect back to the post after adding the comment
 		http.Redirect(w, r, fmt.Sprintf("/posts?post_id=%s", postID), http.StatusSeeOther)
+		//http.Redirect(w, r, fmt.Sprintf("/posts/?post_id=%d", postIDInt), http.StatusSeeOther)
+		//http.Redirect(w, r, "/posts/"+postID, http.StatusSeeOther)
+		return
+
 	}
+}
+func LikeComment(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// Получаем ID комментария
+		commentID := r.FormValue("comment_id")
+		if commentID == "" {
+			http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+			return
+		}
+
+		// Преобразуем ID комментария в целое число
+		commentIDInt, err := strconv.Atoi(commentID)
+		if err != nil {
+			http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+			return
+		}
+
+		// Обновляем количество лайков в базе данных
+		_, err = database.WriteDB.Exec("UPDATE comments SET likes = likes + 1 WHERE id = ?", commentIDInt)
+		if err != nil {
+			http.Error(w, "Unable to like comment", http.StatusInternalServerError)
+			log.Printf("Error liking comment: %v", err)
+			return
+		}
+
+		// Опционально: перенаправляем обратно на пост или возвращаем JSON для динамического обновления на странице
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	}
+}
+
+// fetching comments by Post ID
+func FetchCommentsForPost(db *sql.DB, postID int) ([]structs.Comment, error) {
+	var comments []structs.Comment
+	rows, err := db.Query("SELECT id, user_id, post_id, body, created_at, likes, dislikes FROM comments WHERE post_id = ?", postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var comment structs.Comment
+		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.PostID, &comment.Body, &comment.CreatedAt, &comment.LikeCount, &comment.DislikeCount); err != nil {
+			return nil, err
+		}
+		// Fetch the poster name using userID
+		err = database.DB.QueryRow("SELECT username FROM users WHERE id = ?", comment.UserID).Scan(&comment.Poster)
+		if err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, comment)
+	}
+	return comments, nil //rows.Err()
 }
 
 func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
@@ -929,3 +1056,37 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect to the posts list after deletion
 	http.Redirect(w, r, "/posts", http.StatusSeeOther)
 }
+
+/* func PostHandler(w http.ResponseWriter, r *http.Request) {
+	// Получите ID поста из URL
+	postID := r.URL.Path[len("/posts/"):] // Отделите ID от URL
+	var post structs.Post
+	// Получите данные поста из базы данных
+	err := database.DB.QueryRow("SELECT id, title, body FROM posts WHERE id = ?", postID).Scan(&post.ID, &post.Title, &post.Body)
+	if err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	// Получите комментарии для этого поста
+	comments, err := FetchCommentsForPost(db, post.ID)
+	if err != nil {
+		http.Error(w, "Unable to fetch comments", http.StatusInternalServerError)
+		return
+	}
+
+	// Передайте данные в шаблон
+	data := map[string]interface{}{
+		"Post":       post,
+		"Comments":   comments,
+		"IsLoggedIn": true, // или ваша логика проверки авторизации
+	}
+
+	// Отрисуйте шаблон с данными
+	tmpl := template.Must(template.ParseFiles("views/post.html"))
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Unable to render template", http.StatusInternalServerError)
+	}
+}
+*/

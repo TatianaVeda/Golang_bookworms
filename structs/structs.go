@@ -22,14 +22,16 @@ type Post struct {
 
 // Comment represents a comment in the system
 type Comment struct {
-	ID        int
-	Body      string
-	PostID    int
-	CreatedAt time.Time
-	Poster    string
-	Title     string
-	UserName  string
-	UserID    int
+	ID           int
+	Body         string
+	PostID       int
+	CreatedAt    time.Time
+	Poster       string
+	Title        string
+	UserName     string
+	UserID       int
+	LikeCount    int
+	DislikeCount int
 }
 
 // Category represents a category for a post
