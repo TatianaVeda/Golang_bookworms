@@ -1,0 +1,22 @@
+
+<!-- {{template "post" .}}  -->
+{{define "post"}}
+<h1>{{.Post.Title}}</h1>
+<p>{{.Post.Body}}</p>
+
+<h3>Комментарии:</h3>
+{{range .Comments}}
+    <div>
+        <strong>{{.Poster}}:</strong> {{.Body}} <br>
+        <small>Лайков: {{.LikeCount}}, Дизлайков: {{.DislikeCount}}</small>
+    </div>
+{{end}}
+
+{{if .IsLoggedIn}}
+    <form action="/posts/comment" method="POST">
+        <input type="hidden" name="post_id" value="{{.Post.ID}}">
+        <textarea name="body" required></textarea>
+        <button type="submit">Добавить комментарий</button>
+    </form>
+{{end}}
+{{end}}

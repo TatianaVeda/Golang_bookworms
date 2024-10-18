@@ -30,52 +30,87 @@
                     <!-- Category Name -->
                     <p class="post-category">Category: {{.CategoryName}}</p>
 
-                    <!-- Likes and Dislikes -->
-                    {{if $.IsLoggedIn}}
-                        <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
-                        <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
-                            <input type="hidden" name="post_id" value="{{.ID}}">
-                            <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
-                            <input type="hidden" name="like_type" value="1">
-                            <button type="submit" class="like-button">Like🤩</button>
-                        </form>
-                        <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
-                            <input type="hidden" name="post_id" value="{{.ID}}">
-                            <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
-                            <input type="hidden" name="like_type" value="-1">
-                            <button type="submit" class="dislike-button">Dislike👿</button>
-                        </form>
+                <!-- <div class="comments">
+                <p>Comments:</p>
+                <ul>{{range .Comments}}
+                    <div class="comment"></div>
+                    <li><p>{{.Body}} </p>/</li>
+                    <small>Posted by: {{.UserName}} on {{.CreatedAt}}</small>
+                    <form method="post" action="/comments/like">
+                        <input type="hidden" name="comment_id" value="{{.ID}}">
+                        <button type="submit">👍 Likes: {{.LikeCount}},| Dislikes: {{.DislikeCount}}</button>
+                    </form>
+                      </div>
+                  </ul>
+                    {{end}} -->
+                
+               <!-- Likes and Dislikes -->
+                {{if $.IsLoggedIn}}
+                    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+                    <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
+                        <input type="hidden" name="post_id" value="{{.ID}}">
+                        <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
+                        <input type="hidden" name="like_type" value="1">
+                        <button type="submit" class="like-button">Like🤩</button>
+                    </form>
+                    <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
+                        <input type="hidden" name="post_id" value="{{.ID}}">
+                        <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
+                        <input type="hidden" name="like_type" value="-1">
+                        <button type="submit" class="dislike-button">Dislike👿</button>
+                    </form>
+                    <form action="/posts" method="POST">
+                        <input type="hidden" name="post_id" value="{{.ID}}">
+                        <textarea name="body" placeholder="Leave a comment..." required></textarea>
+                        <button type="submit">Add Comment</button>
+                    </form>
+                   
+
+                  <div class="comments">
+                    <h3>Comments:</h3>
+                        {{range .Comments}}
+                        <div class="comment">
+                            <p>{{.Body}}</p>
+                            <strong>Posted by: {{.Poster}}:</strong> {{.Body}} <br>
+                            <li>{{.Body}} - User ID: {{.UserID}}</li>
+                            <small>on {{.CreatedAt}} Лайков: {{.LikeCount}}, Дизлайков: {{.DislikeCount}}</small>
+                            <form method="post" action="/posts">
+                                <input type="hidden" name="comment_id" value="{{.ID}}">
+                                <button type="submit">👍 Like ({{.LikeCount}})</button>
+                            </form>
+                        </div>
+                        {{end}}
+                {{else}}
+                    <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
+                {{end}}
+                <!-- Comments for the current post -->
+                <div class="comments-section">
+                    <h3>Comments</h3>
+                    {{if .Comments}}
+                        {{range .Comments}}
+                        <div class="comment">
+                            <p>{{.Body}} - <strong>{{.UserName}}</strong></p> <!-- Display comment body and username -->
+                        </div>
+                        {{end}}
                     {{else}}
-                        <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
+                        <p>No comments yet. Be the first to comment!</p>
                     {{end}}
 
-                    <!-- Comments for the current post -->
-                    <div class="comments-section">
-                        <h3>Comments</h3>
-                        {{if .Comments}}
-                            {{range .Comments}}
-                            <div class="comment">
-                                <p>{{.Body}} - <strong>{{.UserName}}</strong></p> <!-- Display comment body and username -->
-                            </div>
-                            {{end}}
-                        {{else}}
-                            <p>No comments yet. Be the first to comment!</p>
-                        {{end}}
-
-                        <!-- Add a new comment -->
-                        {{if $.IsLoggedIn}}
-                            <form action="/posts/comment" method="POST">
-                                <input type="hidden" name="post_id" value="{{.ID}}">
-                                <textarea name="body" placeholder="Write your comment..." required></textarea>
-                                <button type="submit">Comment</button>
-                            </form>
-                        {{else}}
-                            <p><em>Log in to comment.</em></p>
-                        {{end}}
-                    </div>
-                    <hr>
+                    <!-- Add a new comment -->
+                    {{if $.IsLoggedIn}}
+                        <form action="/posts/comment" method="POST">
+                            <input type="hidden" name="post_id" value="{{.ID}}">
+                            <textarea name="body" placeholder="Write your comment..." required></textarea>
+                            <button type="submit">Comment</button>
+                        </form>
+                    {{else}}
+                        <p><em>Log in to comment.</em></p>
+                    {{end}}
                 </div>
-                {{end}}
+
+                <hr>
+            </div>
+            {{end}}
             {{else}}
                 <p>No posts found in this category. Please create a new post to get started!</p>
             {{end}}
