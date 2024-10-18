@@ -247,7 +247,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 		userID, err := GetSession(r)
 		if err != nil {
 			fmt.Println("Get session error:", err)
-			http.Redirect(w, r, "/loginplease", http.StatusSeeOther)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 		fmt.Printf("Session retrieved successfully. UserID: %d\n", userID)
@@ -302,6 +302,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 				http.Error(w, "Error fetching liked posts", http.StatusInternalServerError)
 				return
 			}
+			fmt.Println("len of liked posts", len(likedPosts))
 
 			// Convert []map[string]interface{} to []structs.Post
 			var likedPostsConverted []structs.Post
@@ -314,6 +315,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 				likedPostsConverted = append(likedPostsConverted, post)
 			}
 			profileData.LikedPosts = likedPostsConverted
+			fmt.Println("len of profileData liked posts", len(profileData.LikedPosts))
 
 			// Fetch liked comments
 			likedComments, err := database.FetchLikedComments(userID)

@@ -89,7 +89,26 @@ input:checked + label {
 /* When a tab is selected, display the related content */
 #posts-tab:checked ~ .tab-content #posts-content,
 #liked-posts-tab:checked ~ .tab-content #liked-posts-content,
-#liked-comments-tab:checked ~ .tab-content #liked-comments-content,
-#comments-tab:checked ~ .tab-content #comments-content {
+#comments-tab:checked ~ .tab-content #comments-content,
+#liked-comments-tab:checked ~ .tab-content #liked-comments-content {
     display: block;
+}
+
+.home-btn {
+    position: absolute; /* Use absolute positioning */
+    top: 10px; /* Distance from the top of the page */
+    left: 10px; /* Distance from the left of the page */
+    padding: 10px 20px; /* Add padding */
+    font-size: 16px; /* Set font size */
+    color: white; /* Text color */
+    background-color: #007BFF; /* Background color */
+    text-decoration: none; /* Remove underline */
+    border-radius: 5px; /* Rounded corners */
+    border: none; /* No border */
+    cursor: pointer; /* Change cursor on hover */
+    z-index: 1000; /* Ensure it appears above other content */
+}
+
+.home-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
 }
