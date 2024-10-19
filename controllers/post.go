@@ -218,7 +218,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 		var comments []structs.Comment
 		for commentRows.Next() {
 			var comment structs.Comment
-			err := commentRows.Scan(&comment.Body, &comment.UserName)
+			err := commentRows.Scan(&comment.Body, &comment.UserID) //comment.UserName
 			if err == nil {
 				comments = append(comments, comment)
 			} else {
@@ -813,11 +813,11 @@ func FetchCommentsForPost(db *sql.DB, postID int) ([]structs.Comment, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var comment structs.Comment
+		var comment structs.Comment //&commentUserName
 		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.PostID, &comment.Body, &comment.CreatedAt, &comment.LikeCount, &comment.DislikeCount); err != nil {
 			return nil, err
 		}
-		// Fetch the poster name using userID
+		// Fetch the poster name using userID - comment.UserName
 		err = database.DB.QueryRow("SELECT username FROM users WHERE id = ?", comment.UserID).Scan(&comment.Poster)
 		if err != nil {
 			return nil, err
