@@ -119,8 +119,6 @@ func createSchema() error {
 			post_id INTEGER NOT NULL,
 			user_id INTEGER NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			likes INTEGER DEFAULT 0,
-			dislikes INTEGER DEFAULT 0,
 			FOREIGN KEY(post_id) REFERENCES posts(id),
 			FOREIGN KEY(user_id) REFERENCES users(id)
 		);`,

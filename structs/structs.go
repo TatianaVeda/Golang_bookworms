@@ -10,13 +10,13 @@ type Post struct {
 	Body         string
 	CreatedAt    time.Time
 	Categories   []Category
-	Comments     []Comment
 	UserID       int
 	UserName     string
 	LikeCount    int
 	DislikeCount int
 	CategoryName string
 	CategoryID   int
+	Comments     []Comment
 	postID       int
 }
 
@@ -25,9 +25,11 @@ type Comment struct {
 	ID           int
 	Body         string
 	PostID       int
-	CreatedAt    string
+	CreatedAt    time.Time
 	Poster       string
 	Title        string
+	UserName     string
+	UserID       int
 	LikeCount    int
 	DislikeCount int
 }

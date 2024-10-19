@@ -47,19 +47,6 @@
         <!-- Categories Section -->
         {{template "categories" .}}
 
-        <!-- Published Posts Section -->
-        <div class="posts-section">
-            <h2>Published Posts</h2>
-            {{range .Posts}} <!-- Posts iteration -->
-            <div class="post">
-                <p class="post-title"><a href="/posts/{{.ID}}">{{.Title}}</a></p> <!-- Ссылка на пост -->
-                <p class="post-body">{{.Body }}</p> <!--Displaying post content -->
-            </div>->
-            </div>
-        
-        </div>
-        {{end}}
-
         <!-- Footer Section -->
         <div class="footer">
             <p>&copy; 2024 Literary Lions Forum</p>

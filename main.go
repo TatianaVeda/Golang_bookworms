@@ -32,7 +32,6 @@ func GenerateHash(password string) string {
 }
 
 var templates *template.Template
-var db *sql.DB
 
 func init() {
 	// Ensure all templates are parsed together
@@ -64,7 +63,6 @@ func main() {
 
 	http.HandleFunc("/login", controllers.LoginUser)
 	http.HandleFunc("/register", controllers.RegisterUser)
-	//http.HandleFunc("/posts", controllers.PostsHandler(db, templates))
 	http.Handle("/posts", StripTrailingSlash(http.HandlerFunc(controllers.ShowPosts)))
 	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePostHandler)))
 	http.HandleFunc("/logout", controllers.LogoutHandler)
