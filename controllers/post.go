@@ -13,9 +13,18 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var db *sql.DB
+
+type Post struct {
+	ID        int
+	Title     string
+	Body      string // Change Content to Body
+	UserID    int
+	CreatedAt time.Time
+}
 
 func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -312,7 +321,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 		userID, err := GetSession(r)
 		if err != nil {
 			fmt.Println("Get session error:", err)
-			http.Redirect(w, r, "/loginplease", http.StatusSeeOther)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 		fmt.Printf("Session retrieved successfully. UserID: %d\n", userID)
@@ -344,6 +353,14 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			return
 		}
 
+		// Fetch user posts
+		userPosts, err := database.FetchUserPosts(userID)
+		if err != nil {
+			http.Error(w, "Error fetching user posts", http.StatusInternalServerError)
+			return
+		}
+		profileData.Posts = userPosts
+
 		// Fetch user comments
 		comments, err := database.FetchUserComments(profileUserID)
 		if err != nil {
@@ -373,15 +390,11 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			profileData.LikedPosts = likedPostsConverted
 
 			// Fetch liked comments
-			fmt.Println("Fetching liked posts and comments for user ID:", userID)
 			likedComments, err := database.FetchLikedComments(userID)
 			if err != nil {
-				fmt.Println("Error fetching liked comments:", err) // Add this line for debugging
 				http.Error(w, "Error fetching liked comments", http.StatusInternalServerError)
 				return
 			}
-
-			fmt.Println("Fetched liked comments:", likedComments) // Add this to see if comments are fetched
 
 			// Convert []map[string]interface{} to []structs.Comment
 			var likedCommentsConverted []structs.Comment
@@ -395,6 +408,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			}
 			profileData.LikedComments = likedCommentsConverted
 		}
+		fmt.Println("userPosts len at the end", len(profileData.Posts))
 
 		// Render the profile template
 		templates.ExecuteTemplate(w, "profile.html", map[string]interface{}{

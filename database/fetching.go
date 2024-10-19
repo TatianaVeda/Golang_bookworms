@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"literary-lions/structs"
 	"log"
 )
@@ -23,28 +22,29 @@ func FetchProfile(userID int) (map[string]interface{}, error) {
 }
 
 // FetchUserPosts retrieves posts created by a specific user.
-func FetchUserPosts(userID int) ([]map[string]interface{}, error) {
-	rows, err := DB.Query("SELECT id, title, body FROM posts WHERE user_id = ?", userID)
+func FetchUserPosts(userID int) ([]structs.Post, error) {
+	query := `
+    SELECT id, title, body, created_at 
+    FROM posts 
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    `
+
+	rows, err := DB.Query(query, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var posts []map[string]interface{}
+	var posts []structs.Post
 	for rows.Next() {
-		var id int
-		var title, body string
-		err := rows.Scan(&id, &title, &body)
-		if err != nil {
+		var post structs.Post
+		if err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt); err != nil {
 			return nil, err
-		}
-		post := map[string]interface{}{
-			"ID":    id,
-			"Title": title,
-			"Body":  body,
 		}
 		posts = append(posts, post)
 	}
+
 	return posts, nil
 }
 
@@ -114,7 +114,7 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 
 	var comments []map[string]interface{}
 	for rows.Next() {
-		var id, postID int64
+		var id, postID int
 		var body string
 		err := rows.Scan(&id, &body, &postID)
 		if err != nil {
@@ -133,7 +133,6 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 		return nil, err
 	}
 
-	fmt.Printf("Fetched liked comments: %+v\n", comments)
 	return comments, nil
 }
 

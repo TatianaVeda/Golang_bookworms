@@ -147,7 +147,7 @@ func createSchema() error {
 	}
 
 	for _, query := range queries {
-		err := execSchemaQuery(query) // Use the helper function here
+		err := execSchemaQuery(query)
 		if err != nil {
 			return fmt.Errorf("error creating table: %w", err)
 		}

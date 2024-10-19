@@ -1,0 +1,114 @@
+/* General styles for layout */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.profile-container {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+}
+
+/* Profile picture styling */
+.profile-picture img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #007bff;
+}
+
+/* Profile information styling */
+.profile-info {
+    margin-left: 20px;
+}
+
+.profile-name {
+    font-size: 1.5em;
+    margin: 0;
+}
+
+.profile-username {
+    font-size: 1em;
+    color: #777;
+    margin-top: 5px;
+}
+
+.tab-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.tab-labels {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    justify-content: space-around;
+    border-bottom: 2px solid #ccc;
+}
+
+.tab-labels li label {
+    padding: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.tab-labels li label:hover {
+    color: #007bff;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+/* Tabs selected state */
+input:checked + label {
+    border-bottom: 2px solid #007bff;
+    font-weight: bold;
+}
+
+/* Content sections */
+.tab-content section {
+    display: none;
+    padding: 20px;
+}
+
+/* When a tab is selected, display the related content */
+#posts-tab:checked ~ .tab-content #posts-content,
+#liked-posts-tab:checked ~ .tab-content #liked-posts-content,
+#comments-tab:checked ~ .tab-content #comments-content,
+#liked-comments-tab:checked ~ .tab-content #liked-comments-content {
+    display: block;
+}
+
+.home-btn {
+    position: absolute; /* Use absolute positioning */
+    top: 10px; /* Distance from the top of the page */
+    left: 10px; /* Distance from the left of the page */
+    padding: 10px 20px; /* Add padding */
+    font-size: 16px; /* Set font size */
+    color: white; /* Text color */
+    background-color: #007BFF; /* Background color */
+    text-decoration: none; /* Remove underline */
+    border-radius: 5px; /* Rounded corners */
+    border: none; /* No border */
+    cursor: pointer; /* Change cursor on hover */
+    z-index: 1000; /* Ensure it appears above other content */
+}
+
+.home-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
