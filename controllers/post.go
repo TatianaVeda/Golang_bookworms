@@ -3,7 +3,6 @@ package controllers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"literary-lions/database"
@@ -715,12 +714,37 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse JSON body
+	/* // Parse JSON body
 	var postData struct {
 		Title      string `json:"title"`
 		Body       string `json:"body"`
 		CategoryID int    `json:"category_id"`
 		UserID     int    `json:"user_id"`
+	} */
+
+	// Get the user ID from the session
+	userID, err := GetUserIDFromSession(r)
+	if err != nil {
+		http.Error(w, "Unauthorized. Please log in.", http.StatusUnauthorized)
+		return
+	}
+	// Retrieve form values
+	title := r.FormValue("title")
+	body := r.FormValue("body")
+	categoryID := r.FormValue("category_id")
+
+	if title == "" || body == "" || categoryID == "" {
+		http.Error(w, "Title, body, and category cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve form values
+	/* postData.Title := r.FormValue("title")
+	postData.Body := r.FormValue("body")
+	postData.CategoryID, err = strconv.Atoi(r.FormValue("category_id"))
+	if err != nil {
+		http.Error(w, "Invalid category ID", http.StatusBadRequest)
+		return
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&postData)
@@ -736,14 +760,29 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert post into database
-	_, err = database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", postData.Title, postData.Body, postData.UserID, postData.CategoryID)
+	result, err := database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", postData.Title, postData.Body, postData.UserID, postData.CategoryID)
 	if err != nil {
 		http.Error(w, "Unable to create post.", http.StatusInternalServerError)
 		return
+	}*/
+	// Insert post into the database
+	result, err := database.DB.Exec("INSERT INTO posts (title, body, user_id, category_id) VALUES (?, ?, ?, ?)", title, body, userID, categoryID)
+	if err != nil {
+		log.Printf("Error inserting new post: %v", err)
+		http.Error(w, "Unable to create post", http.StatusInternalServerError)
+		return
+	}
+	log.Printf("Post created successfully: Title: %s | Body: %s | CategoryID: %s", title, body, categoryID)
+	// Get the last inserted post ID (for potential debugging purposes)
+	postID, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("Error retrieving last insert ID: %v", err)
+	} else {
+		log.Printf("Successfully inserted post with ID: %d", postID)
 	}
 
 	// Redirect to the category page
-	http.Redirect(w, r, fmt.Sprintf("/posts?category=%d", postData.CategoryID), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/posts?category=%s", categoryID), http.StatusSeeOther)
 }
 
 func CreateComment(w http.ResponseWriter, r *http.Request) {
