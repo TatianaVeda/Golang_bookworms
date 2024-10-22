@@ -24,10 +24,11 @@ func FetchProfile(userID int) (map[string]interface{}, error) {
 // FetchUserPosts retrieves posts created by a specific user.
 func FetchUserPosts(userID int) ([]structs.Post, error) {
 	query := `
-    SELECT id, title, body, created_at 
-    FROM posts 
-    WHERE user_id = ?
-    ORDER BY created_at DESC
+    SELECT posts.id, posts.title, posts.body, posts.created_at, users.username
+		FROM posts
+		JOIN users ON posts.user_id = users.id
+		WHERE posts.user_id = ?
+		ORDER BY posts.created_at DESC
     `
 
 	rows, err := DB.Query(query, userID)
@@ -39,12 +40,12 @@ func FetchUserPosts(userID int) ([]structs.Post, error) {
 	var posts []structs.Post
 	for rows.Next() {
 		var post structs.Post
-		if err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt); err != nil {
+		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt, &post.UserName)
+		if err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
 	}
-
 	return posts, nil
 }
 

@@ -408,7 +408,6 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			}
 			profileData.LikedComments = likedCommentsConverted
 		}
-		fmt.Println("userPosts len at the end", len(profileData.Posts))
 
 		// Render the profile template
 		templates.ExecuteTemplate(w, "profile.html", map[string]interface{}{
