@@ -8,6 +8,10 @@
     <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
+    <div class="header">
+        <img src="/static/images/lion-icon.png" alt="Logo" class="logo">
+        <h1> Feeling your inner-r-rr-rrr lion?</h1>
+    </div>
     <div class="back-home">
         <a href="/" class="home-button">Home 🏠</a>
     </div>
@@ -80,6 +84,11 @@
                 <p>No posts found in this category. Please create a new post to get started!</p>
             {{end}}
         </div>
+        <form action="/search" method="get">
+            <input type="text" name="query" placeholder="Search...">
+            <button type="submit">Search</button>
+        </form>
+        
     </div>
     <iframe name="hidden_iframe" style="display:none;"></iframe>
     <div class="footer">

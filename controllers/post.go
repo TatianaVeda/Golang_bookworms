@@ -656,7 +656,7 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 }
 
 func SearchPosts(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("query") // Retrieve the search query from the URL
+	query := r.URL.Query().Get("keywords") // Retrieve the search query from the URL
 
 	// Ensure query isn't empty
 	if query == "" {
@@ -666,11 +666,14 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Executing search with query: %s", query)
 
-	// Search posts based on the query (e.g., title or body match)
+	// Adjust the query to join with the users table
 	rows, err := database.DB.Query(`
-        SELECT title, body, author, created_at FROM posts
-        WHERE title LIKE ? OR body LIKE ?`, "%"+query+"%", "%"+query+"%")
+        SELECT posts.title, posts.body, users.username, posts.created_at
+        FROM posts
+        JOIN users ON posts.user_id = users.id
+        WHERE posts.title LIKE ? OR posts.body LIKE ?`, "%"+query+"%", "%"+query+"%")
 	if err != nil {
+		log.Printf("Error fetching search results: %v", err) // Log the error
 		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching search results.")
 		return
 	}
@@ -679,16 +682,17 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 	// Collect results
 	var results []map[string]interface{}
 	for rows.Next() {
-		var title, body, author string
+		var title, body, username string
 		var createdAt string
-		if err := rows.Scan(&title, &body, &author, &createdAt); err != nil {
+		if err := rows.Scan(&title, &body, &username, &createdAt); err != nil {
+			log.Printf("Error scanning search results: %v", err) // Log the scanning error
 			utils.RenderErrorPage(w, http.StatusInternalServerError, "Error scanning search results.")
 			return
 		}
 		result := map[string]interface{}{
 			"Title":     title,
 			"Body":      body,
-			"Author":    author,
+			"Author":    username,
 			"CreatedAt": createdAt,
 		}
 		results = append(results, result)

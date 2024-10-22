@@ -72,7 +72,7 @@ type TemplateData struct {
 type SearchResult struct {
 	ID        int
 	Title     string
-	Author    string
+	username  string
 	CreatedAt time.Time
 	Body      string
 }

@@ -4,26 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results</title>
-    <link rel="stylesheet" href="static/home.css">
+    <link rel="stylesheet" href="/static/home.css">
     <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
     <div class="container">
-        <!-- Header Section -->
+        <!-- Header Section with logo -->
         <div class="header">
-            <img src="static/images/lion-icon.png" alt="Logo" class="logo">
-            <h1> Feeling your inner-r-rr-rrr lion?</h1>
+            <img src="/static/images/lion-icon.png" alt="Logo" class="logo">
+            <h1>Feeling your inner-r-rr-rrr lion?</h1>
         </div>
 
-        <!-- Centered Search Bar -->
+        <!-- Home Button -->
+        <div class="back-home">
+            <a href="/" class="home-button">Home 🏠</a>
+        </div>
+
+        <!-- Search Bar -->
         <div class="search-bar">
             <form action="/search" method="GET" class="search-form">
-                <input type="text" id="keywords" name="keywords" placeholder="Search posts, topics, or users..." class="search-input">
+                <input type="text" id="keywords" name="keywords" placeholder="Search posts, topics, or users..." class="search-input" required>
                 <button type="submit" class="search-button">Search 🔍</button>
             </form>
-        </div>               
+        </div>
 
-        <!-- Display Search Results -->
+        <!-- Search Results -->
         <div class="search-results">
             <h2>Results for query: <strong>{{.Query}}</strong></h2>
 
@@ -35,21 +40,16 @@
             {{else}}
                 <ul class="post-list">
                     {{range .Results}}
-                        <li class="post-item">
-                            <a href="/posts/{{.ID}}" class="post-link">
-                                <h3>{{.Title}}</h3>
-                            </a>
-                            <p>By <strong>{{.Author}}</strong> on <em>{{.CreatedAt}}</em></p>
-                            <div class="post-content">{{.Body}}</div>
-                        </li>
+                    <li class="post-item">
+                        <a href="/posts/{{.ID}}" class="post-link">
+                            <h3>{{.Title}}</h3>
+                        </a>
+                        <p>By <strong>{{.Author}}</strong> on <em>{{.CreatedAt}}</em></p>
+                        <div class="post-content">{{.Body}}</div>
+                    </li>
                     {{end}}
                 </ul>
             {{end}}
-        </div>
-
-        <!-- Link to go back to the Home Page -->
-        <div class="back-home">
-            <a href="/" class="home-button">Home 🏠</a>
         </div>
 
         <!-- Footer Section -->
