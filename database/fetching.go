@@ -3,6 +3,7 @@ package database
 import (
 	"literary-lions/structs"
 	"log"
+	"time"
 )
 
 // FetchProfile retrieves a user's profile from the database.
@@ -52,10 +53,12 @@ func FetchUserPosts(userID int) ([]structs.Post, error) {
 // FetchLikedPosts retrieves posts liked by a user.
 func FetchLikedPosts(userID int) ([]map[string]interface{}, error) {
 	query := `
-		SELECT p.id, p.title, p.body
+		SELECT p.id, p.title, p.body, p.created_at, u.username
 		FROM posts p
 		JOIN likes_dislikes ld ON p.id = ld.post_id
+		JOIN users u ON p.user_id = u.id
 		WHERE ld.user_id = ? AND ld.like_type = 1
+		ORDER BY p.created_at DESC
 	`
 	rows, err := DB.Query(query, userID)
 	if err != nil {
@@ -66,15 +69,18 @@ func FetchLikedPosts(userID int) ([]map[string]interface{}, error) {
 	var posts []map[string]interface{}
 	for rows.Next() {
 		var id int
-		var title, body string
-		err := rows.Scan(&id, &title, &body)
+		var title, body, username string
+		var createdAt time.Time
+		err := rows.Scan(&id, &title, &body, &createdAt, &username)
 		if err != nil {
 			return nil, err
 		}
 		post := map[string]interface{}{
-			"ID":    id,
-			"Title": title,
-			"Body":  body,
+			"ID":        id,
+			"Title":     title,
+			"Body":      body,
+			"CreatedAT": createdAt,
+			"UserName":  username,
 		}
 		posts = append(posts, post)
 	}

@@ -381,9 +381,11 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			var likedPostsConverted []structs.Post
 			for _, postMap := range likedPosts {
 				post := structs.Post{
-					ID:    postMap["ID"].(int),
-					Title: postMap["Title"].(string),
-					Body:  postMap["Body"].(string),
+					ID:        postMap["ID"].(int),
+					Title:     postMap["Title"].(string),
+					Body:      postMap["Body"].(string),
+					CreatedAt: postMap["CreatedAT"].(time.Time),
+					UserName:  postMap["UserName"].(string),
 				}
 				likedPostsConverted = append(likedPostsConverted, post)
 			}
