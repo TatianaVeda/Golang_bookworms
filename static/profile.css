@@ -2,13 +2,33 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     margin: 0;
+    padding: 0;
 }
 
+/* Styling for the back to homepage button */
+.home-button {
+    display: block;
+    text-align: center;
+    padding: 12px 20px;
+    background-color: #046871; 
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    width: fit-content;
+    position: absolute;  /* Absolute positioning */
+    top: 20px;           /* Stick it at the top */
+    left: 50%;           /* Start from the middle of the screen */
+    transform: translateX(-50%);  /* Shift it back by 50% of its own width to center it */
+    z-index: 10;         /* Ensure the button is above other content */
+    transition: background-color 0.3s ease;
+}
+
+.home-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Profile container styles */
 .profile-container {
     display: flex;
     align-items: center;
@@ -18,6 +38,8 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     max-width: 400px;
     width: 100%;
+    margin: 100px auto 20px auto; /* Center the profile and add spacing */
+    position: relative;  /* Remove absolute positioning */
 }
 
 /* Profile picture styling */
@@ -45,10 +67,12 @@ body {
     margin-top: 5px;
 }
 
+/* Tab container and layout styles */
 .tab-container {
     width: 100%;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 20px auto 0 auto; /* Space below profile container */
+    padding: 0 20px; /* Add padding on the sides for better alignment */
 }
 
 .tab-labels {
@@ -92,23 +116,4 @@ input:checked + label {
 #comments-tab:checked ~ .tab-content #comments-content,
 #liked-comments-tab:checked ~ .tab-content #liked-comments-content {
     display: block;
-}
-
-.home-btn {
-    position: absolute; /* Use absolute positioning */
-    top: 10px; /* Distance from the top of the page */
-    left: 10px; /* Distance from the left of the page */
-    padding: 10px 20px; /* Add padding */
-    font-size: 16px; /* Set font size */
-    color: white; /* Text color */
-    background-color: #007BFF; /* Background color */
-    text-decoration: none; /* Remove underline */
-    border-radius: 5px; /* Rounded corners */
-    border: none; /* No border */
-    cursor: pointer; /* Change cursor on hover */
-    z-index: 1000; /* Ensure it appears above other content */
-}
-
-.home-btn:hover {
-    background-color: #0056b3; /* Darker blue on hover */
 }

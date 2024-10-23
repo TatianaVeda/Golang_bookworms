@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var db *sql.DB
+//var db *sql.DB
 
 type Post struct {
 	ID        int
@@ -843,7 +843,7 @@ func FetchCommentsForPost(db *sql.DB, postID int) ([]structs.Comment, error) {
 	return comments, nil //rows.Err()
 }
 
-func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
+/*func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 	// Retrieve the session cookie
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
@@ -864,7 +864,7 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Correct query with LEFT JOIN to get categories and posts
 	query := `
-		SELECT posts.id, posts.title, posts.body, 
+		SELECT posts.id, posts.title, posts.body,
 		       COALESCE(categories.name, 'Uncategorized') AS category_name
 		FROM posts
 		LEFT JOIN categories ON posts.category_id = categories.id
@@ -909,6 +909,7 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
 }
+*/
 
 func GetCategoryName(categoryID int) string {
 	var categoryName string
