@@ -5,8 +5,7 @@ import (
 	"log"
 )
 
-// FetchProfile retrieves a user's profile from the database.
-func FetchProfile(userID int) (map[string]interface{}, error) {
+func FetchProfile(userID int) (map[string]interface{}, error) { // FetchProfile retrieves a user's profile from the database.
 	var email, username string
 	err := DB.QueryRow("SELECT email, username FROM users WHERE id = ?", userID).Scan(&email, &username)
 	if err != nil {
@@ -21,8 +20,7 @@ func FetchProfile(userID int) (map[string]interface{}, error) {
 	return profile, nil
 }
 
-// FetchUserPosts retrieves posts created by a specific user.
-func FetchUserPosts(userID int) ([]structs.Post, error) {
+func FetchUserPosts(userID int) ([]structs.Post, error) { // FetchUserPosts retrieves posts created by a specific user.
 	query := `
     SELECT id, title, body, created_at 
     FROM posts 
@@ -48,8 +46,7 @@ func FetchUserPosts(userID int) ([]structs.Post, error) {
 	return posts, nil
 }
 
-// FetchLikedPosts retrieves posts liked by a user.
-func FetchLikedPosts(userID int) ([]map[string]interface{}, error) {
+func FetchLikedPosts(userID int) ([]map[string]interface{}, error) { // FetchLikedPosts retrieves posts liked by a user.
 	query := `
 		SELECT p.id, p.title, p.body
 		FROM posts p
@@ -98,8 +95,7 @@ func FetchUserComments(userID int) ([]structs.Comment, error) {
 	return comments, nil
 }
 
-// FetchLikedComments retrieves comments liked by a user.
-func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
+func FetchLikedComments(userID int) ([]map[string]interface{}, error) { // FetchLikedComments retrieves comments liked by a user.
 	query := `
 		SELECT c.id, c.body, c.post_id
 		FROM comments c
@@ -128,8 +124,7 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) {
 		comments = append(comments, comment)
 	}
 
-	// Check for any errors that occurred during the iteration
-	if err = rows.Err(); err != nil {
+	if err = rows.Err(); err != nil { // Check for any errors that occurred during the iteration
 		return nil, err
 	}
 
@@ -148,8 +143,7 @@ func FetchPostsByCategory(categoryID string) ([]map[string]interface{}, error) {
 	}
 	defer rows.Close()
 
-	// Prepare a slice to store posts
-	var posts []map[string]interface{}
+	var posts []map[string]interface{} // Prepare a slice to store posts
 
 	for rows.Next() {
 		var id, userID int
@@ -170,26 +164,20 @@ func FetchPostsByCategory(categoryID string) ([]map[string]interface{}, error) {
 		posts = append(posts, post)
 	}
 
-	// Return the posts for the given category
-	return posts, nil
+	return posts, nil // Return the posts for the given category
 }
 
-// FetchProfileData retrieves the profile data for a given username
-func FetchProfileData(username string) (structs.ProfileData, error) {
+func FetchProfileData(username string) (structs.ProfileData, error) { // FetchProfileData retrieves the profile data for a given username
 	var profileData structs.ProfileData
-
-	// Example query to get the username and email
 	err := DB.QueryRow("SELECT username, email FROM users WHERE username = ?", username).Scan(&profileData.Username, &profileData.Email)
 	if err != nil {
 		return profileData, err
 	}
 
-	// Fetch other profile-related data if needed, like user posts, etc.
-	return profileData, nil
+	return profileData, nil // Fetch other profile-related data if needed, like user posts, etc.
 }
 
-// FetchCategories retrieves all categories from the database.
-func FetchCategories() ([]structs.Category, error) {
+func FetchCategories() ([]structs.Category, error) { // FetchCategories retrieves all categories from the database.
 	rows, err := DB.Query("SELECT id, name FROM categories")
 	if err != nil {
 		log.Printf("FetchCategories: Error executing query: %v", err)
@@ -197,11 +185,9 @@ func FetchCategories() ([]structs.Category, error) {
 	}
 	defer rows.Close()
 
-	// Create a slice to store categories
-	var categories []structs.Category
+	var categories []structs.Category // Create a slice to store categories
 
-	// Iterate over rows and populate categories slice
-	for rows.Next() {
+	for rows.Next() { // Iterate over rows and populate categories slice
 		var category structs.Category
 		if err := rows.Scan(&category.ID, &category.Name); err != nil {
 			log.Printf("FetchCategories: Error scanning row: %v", err)
@@ -209,11 +195,7 @@ func FetchCategories() ([]structs.Category, error) {
 		}
 		categories = append(categories, category)
 	}
-
-	// Log the fetched categories for debugging
 	log.Printf("FetchCategories: Retrieved categories: %+v", categories)
-
-	// Return the categories
 	return categories, nil
 }
 
@@ -227,22 +209,17 @@ func FetchAllPosts() ([]map[string]interface{}, error) {
 	}
 	defer rows.Close()
 
-	// Prepare a slice to store posts
 	var posts []map[string]interface{}
-
-	// Scan each row and add it to the slice
-	for rows.Next() {
+	for rows.Next() { // Scan each row and add it to the slice
 		var id, userID int
 		var title, body, createdAt string
 
-		// Scan the row into variables
-		if err := rows.Scan(&id, &title, &body, &userID, &createdAt); err != nil {
+		if err := rows.Scan(&id, &title, &body, &userID, &createdAt); err != nil { // Scan the row into variables
 			log.Printf("Error scanning post row: %v", err)
 			return nil, err
 		}
 
-		// Prepare a map to hold post data
-		post := map[string]interface{}{
+		post := map[string]interface{}{ // Prepare a map to hold post data
 			"ID":        id,
 			"Title":     title,
 			"Body":      body,
@@ -252,6 +229,5 @@ func FetchAllPosts() ([]map[string]interface{}, error) {
 		posts = append(posts, post)
 	}
 
-	// Return all posts
-	return posts, nil
+	return posts, nil // Return all posts
 }

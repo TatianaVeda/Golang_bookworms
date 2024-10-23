@@ -63,8 +63,8 @@ type SessionData struct {
 type TemplateData struct {
 	Categories   []Category
 	Title        string
-	Posts        []Post // Slice to store the list of posts
-	CategoryName string // Store the name of the category being viewed
+	Posts        []Post
+	CategoryName string
 	LoggedUser   string
 	IsLoggedIn   bool
 }

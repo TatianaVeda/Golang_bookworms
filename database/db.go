@@ -18,21 +18,18 @@ var (
 func InitDB(dsn string) error {
 	var err error
 
-	// Open the SQLite database with the provided DSN (data source name)
-	DB, err = sql.Open("sqlite3", dsn)
+	DB, err = sql.Open("sqlite3", dsn) // Open the SQLite database with the provided DSN (data source name)
 	if err != nil {
 		log.Fatalf("Failed to open the database: %v", err)
 		return err
 	}
 
-	// Set journal mode to WAL (write-ahead logging) to support concurrent reads and writes.
-	_, err = DB.Exec("PRAGMA journal_mode = WAL;")
+	_, err = DB.Exec("PRAGMA journal_mode = WAL;") // Set journal mode to WAL (write-ahead logging) to support concurrent reads and writes.
 	if err != nil {
 		log.Fatalf("Failed to set journal mode to WAL: %v", err)
 		return err
 	}
 
-	// Set a busy timeout to avoid "database is locked" errors when SQLite is under heavy load.
 	_, err = DB.Exec("PRAGMA busy_timeout = 5000;") // Set a 5-second timeout
 	if err != nil {
 		log.Fatalf("Failed to set busy timeout: %v", err)
@@ -69,16 +66,15 @@ func InitWriteDB(dsn string) error {
 }
 
 func ConnectDB() *sql.DB {
-	// Connect to the SQLite database
-	db, err := sql.Open("sqlite3", "./forum.db")
+
+	db, err := sql.Open("sqlite3", "./forum.db") // Connect to the SQLite database
 	if err != nil {
 		log.Fatal("Error connecting to the database:", err)
 	}
 	return db
 }
 
-// createSchema defines and executes the SQL schema to create the necessary tables
-func createSchema() error {
+func createSchema() error { // createSchema defines and executes the SQL schema to create the necessary tables
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -164,8 +160,7 @@ func execSchemaQuery(query string) error {
 	return nil
 }
 
-// Functions for interacting with the database, e.g., adding categories, posts, etc.
-func AddCategory(name string) error {
+func AddCategory(name string) error { // Functions for interacting with the database, e.g., adding categories, posts, etc.
 	query := `INSERT INTO categories (name) VALUES (?)`
 	_, err := DB.Exec(query, name)
 	if err != nil {

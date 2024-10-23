@@ -18,7 +18,6 @@ import (
 
 func StripTrailingSlash(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Only modify if it's not the root path
 		if r.URL.Path != "/" && strings.HasSuffix(r.URL.Path, "/") {
 			http.Redirect(w, r, strings.TrimSuffix(r.URL.Path, "/"), http.StatusMovedPermanently)
 			return
@@ -34,14 +33,12 @@ func GenerateHash(password string) string {
 var templates *template.Template
 
 func init() {
-	// Ensure all templates are parsed together
 	templates = template.Must(template.ParseFiles("views/home.html", "views/posts.html", "views/create_post.html", "views/error.html", "views/myposts.html", "views/profile.html"))
 }
 
 func main() {
 	log.Println("Starting database initialization...")
 
-	// Initialize the database
 	database.DB = database.ConnectDB()
 	defer database.DB.Close()
 
@@ -56,7 +53,6 @@ func main() {
 		log.Fatalf("Failed to initialize config: %v", err)
 	}
 
-	// Handle routes
 	http.Handle("/", StripTrailingSlash(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rootHandler(w, r, cfg.DB, cfg.Templates)
 	})))
@@ -79,16 +75,12 @@ func main() {
 	http.HandleFunc("/posts/delete/", controllers.DeletePostHandler)
 	http.HandleFunc("/profile", controllers.ProfileHandler(templates))
 
-	// Logging setup
-	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666) // Logging setup
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
 	defer file.Close()
 
-	// log.SetOutput(file) // Enable if you want to log to a file
-
-	// Start the server
 	log.Println("Starting server on http://localhost:8080/")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
@@ -96,7 +88,6 @@ func main() {
 	}
 }
 
-// rootHandler processes the root path '/'
 func rootHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *template.Template) {
 	switch r.URL.Path {
 	case "/":
@@ -140,12 +131,12 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			if sessionExists {
 				isLoggedIn = true
 			} else {
-				// Ensure that invalid sessions are treated correctly
-				isLoggedIn = false
+
+				isLoggedIn = false // Ensure that invalid sessions are treated correctly
 			}
 		} else {
-			// No session found, treat as not logged in
-			isLoggedIn = false
+
+			isLoggedIn = false // No session found, treat as not logged in
 		}
 
 		csrfToken, err := controllers.GenerateAndSetCSRFToken(w, r)
@@ -177,8 +168,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			})
 		}
 
-		// Pass the categories and other data to the template
-		data := map[string]interface{}{
+		data := map[string]interface{}{ // Pass the categories and other data to the template
 			"IsLoggedIn": isLoggedIn,
 			"CsrfToken":  csrfToken,
 			"Categories": categories, // Include categories in the template data
@@ -199,8 +189,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 	}
 }
 
-// Helper function to create a new HTTP request for form data
-func newHTTPRequest(method, path string, form url.Values) *http.Request {
+func newHTTPRequest(method, path string, form url.Values) *http.Request { // Helper function to create a new HTTP request for form data
 	body := strings.NewReader(form.Encode())
 	req, err := http.NewRequest(method, path, body)
 	if err != nil {
@@ -225,8 +214,7 @@ func CauseInternalServerError(w http.ResponseWriter, r *http.Request) {
 }
 
 func CategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	// Fetch categories from the database
-	rows, err := database.DB.Query("SELECT id, name FROM categories")
+	rows, err := database.DB.Query("SELECT id, name FROM categories") // Fetch categories from the database
 	if err != nil {
 		utils.RenderErrorPage(w, http.StatusInternalServerError, "Error fetching categories.")
 		return
@@ -247,13 +235,11 @@ func CategoriesHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Pass the categories data to the template
-	data := map[string]interface{}{
+	data := map[string]interface{}{ // Pass the categories data to the template
 		"Categories": categories,
 	}
 
-	// Serve the categories.html view with data
-	tmpl := template.Must(template.ParseFiles("views/categories.html"))
+	tmpl := template.Must(template.ParseFiles("views/categories.html")) // Serve the categories.html view with data
 	if err := tmpl.Execute(w, data); err != nil {
 		log.Printf("Template execution error: %v", err) // Log the exact template error
 		utils.RenderErrorPage(w, http.StatusInternalServerError, fmt.Sprintf("Error rendering template: %v", err))

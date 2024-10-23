@@ -9,18 +9,15 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header Section with logo -->
         <div class="header">
             <img src="/static/images/lion-icon.png" alt="Logo" class="logo">
             <h1>Feeling your inner-r-rr-rrr lion?</h1>
         </div>
 
-        <!-- Home Button -->
         <div class="back-home">
             <a href="/" class="home-button">Home 🏠</a>
         </div>
 
-        <!-- Search Bar -->
         <div class="search-bar">
             <form action="/search" method="GET" class="search-form">
                 <input type="text" id="keywords" name="keywords" placeholder="Search posts, topics, or users..." class="search-input" required>
@@ -28,7 +25,6 @@
             </form>
         </div>
 
-        <!-- Search Results -->
         <div class="search-results">
             <h2>Results for query: <strong>{{.Query}}</strong></h2>
 
@@ -52,7 +48,6 @@
             {{end}}
         </div>
 
-        <!-- Footer Section -->
         <div class="footer">
             <p>&copy; 2024 Literary Lions Forum</p>
         </div>

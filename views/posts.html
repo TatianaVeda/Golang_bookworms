@@ -17,23 +17,15 @@
     </div>
     <div class="container">
         <div class="post" id="post-{{.ID}}">
-            <!-- Category Name -->
             <h1 class="category-name">All Posts in {{.CategoryName}}</h1>
-
-            <!-- Posts List -->
             {{if .Posts}}
             {{range .Posts}}
 <div class="post" id="post-{{.ID}}">
-    <!-- Post Title -->
     <h2 class="post-title">{{.Title}}</h2>
-    <!-- Post Body -->
     <p class="post-body">{{.Body}}</p>
-    <!-- User who posted -->
     <p class="post-user">Posted by: {{.UserName}}</p>
-    <!-- Category Name -->
     <p class="post-category">Category: {{.CategoryName}}</p>
 
-    <!-- Likes and Dislikes -->
     {{if $.IsLoggedIn}}
         <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
         <form action="/posts/update_like_dislike" method="POST" target="hidden_iframe">
@@ -51,13 +43,12 @@
     {{else}}
         <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
     {{end}}
-                    <!-- Comments for the current post -->
                     <div class="comments-section">
                         <h3>Comments</h3>
                         {{if .Comments}}
                             {{range .Comments}}
                             <div class="comment">
-                                <p>{{.Body}} - <strong>{{.UserName}}</strong></p> <!-- Display comment body and username -->
+                                <p>{{.Body}} - <strong>{{.UserName}}</strong></p> 
                             </div>
                             {{end}}
                         {{else}}

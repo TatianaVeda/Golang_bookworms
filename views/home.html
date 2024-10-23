@@ -10,15 +10,12 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header Section -->
         <div class="header">
             <img src="static/images/lion-icon.png" alt="Logo" class="logo">
             <h1> Feeling your inner-r-rr-rrr lion?</h1>
 
             <p class="welcome-message">Welcome to Literary Lions Forum! Here you can embrace the power of online discussions, fostering deeper connections, enriching their reading journeys, and ensuring the book club roars with literary passion ;-))</p>
         </div>
-
-        <!-- Search Bar Section (Always visible) -->
         <div class="search-bar">
             <form action="/search" method="GET" class="search-form">
                 <input type="text" id="keywords" name="keywords" placeholder="Search posts, topics, or users..." class="search-input" required>
@@ -27,7 +24,7 @@
         </div>                                       
 
         {{if not .IsLoggedIn}}
-        {{template "auth" .}} <!-- Include the auth template here -->
+        {{template "auth" .}}
         {{else}}
             {{if .LoginSuccessMessage}}
                 <div class="success-message">
@@ -40,14 +37,11 @@
                 <button type="submit" class="logout-button">Log Out 🔓</button>
             </form>            
 
-            <!-- Create Post Section -->
             {{template "create_post" .}}
         {{end}}
 
-        <!-- Categories Section -->
         {{template "categories" .}}
 
-        <!-- Footer Section -->
         <div class="footer">
             <p>&copy; 2024 Literary Lions Forum</p>
         </div>

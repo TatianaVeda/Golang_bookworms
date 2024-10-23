@@ -65,9 +65,7 @@ input[type="checkbox"]:checked ~ .modal {
     bottom: 0;
     width: 100%;
     height: 100%;
-    /* background-color: transparent; */
-    background: rgba(0, 0, 0, 0.5); /* Фон затемнения */
-    /* visibility: hidden; Скрываем фон по умолчанию */
+    background: rgba(0, 0, 0, 0.5); 
     cursor: pointer;
   }
 
@@ -96,12 +94,6 @@ input[type="checkbox"]:checked ~ .modal {
     transition: background-color 0.3s;
 }
 
-/* input[type="radio"]:checked + label {
-    background-color: #007bff;
-    color: white;
-} */
-
-/* Hide both forms by default */
 .auth-form {
     display: none;
 }
@@ -117,18 +109,10 @@ input[type="checkbox"]:checked ~ .modal {
     display: block;
     
 } 
-/*
-.modal-toggle:checked + .modal {
-    visibility: visible; /* Показываем модальное окно при проверке чекбокса
-    opacity: 1; /* Делаем видимым 
-}*/
-/*
-.modal-toggle:checked + .modal .modal-overlay {
-    visibility: visible; /* Показываем фон при проверке чекбокса 
-}*/
+
 
 .modal.open {
-    display: flex; /* Show modal when 'open' class is applied */
+    display: flex; 
 }
 
 .error-message {
@@ -137,29 +121,20 @@ input[type="checkbox"]:checked ~ .modal {
     margin-bottom: 10px;
 }
 
-/* .auth-form ::-ms-value {
-    background-color: #28a745;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-} */
 
 form {
     width: 100%;
-    max-width: 400px;  /* Ограничение ширины формы */
-    margin: 0 auto;    /* Центрирование формы на странице */
+    max-width: 400px; 
+    margin: 0 auto;   
     padding: 20px;
     background-color: #f8f8f8;
-    border-radius: 10px; /* Сглаженные углы */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Легкая тень */
+    border-radius: 10px; 
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 label {
-    font-family: 'Playfair Display', serif; /* Шрифт, согласующийся с общим стилем */
-    color: #6D0101;                /* Красный цвет для текста */
+    font-family: 'Playfair Display', serif; 
+    color: #6D0101;               
     font-size: 16px;
     margin-bottom: 8px;
 }
@@ -169,36 +144,36 @@ input[type="email"], input[type="password"], input[type="text"] {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #6D0101;  /* Красная рамка */
-    border-radius: 5px;         /* Скругленные углы */
+    border: 1px solid #6D0101;  
+    border-radius: 5px;         
     font-size: 16px;
     background-color: #fdfdfd;
     color: #333;
-    box-sizing: border-box;     /* Чтобы отступы учитывались в ширине */
+    box-sizing: border-box;     
     outline: none;
-    transition: border-color 0.3s ease; /* Плавный переход цвета */
+    transition: border-color 0.3s ease; 
 }
 
 input[type="email"]:focus, input[type="password"]:focus {
-    border-color: #AA2D2D;  /* Изменение цвета рамки при фокусе */
+    border-color: #AA2D2D; 
 }
 
 input[type="submit"] {
     width: 100%;
     padding: 10px 15px;
-    background-color: #046871;   /* Красная кнопка */
+    background-color: #046871;   
     color: #fff;
     font-size: 16px;
     border: none;
-    border-radius: 5px;          /* Сглаженные углы */
+    border-radius: 5px;          
     cursor: pointer;
-    transition: background-color 0.3s ease; /* Плавное изменение цвета */
+    transition: background-color 0.3s ease; 
 }
 
 input[type="submit"]:hover {
-    background-color: #AA2D2D;   /* Более темный красный при наведении */
+    background-color: #AA2D2D;   
 }
 
 input[type="submit"]:active {
-    background-color: #046871;   /* Более глубокий цвет при нажатии */
+    background-color: #046871;  
 }

@@ -22,22 +22,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// SessionStore stores session data (sessionID -> userID)
-var SessionStore = make(map[string]int) // In-memory store: sessionID -> userID
+var SessionStore = make(map[string]int) // Session store to map session IDs to user IDs
 var SessionMutex sync.Mutex             // Mutex to prevent race conditions on session store
-
 const csrfCookieName = "csrf_token"
 
-// HashPassword hashes the user's password using bcrypt
 func HashPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost) // GenerateFromPassword returns a byte slice so we need to cast to a string
 	if err != nil {
 		return "", err
 	}
 	return string(hashedPassword), nil
 }
 
-// GenerateCSRFToken generates a new random CSRF token
 func GenerateCSRFToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
@@ -46,27 +42,23 @@ func GenerateCSRFToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-// SetCSRFCookie sets the CSRF token as an HTTP-only cookie
 func SetCSRFCookie(w http.ResponseWriter, token string) {
-	cookie := http.Cookie{
+	cookie := http.Cookie{ // Create a cookie with the CSRF token
 		Name:     csrfCookieName,
 		Value:    token,
 		HttpOnly: true,
-		Expires:  time.Now().Add(24 * time.Hour), // Set an expiration time
+		Expires:  time.Now().Add(24 * time.Hour),
 	}
 	http.SetCookie(w, &cookie)
 }
 
 func GenerateAndSetCSRFToken(w http.ResponseWriter, r *http.Request) (string, error) {
-	// Check if the CSRF cookie already exists
-	cookieToken, err := GetCSRFCookie(r)
+	cookieToken, err := GetCSRFCookie(r) // Get the CSRF token from the cookie
 	if err == nil {
-		// Return the existing CSRF token from the cookie
 		return cookieToken, nil
 	}
 
-	// If no valid CSRF token exists, generate a new one
-	csrfToken, err := GenerateCSRFToken()
+	csrfToken, err := GenerateCSRFToken() // Generate a new CSRF token
 	if err != nil {
 		return "", err
 	}
@@ -75,9 +67,8 @@ func GenerateAndSetCSRFToken(w http.ResponseWriter, r *http.Request) (string, er
 	return csrfToken, nil
 }
 
-// GetCSRFCookie retrieves the CSRF token from the request's cookies
 func GetCSRFCookie(r *http.Request) (string, error) {
-	cookie, err := r.Cookie(csrfCookieName)
+	cookie, err := r.Cookie(csrfCookieName) // Get the CSRF token from the cookie
 	if err != nil {
 		return "", err
 	}
@@ -91,7 +82,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		formToken := r.FormValue("csrf_token")
+		formToken := r.FormValue("csrf_token") // Get the CSRF token from the form
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
 			renderModalWithMessage(w, r, "Invalid CSRF token.", true, false)
@@ -102,7 +93,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		if !isValidEmail(email) {
+		if !isValidEmail(email) { // Check if the email is valid
 			renderModalWithMessage(w, r, "Invalid email format.", true, false)
 			return
 		}
@@ -128,21 +119,18 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Registration successful, render success message
-		renderModalWithMessage(w, r, "Registration successful! Welcome!", true, true) // Success message
+		renderModalWithMessage(w, r, "Registration successful! Welcome!", true, true)
 	}
 }
 
-// isValidEmail checks if the provided email has a valid format
 func isValidEmail(email string) bool {
-	// Simple email regex pattern
 	const emailRegexPattern = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegexPattern)
 	return re.MatchString(email)
 }
 
 func renderModalWithMessage(w http.ResponseWriter, r *http.Request, message string, isRegistering bool, isSuccess bool) {
-	csrfToken, _ := GenerateAndSetCSRFToken(w, r)
+	csrfToken, _ := GenerateAndSetCSRFToken(w, r) // Generate and set the CSRF token
 
 	tmpl := template.Must(template.ParseFiles(
 		"views/home.html",
@@ -160,14 +148,11 @@ func renderModalWithMessage(w http.ResponseWriter, r *http.Request, message stri
 		"SuccessMessage":    "",
 	}
 
-	if isSuccess {
-		// Set success message (will display in green)
+	if isSuccess { // Set the success message
 		data["SuccessMessage"] = message
 	} else if isRegistering {
-		// Set registration error
 		data["RegistrationError"] = message
 	} else {
-		// Set login error
 		data["LoginError"] = message
 	}
 
@@ -189,9 +174,9 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 		return err
 	}
 
-	SessionMutex.Lock()
-	SessionStore[sessionID] = userID
-	SessionMutex.Unlock()
+	SessionMutex.Lock()              // Lock the session store
+	SessionStore[sessionID] = userID // Add the user ID to the session store
+	SessionMutex.Unlock()            // Unlock the session store
 
 	cookie := &http.Cookie{
 		Name:     "session_id",
@@ -205,7 +190,7 @@ func SetSessionCookie(w http.ResponseWriter, userID int) error {
 }
 
 func CheckPasswordHash(password, hashedPassword string) error {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) // Compare the password with the hashed password
 	if err != nil {
 		return errors.New("incorrect password")
 	}
@@ -214,9 +199,8 @@ func CheckPasswordHash(password, hashedPassword string) error {
 
 func CreateSession(userID int) (string, error) {
 	sessionID := uuid.New().String()
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(24 * time.Hour) // Set the expiration time to 24 hours from now
 
-	// Insert the session into the database
 	log.Printf("CreateSession: Inserting session for user ID %d with session ID %s", userID, sessionID)
 	_, err := database.DB.Exec("INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)", sessionID, userID, expirationTime)
 	if err != nil {
@@ -224,7 +208,6 @@ func CreateSession(userID int) (string, error) {
 		return "", err
 	}
 
-	// Store the session in the in-memory session store
 	SessionMutex.Lock()
 	SessionStore[sessionID] = userID
 	SessionMutex.Unlock()
@@ -239,10 +222,7 @@ func GetSession(r *http.Request) (int, error) {
 		return 0, fmt.Errorf("session cookie not found")
 	}
 
-	// Retrieve session ID from the cookie
 	sessionID := cookie.Value
-
-	// Lock the session store before accessing
 	SessionMutex.Lock()
 	userID, exists := SessionStore[sessionID]
 	SessionMutex.Unlock()
@@ -250,12 +230,9 @@ func GetSession(r *http.Request) (int, error) {
 	if !exists {
 		return 0, fmt.Errorf("invalid session ID")
 	}
-
-	// Return the user ID from the session
 	return userID, nil
 }
 
-// Updated login handler
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		err := r.ParseForm()
@@ -265,17 +242,15 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Get CSRF token and validate
 		formToken := r.FormValue("csrf_token")
-		cookieToken, err := GetCSRFCookie(r)
+		cookieToken, err := GetCSRFCookie(r) // Get the CSRF token from the cookie
 		if err != nil || formToken != cookieToken {
 			log.Println("Invalid CSRF token")
 			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 			return
 		}
 
-		// Authenticate the user
-		email := r.FormValue("email")
+		email := r.FormValue("email") // 	Get the email and password from the form
 		password := r.FormValue("password")
 		userID, err := Authenticate(email, password)
 		if err != nil {
@@ -284,15 +259,13 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Create session
-		sessionID, err := CreateSession(userID)
+		sessionID, err := CreateSession(userID) // 	Create a new session for the user
 		if err != nil {
 			log.Println("Error creating session:", err)
 			http.Error(w, "Error creating session", http.StatusInternalServerError)
 			return
 		}
 
-		// Set session cookie
 		http.SetCookie(w, &http.Cookie{
 			Name:    "session_id",
 			Value:   sessionID,
@@ -300,22 +273,18 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			Path:    "/",
 		})
 
-		// Redirect to homepage
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the session cookie and clear it
-	cookie, err := r.Cookie("session_id")
+	cookie, err := r.Cookie("session_id") // Retrieve the session cookie and clear it
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
 	sessionID := cookie.Value
-
-	// Attempt to lock and delete the session from the in-memory store
 	SessionMutex.Lock()
 	_, sessionExists := SessionStore[sessionID]
 	if sessionExists {
@@ -323,7 +292,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	SessionMutex.Unlock()
 
-	// Always remove the session cookie, even if the session doesn't exist
 	http.SetCookie(w, &http.Cookie{
 		Name:   "session_id",
 		Value:  "",
@@ -331,17 +299,14 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge: -1, // Expire immediately
 	})
 
-	// Redirect to the homepage or login page after logout
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// Authenticate checks if the user's email and password are valid
 func Authenticate(email, password string) (int, error) {
 	var userID int
 	var storedPassword string
 
-	// Assuming database.DB is your DB connection
-	err := database.DB.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword)
+	err := database.DB.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword) // Get the user ID and password from the database
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, errors.New("invalid credentials")
@@ -349,7 +314,6 @@ func Authenticate(email, password string) (int, error) {
 		return 0, err
 	}
 
-	// Check if password matches (you'll likely use bcrypt for hashing)
 	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)); err != nil {
 		return 0, errors.New("invalid credentials")
 	}

@@ -19,7 +19,7 @@ body, h2, h3, h4, h5, h6, p, input, button,
     letter-spacing: 1px;
 }
 
-/* Global Button Styling (included modal buttons here too) */
+/* Global Button Styling */
 button, 
 .buttons,  
 .auth-section button, 
@@ -39,17 +39,17 @@ button,
 }
 
 .logout-container {
-    display: flex; /* Use flexbox to center the button */
-    justify-content: center; /* Center horizontally */
-    margin: 0; /* Remove extra margin */
-    padding: 0; /* Remove padding */
-    border: none; /* Remove any borders */
-    box-shadow: none; /* Remove any shadow */
-    background: none; /* Remove any background */
+    display: flex; 
+    justify-content: center; 
+    margin: 0; 
+    padding: 0; 
+    border: none; 
+    box-shadow: none; 
+    background: none; 
 }
 
 .logout-button {
-    display: inline-block; /* Make the button inline-block */
+    display: inline-block; 
     padding: 10px 20px;
     background-color: #046871;
     color: white;
@@ -60,7 +60,6 @@ button,
     transition: background-color 0.3s ease;
 }
 
-/* Hover Effects (including for modal buttons) */
 button:hover, 
 .buttons:hover, 
 .logout-button:hover, 
@@ -128,7 +127,6 @@ button:hover,
     width: 100%;
 }
 
-/* User Registration and Login Section */
 .auth-section {
     background-color: #ffffff;
     padding: 20px;
@@ -160,7 +158,6 @@ button:hover,
     border-radius: 4px;
 }
 
-/* Apply the global font to all input, textarea, and select elements */
 input, textarea, select {
     font-family: 'Playfair Display', serif;  
     color: #046871; 
@@ -169,26 +166,23 @@ input, textarea, select {
     border-radius: 4px; 
 }
 
-/* Optionally: Customize the dropdown arrow for select elements */
 select {
     -webkit-appearance: none; 
     -moz-appearance: none;
     appearance: none;
     background-color: #fff;
     padding-right: 30px; 
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB...'); /* Custom arrow, replace with your preferred SVG */
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB...'); 
     background-position: right 10px center;
     background-repeat: no-repeat;
 }
 
-/* Styling the dropdown (select options) */
 select option {
     font-family: 'Playfair Display', serif;
     font-size: 18px;
     color: #8B0000;
 }
 
-/* Consistent text box styling for the Body textarea */
 textarea {
     resize: vertical; 
     min-height: 100px; 
@@ -244,13 +238,13 @@ button {
 
 .category-name {
     font-size: 28px;
-    color: #8B0000; /* Dark red or any color you prefer */
+    color: #8B0000; 
     font-weight: bold;
     margin-bottom: 10px;
 }
 
 html {
-    scroll-behavior: smooth;  /* Enables smooth scrolling */
+    scroll-behavior: smooth;  
  }
 
 
@@ -308,40 +302,40 @@ html {
 /* Responsive layout */
 @media (max-width: 768px) {
     .post {
-        width: 100%;  /* Full width for small screens */
+        width: 100%;  
     }
 }
 
 .comment {
-    margin-bottom: 10px; /* Adds space between comments */
-    font-size: 18px; /* Adjusts font size */
-    line-height: 1.5; /* Better line spacing */
+    margin-bottom: 10px; 
+    font-size: 18px; 
+    line-height: 1.5; 
 }
 
 .comments-section {
-    width: 100%; /* Make the comment section take the full width of the parent container */
+    width: 100%; 
     max-width: 100%;
-    box-sizing: border-box; /* Ensure padding doesn't break the layout */
-    padding: 20px; /* Add some padding for spacing */
+    box-sizing: border-box; 
+    padding: 20px; 
     margin-top: 20px;
 }
 
 .comments-section textarea {
-    width: 100%;  /* Make the comment textarea full width */
+    width: 100%;  
     max-width: 100%;
-    min-height: 120px; /* A reasonable height for writing comments */
-    box-sizing: border-box; /* Make sure padding is included in the total width */
-    padding: 10px; /* Add padding inside the textarea */
-    margin-bottom: 10px; /* Some space below the textarea */
+    min-height: 120px; 
+    box-sizing: border-box; 
+    padding: 10px; 
+    margin-bottom: 10px; 
     padding: 10px;
     border-radius: 5px;
     font-size: 16px;
 }
 
 .comments-section button {
-    width: auto;  /* Keep the button size proportional */
-    padding: 10px 20px; /* Make the button more clickable */
-    background-color: #046871; /* Match the theme */
+    width: auto;  
+    padding: 10px 20px; 
+    background-color: #046871; 
     color: white;
     border: none;
     border-radius: 5px;
@@ -350,7 +344,7 @@ html {
 }
 
 .comments-section button:hover {
-    background-color: #AA2D2D; /* Change the button color on hover */
+    background-color: #AA2D2D; 
 }
 
 
@@ -440,9 +434,9 @@ html {
 
 .search-bar {
     background-color: #f5f5f5;
-    padding: 10px; /* Reduce padding */
-    border-radius: 8px; /* Smooth corners */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Single box shadow */
+    padding: 10px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
     margin: 20px auto;
     width: 100%;
     max-width: 600px;

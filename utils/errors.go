@@ -25,10 +25,10 @@ func NewConfig() (*Config, error) {
 }
 
 func RenderErrorPage(w http.ResponseWriter, statusCode int, message string) {
-	w.WriteHeader(statusCode)
+	w.WriteHeader(statusCode) // Set the status code
 
 	tmpl := template.Must(template.ParseFiles("views/error.html"))
-	data := map[string]interface{}{
+	data := map[string]interface{}{ // 	Create a map of data to pass to the template
 		"StatusCode": statusCode,
 		"Message":    message,
 	}
@@ -39,19 +39,17 @@ func RenderErrorPage(w http.ResponseWriter, statusCode int, message string) {
 }
 
 func HandleError(w http.ResponseWriter, statusCode int, userMessage string, err ...error) {
-	// Log the internal error, if provided
-	if len(err) > 0 && err[0] != nil {
+
+	if len(err) > 0 && err[0] != nil { // Check if there is an error
 		log.Printf("Internal error: %v", err[0])
 	}
-
-	// Send the user-friendly message to the client
 	http.Error(w, userMessage, statusCode)
 }
 
 func middleware(next http.Handler, templates *template.Template) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rec := &responseRecorder{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(rec, r)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { // 	Handle 404 and 500 errors
+		rec := &responseRecorder{ResponseWriter: w, statusCode: http.StatusOK} // 	Create a response recorder
+		next.ServeHTTP(rec, r)                                                 // 	Serve the request
 
 		if rec.statusCode == http.StatusNotFound {
 			templates.ExecuteTemplate(w, "404.html", nil)
