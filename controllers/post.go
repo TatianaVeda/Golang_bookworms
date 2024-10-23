@@ -552,9 +552,7 @@ func DislikePostHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("UpdateLikeDislikeHandler: Received a request")
-
-		// Ensure the request method is POST (or PUT for updating)
-		if r.Method != http.MethodPost && r.Method != http.MethodPut {
+		if r.Method != http.MethodPost {
 			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 			return
 		}
@@ -567,14 +565,14 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Retrieve form values for post_id, like_type, and category_id
+		// Retrieve form values for post_id and like_type
 		postIDStr := r.FormValue("post_id")
 		likeTypeStr := r.FormValue("like_type")
-		//categoryIDStr := r.FormValue("category_id") remove category checking
 
-		log.Printf("Incoming form values: post_id=%s, like_type=%s", postIDStr, likeTypeStr) //, categoryIDStr, category_id=%s
+		// Log incoming form values for debugging
+		log.Printf("Incoming form values: post_id=%s, like_type=%s", postIDStr, likeTypeStr)
 
-		// Validate post ID and like type
+		// Convert form values to integers
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
@@ -589,13 +587,6 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		/* categoryID, err := strconv.Atoi(categoryIDStr)
-		if err != nil || categoryID <= 0 {
-			http.Error(w, "Category ID is required", http.StatusBadRequest)
-			log.Println("Invalid category ID:", categoryIDStr, "Error:", err)
-			return
-		} */
-
 		// Check if the user has already liked or disliked the post
 		var existingLikeType int
 		err = db.QueryRow("SELECT like_type FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID).Scan(&existingLikeType)
@@ -608,50 +599,44 @@ func UpdateLikeDislikeHandler(db *sql.DB) http.HandlerFunc {
 				log.Println("Error inserting new like/dislike:", err)
 				return
 			}
-		} else if existingLikeType != likeType {
-			// Update existing like/dislike
-			_, err = db.Exec("UPDATE likes_dislikes SET like_type = ? WHERE post_id = ? AND user_id = ?", likeType, postID, userID)
-			if err != nil {
-				http.Error(w, "Error updating like/dislike", http.StatusInternalServerError)
-				log.Println("Error updating like/dislike:", err)
-				return
-			}
 		} else {
-			// Remove like/dislike if user clicks the same button again
-			_, err = db.Exec("DELETE FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID)
-			if err != nil {
-				http.Error(w, "Error removing like/dislike", http.StatusInternalServerError)
-				log.Println("Error removing like/dislike:", err)
-				return
+			if existingLikeType == likeType {
+				// If the user clicks the same button again, remove the like/dislike
+				_, err = db.Exec("DELETE FROM likes_dislikes WHERE post_id = ? AND user_id = ?", postID, userID)
+				if err != nil {
+					http.Error(w, "Error removing like/dislike", http.StatusInternalServerError)
+					log.Println("Error removing like/dislike:", err)
+					return
+				}
+			} else {
+				// Update the like/dislike to switch from like to dislike or vice versa
+				_, err = db.Exec("UPDATE likes_dislikes SET like_type = ? WHERE post_id = ? AND user_id = ?", likeType, postID, userID)
+				if err != nil {
+					http.Error(w, "Error updating like/dislike", http.StatusInternalServerError)
+					log.Println("Error updating like/dislike:", err)
+					return
+				}
 			}
 		}
 
-		// Retrieve the updated like and dislike counts for the post
+		// Retrieve updated like and dislike counts
 		var likeCount, dislikeCount int
 		err = db.QueryRow(`
-			SELECT IFNULL(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS likes,
-			       IFNULL(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislikes
-			FROM likes_dislikes
-			WHERE post_id = ?`, postID).Scan(&likeCount, &dislikeCount)
+            SELECT IFNULL(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0) AS likes,
+                   IFNULL(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0) AS dislikes
+            FROM likes_dislikes
+            WHERE post_id = ?`, postID).Scan(&likeCount, &dislikeCount)
 		if err != nil {
 			http.Error(w, "Error fetching like/dislike counts", http.StatusInternalServerError)
 			log.Println("Error fetching like/dislike counts:", err)
 			return
 		}
 
-		categoryID := r.URL.Query().Get("category")
-		// Pass the updated counts back to the ShowPosts handler for the correct category
-		log.Printf("Updated counts for post %d: Likes = %d, Dislikes = %d\n", postID, likeCount, dislikeCount)
+		// Log the updated counts
+		log.Printf("Updated counts for post %d: Likes = %d, Dislikes = %d", postID, likeCount, dislikeCount)
 
-		// Logic for redirection depending on the presence of the category
-		if categoryID != "" {
-			log.Printf("Redirecting back to category page with category ID: %s", categoryID)
-			http.Redirect(w, r, fmt.Sprintf("/posts?category=%s", categoryID), http.StatusSeeOther)
-		} else {
-			log.Println("Redirecting back to the referring page")
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-			//http.Redirect(w, r, "/posts?category=%d", http.StatusSeeOther)
-		}
+		// Return a 204 No Content (no redirect)
+		w.WriteHeader(http.StatusNoContent) // Prevents page reload
 	}
 }
 

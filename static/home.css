@@ -249,6 +249,11 @@ button {
     margin-bottom: 10px;
 }
 
+html {
+    scroll-behavior: smooth;  /* Enables smooth scrolling */
+ }
+
+
 .posts-section {
     display: flex;
     flex-direction: column;

@@ -15,44 +15,42 @@
     <div class="back-home">
         <a href="/" class="home-button">Home 🏠</a>
     </div>
-
     <div class="container">
-        <div class="posts-section">
+        <div class="post" id="post-{{.ID}}">
             <!-- Category Name -->
             <h1 class="category-name">All Posts in {{.CategoryName}}</h1>
 
             <!-- Posts List -->
             {{if .Posts}}
-                {{range .Posts}}
-                <div class="post">
-                    <!-- Post Title -->
-                    <h2 class="post-title">{{.Title}}</h2>
-                    <!-- Post Body -->
-                    <p class="post-body">{{.Body}}</p>
-                    <!-- User who posted -->
-                    <p class="post-user">Posted by: {{.UserName}}</p>
-                    <!-- Category Name -->
-                    <p class="post-category">Category: {{.CategoryName}}</p>
+            {{range .Posts}}
+<div class="post" id="post-{{.ID}}">
+    <!-- Post Title -->
+    <h2 class="post-title">{{.Title}}</h2>
+    <!-- Post Body -->
+    <p class="post-body">{{.Body}}</p>
+    <!-- User who posted -->
+    <p class="post-user">Posted by: {{.UserName}}</p>
+    <!-- Category Name -->
+    <p class="post-category">Category: {{.CategoryName}}</p>
 
-                    <!-- Likes and Dislikes -->
-                    {{if $.IsLoggedIn}}
-                        <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
-                        <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
-                            <input type="hidden" name="post_id" value="{{.ID}}">
-                            <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
-                            <input type="hidden" name="like_type" value="1">
-                            <button type="submit" class="like-button">Like🤩</button>
-                        </form>
-                        <form action="/posts/update_like_dislike" method="POST" style="display:inline;">
-                            <input type="hidden" name="post_id" value="{{.ID}}">
-                            <input type="hidden" name="category_id" value="{{$.CategoryID}}"> <!-- Pass Category ID -->
-                            <input type="hidden" name="like_type" value="-1">
-                            <button type="submit" class="dislike-button">Dislike👿</button>
-                        </form>
-                    {{else}}
-                        <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
-                    {{end}}
-
+    <!-- Likes and Dislikes -->
+    {{if $.IsLoggedIn}}
+        <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+        <form action="/posts/update_like_dislike" method="POST" target="hidden_iframe">
+            <input type="hidden" name="post_id" value="{{.ID}}">
+            <input type="hidden" name="category_id" value="{{$.CategoryID}}">
+            <input type="hidden" name="like_type" value="1">
+            <button type="submit" class="like-button">Like🤩</button>
+        </form>     
+        <form action="/posts/update_like_dislike" method="POST" target="hidden_iframe">
+            <input type="hidden" name="post_id" value="{{.ID}}">
+            <input type="hidden" name="category_id" value="{{$.CategoryID}}">
+            <input type="hidden" name="like_type" value="-1">
+            <button type="submit" class="like-button">Dislike👿</button>
+        </form>                             
+    {{else}}
+        <p><em>Log in to see like/dislike counts and interact with posts.</em></p>
+    {{end}}
                     <!-- Comments for the current post -->
                     <div class="comments-section">
                         <h3>Comments</h3>
@@ -83,13 +81,7 @@
             {{else}}
                 <p>No posts found in this category. Please create a new post to get started!</p>
             {{end}}
-        </div>
-        <form action="/search" method="get">
-            <input type="text" name="query" placeholder="Search...">
-            <button type="submit">Search</button>
-        </form>
-        
-    </div>
+    <meta http-equiv="refresh" content="2">
     <iframe name="hidden_iframe" style="display:none;"></iframe>
     <div class="footer">
         <p>&copy; 2024 Literary Lions Forum</p>
