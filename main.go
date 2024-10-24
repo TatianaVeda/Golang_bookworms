@@ -33,12 +33,12 @@ func GenerateHash(password string) string {
 var templates *template.Template
 
 func init() {
-	templates = template.Must(template.ParseFiles("views/home.html", "views/posts.html", "views/create_post.html", "views/error.html", "views/myposts.html", "views/profile.html"))
+	templates = template.Must(template.ParseGlob("views/*.html"))
 }
 
 func main() {
 	log.Println("Starting database initialization...")
-
+	templates = template.Must(template.ParseGlob("views/*.html"))
 	database.DB = database.ConnectDB()
 	defer database.DB.Close()
 
@@ -73,9 +73,8 @@ func main() {
 	http.HandleFunc("/test-error", CauseInternalServerError)
 	http.HandleFunc("/search", controllers.SearchPosts)
 	http.HandleFunc("/posts/delete/", controllers.DeletePostHandler)
-	http.HandleFunc("/profile", controllers.ProfileHandler(templates))
 
-	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666) // Logging setup
+	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
