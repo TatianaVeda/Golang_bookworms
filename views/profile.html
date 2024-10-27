@@ -4,11 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Profile</title>
+    <link rel="stylesheet" href="/static/home.css?v=1.0">
     <link rel="stylesheet" href="static/profile.css">
+    <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
-    <a href="/" class="home-btn">Back to Homepage</a>
-
+    <div class="container">
+        <div class="header">
+            <img src="static/images/lion-icon.png" alt="Logo" class="logo">
+            <h1> Feeling your inner-r-rr-rrr lion?</h1>
+        </div>
+        <div class="back-home">
+            <a href="/" class="home-button">Home 🏠</a>
+        </div>
     <div class="profile-container">
         <div class="profile-picture">
             <img src="static/images/babylion.jpg" alt="User Profile Picture">
@@ -78,7 +86,11 @@
                     <li>{{.Body}}</li> <!-- Fixed .Comment to .Body -->
                     {{end}}
                 </ul>
+                {{template "create_post" .}}
             </section>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 Literary Lions Forum</p>
         </div>
     </div>
 </body>
