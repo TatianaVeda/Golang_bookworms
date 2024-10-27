@@ -12,9 +12,18 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var db *sql.DB
+//var db *sql.DB
+
+type Post struct {
+	ID        int
+	Title     string
+	Body      string // Change Content to Body
+	UserID    int
+	CreatedAt time.Time
+}
 
 func PostsHandler(db *sql.DB, templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -331,9 +340,11 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			var likedPostsConverted []structs.Post
 			for _, postMap := range likedPosts { // 	Convert the map to a Post struct
 				post := structs.Post{
-					ID:    postMap["ID"].(int),
-					Title: postMap["Title"].(string),
-					Body:  postMap["Body"].(string),
+					ID:        postMap["ID"].(int),
+					Title:     postMap["Title"].(string),
+					Body:      postMap["Body"].(string),
+					CreatedAt: postMap["CreatedAT"].(time.Time),
+					UserName:  postMap["UserName"].(string),
 				}
 				likedPostsConverted = append(likedPostsConverted, post)
 			}
@@ -356,7 +367,6 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			}
 			profileData.LikedComments = likedCommentsConverted
 		}
-		fmt.Println("userPosts len at the end", len(profileData.Posts))
 
 		templates.ExecuteTemplate(w, "profile.html", map[string]interface{}{
 			"ProfileData": profileData,
@@ -732,7 +742,8 @@ func FetchCommentsForPost(db *sql.DB, postID int) ([]structs.Comment, error) {
 	return comments, nil
 }
 
-func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
+/*func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the session cookie
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -750,7 +761,7 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		SELECT posts.id, posts.title, posts.body, 
+		SELECT posts.id, posts.title, posts.body,
 		       COALESCE(categories.name, 'Uncategorized') AS category_name
 		FROM posts
 		LEFT JOIN categories ON posts.category_id = categories.id
@@ -792,6 +803,7 @@ func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
 }
+*/
 
 func GetCategoryName(categoryID int) string {
 	var categoryName string

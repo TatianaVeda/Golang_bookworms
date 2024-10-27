@@ -3,6 +3,7 @@ package database
 import (
 	"literary-lions/structs"
 	"log"
+	"time"
 )
 
 func FetchProfile(userID int) (map[string]interface{}, error) { // FetchProfile retrieves a user's profile from the database.
@@ -22,10 +23,11 @@ func FetchProfile(userID int) (map[string]interface{}, error) { // FetchProfile 
 
 func FetchUserPosts(userID int) ([]structs.Post, error) { // FetchUserPosts retrieves posts created by a specific user.
 	query := `
-    SELECT id, title, body, created_at 
-    FROM posts 
-    WHERE user_id = ?
-    ORDER BY created_at DESC
+    SELECT posts.id, posts.title, posts.body, posts.created_at, users.username
+		FROM posts
+		JOIN users ON posts.user_id = users.id
+		WHERE posts.user_id = ?
+		ORDER BY posts.created_at DESC
     `
 
 	rows, err := DB.Query(query, userID)
@@ -37,21 +39,23 @@ func FetchUserPosts(userID int) ([]structs.Post, error) { // FetchUserPosts retr
 	var posts []structs.Post
 	for rows.Next() {
 		var post structs.Post
-		if err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt); err != nil {
+		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt, &post.UserName)
+		if err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
 	}
-
 	return posts, nil
 }
 
 func FetchLikedPosts(userID int) ([]map[string]interface{}, error) { // FetchLikedPosts retrieves posts liked by a user.
 	query := `
-		SELECT p.id, p.title, p.body
+		SELECT p.id, p.title, p.body, p.created_at, u.username
 		FROM posts p
 		JOIN likes_dislikes ld ON p.id = ld.post_id
+		JOIN users u ON p.user_id = u.id
 		WHERE ld.user_id = ? AND ld.like_type = 1
+		ORDER BY p.created_at DESC
 	`
 	rows, err := DB.Query(query, userID)
 	if err != nil {
@@ -62,15 +66,18 @@ func FetchLikedPosts(userID int) ([]map[string]interface{}, error) { // FetchLik
 	var posts []map[string]interface{}
 	for rows.Next() {
 		var id int
-		var title, body string
-		err := rows.Scan(&id, &title, &body)
+		var title, body, username string
+		var createdAt time.Time
+		err := rows.Scan(&id, &title, &body, &createdAt, &username)
 		if err != nil {
 			return nil, err
 		}
 		post := map[string]interface{}{
-			"ID":    id,
-			"Title": title,
-			"Body":  body,
+			"ID":        id,
+			"Title":     title,
+			"Body":      body,
+			"CreatedAT": createdAt,
+			"UserName":  username,
 		}
 		posts = append(posts, post)
 	}
