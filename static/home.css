@@ -421,15 +421,25 @@ html {
 }
 
 /* Footer Styling */
-.footer, .footer * {
+.footer{
     text-align: center;
     padding: 10px;
     background-color: #046871;
     color: white !important;
-    margin-top: 20px;
-    width: 1200px;  
-    margin: 0 auto; 
+    width: 100%;  
+    max-width: 1200px;
+    margin: 20px auto; 
     box-sizing: border-box; 
+    border-radius: 8px;   
+}
+
+.footer * {
+    color: white !important;
+}
+
+.footer p {
+    margin: 0; 
+    padding: 0;
 }
 
 .search-bar {
