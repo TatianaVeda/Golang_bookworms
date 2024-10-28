@@ -205,7 +205,37 @@ func FetchCategories() ([]structs.Category, error) { // FetchCategories retrieve
 	log.Printf("FetchCategories: Retrieved categories: %+v", categories)
 	return categories, nil
 }
+func FetchAllPosts() ([]structs.Post, error) {
+	// Use your specific columns here
+	query := `SELECT id, title, body, COALESCE(user_id, 0) AS user_id, created_at FROM posts ORDER BY created_at DESC`
+	rows, err := DB.Query(query)
+	if err != nil {
+		log.Printf("Error executing SQL query: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
 
+	// Prepare a slice to store posts
+	var posts []structs.Post
+
+	// Scan each row and add it to the slice
+	for rows.Next() {
+		var post structs.Post
+
+		// Scan the row into variables
+		if err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserID, &post.CreatedAt); err != nil {
+			log.Printf("Error scanning post row: %v", err)
+			return nil, err
+		}
+
+		posts = append(posts, post)
+	}
+
+	// Return all posts
+	return posts, nil
+}
+
+/*
 func FetchAllPosts() ([]map[string]interface{}, error) {
 	// Use your specific columns here
 	query := `SELECT id, title, body, COALESCE(user_id, 0) AS user_id, created_at FROM posts ORDER BY created_at DESC`
@@ -216,6 +246,7 @@ func FetchAllPosts() ([]map[string]interface{}, error) {
 	}
 	defer rows.Close()
 
+	// Prepare a slice to store posts
 	var posts []map[string]interface{}
 	for rows.Next() { // Scan each row and add it to the slice
 		var id, userID int
@@ -237,4 +268,4 @@ func FetchAllPosts() ([]map[string]interface{}, error) {
 	}
 
 	return posts, nil // Return all posts
-}
+} */

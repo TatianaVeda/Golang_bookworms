@@ -16,6 +16,7 @@ type Post struct {
 	DislikeCount int
 	CategoryName string
 	CategoryID   int
+	PostID       int
 	Comments     []Comment
 	postID       int
 }
@@ -25,11 +26,11 @@ type Comment struct {
 	ID           int
 	Body         string
 	PostID       int
+	UserID       int
+	UserName     string
 	CreatedAt    time.Time
 	Poster       string
 	Title        string
-	UserName     string
-	UserID       int
 	LikeCount    int
 	DislikeCount int
 }
