@@ -18,21 +18,21 @@ type Post struct {
 	CategoryID   int
 	PostID       int
 	Comments     []Comment
-	postID       int
 }
 
 // Comment represents a comment in the system
 type Comment struct {
-	ID           int
-	Body         string
-	PostID       int
-	UserID       int
-	UserName     string
-	CreatedAt    time.Time
-	Poster       string
-	Title        string
-	LikeCount    int
-	DislikeCount int
+	ID                 int
+	Body               string
+	PostID             int
+	UserID             int
+	UserName           string
+	CreatedAt          time.Time
+	CreatedAtFormatted string
+	Poster             string
+	Title              string
+	LikeCount          int
+	DislikeCount       int
 }
 
 // Category represents a category for a post
@@ -73,7 +73,7 @@ type TemplateData struct {
 type SearchResult struct {
 	ID        int
 	Title     string
-	username  string
+	Username  string
 	CreatedAt time.Time
 	Body      string
 }

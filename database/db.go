@@ -15,6 +15,16 @@ var (
 	SessionStore = make(map[string]int) // Session store to map session IDs to user IDs
 )
 
+func checkIfTablesExist() (bool, error) {
+	var tableCount int
+	query := "SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name IN ('users', 'posts', 'categories', 'post_categories', 'comments', 'likes_dislikes', 'comment_likes');"
+	err := DB.QueryRow(query).Scan(&tableCount)
+	if err != nil {
+		return false, err
+	}
+	return tableCount > 0, nil
+}
+
 func InitDB(dsn string) error {
 	var err error
 
@@ -34,6 +44,19 @@ func InitDB(dsn string) error {
 	if err != nil {
 		log.Fatalf("Failed to set busy timeout: %v", err)
 		return err
+	}
+
+	tablesExist, err := checkIfTablesExist()
+	if err != nil {
+		return fmt.Errorf("failed to check for existing tables: %w", err)
+	}
+
+	if !tablesExist {
+		// if table doesn't exist - create schema
+		if err := createSchema(); err != nil {
+			log.Fatalf("Failed to create schema: %v", err)
+			return err
+		}
 	}
 
 	log.Println("Database connection initialized successfully with WAL journal mode and busy timeout.")
@@ -74,7 +97,13 @@ func ConnectDB() *sql.DB {
 	return db
 }
 
-func createSchema() error { // createSchema defines and executes the SQL schema to create the necessary tables
+// createSchema defines and executes the SQL schema to create the necessary tables
+func createSchema() error {
+
+	err := execSchemaQuery(`PRAGMA foreign_keys = ON;`) // Ensure foreign keys are enforced.
+	if err != nil {
+		return fmt.Errorf("error enabling foreign key support: %w", err)
+	}
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,12 +163,14 @@ func createSchema() error { // createSchema defines and executes the SQL schema 
 			user_id INTEGER NOT NULL,
 			comment_id INTEGER NOT NULL,
 			like BOOLEAN NOT NULL DEFAULT 1,
+			like_type INTEGER NOT NULL CHECK (like_type IN (1, -1)),
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY(user_id) REFERENCES users(id),
 			FOREIGN KEY(comment_id) REFERENCES comments(id)
 		);`,
 
-		`PRAGMA foreign_keys = ON;`, // Ensure foreign keys are enforced.
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_user_comment_like ON comment_likes (user_id, comment_id);`, // inique index to prevent "likes" duplicate
+
 	}
 
 	for _, query := range queries {

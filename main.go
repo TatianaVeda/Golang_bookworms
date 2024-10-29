@@ -31,6 +31,7 @@ func GenerateHash(password string) string {
 }
 
 var templates *template.Template
+var DB *sql.DB
 
 func init() {
 	templates = template.Must(template.ParseGlob("views/*.html"))
@@ -63,6 +64,7 @@ func main() {
 	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePostHandler)))
 	http.HandleFunc("/logout", controllers.LogoutHandler)
 	http.Handle("/posts/comment", controllers.RequireSession(http.HandlerFunc(controllers.CreateComment)))
+	http.Handle("/like_comment", controllers.RequireSession(http.HandlerFunc(controllers.LikeComment)))
 	//http.HandleFunc("/myposts", controllers.MyPostsHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/posts/like", controllers.LikePostHandler)

@@ -1,12 +1,17 @@
 package database
 
 import (
+	"database/sql"
+	"fmt"
 	"literary-lions/structs"
 	"log"
 	"time"
 )
 
-func FetchProfile(userID int) (map[string]interface{}, error) { // FetchProfile retrieves a user's profile from the database.
+//var db *sql.DB
+
+// FetchProfile retrieves a user's profile from the database.
+func FetchProfile(userID int) (map[string]interface{}, error) {
 	var email, username string
 	err := DB.QueryRow("SELECT email, username FROM users WHERE id = ?", userID).Scan(&email, &username)
 	if err != nil {
@@ -84,8 +89,21 @@ func FetchLikedPosts(userID int) ([]map[string]interface{}, error) { // FetchLik
 	return posts, nil
 }
 
-func FetchUserComments(userID int) ([]structs.Comment, error) {
-	rows, err := DB.Query("SELECT id, body FROM comments WHERE user_id = ?", userID)
+func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
+	var rows *sql.Rows
+	var err error
+
+	// query based on postID or userID
+	if postID > 0 {
+		query := `SELECT id, body, user_id, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC`
+		rows, err = DB.Query(query, postID)
+	} else if userID > 0 {
+		query := `SELECT id, body, user_id, created_at FROM comments WHERE user_id = ? ORDER BY created_at ASC`
+		rows, err = DB.Query(query, userID)
+	} else {
+		return nil, fmt.Errorf("either postID or userID must be provided")
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -94,12 +112,28 @@ func FetchUserComments(userID int) ([]structs.Comment, error) {
 	var comments []structs.Comment
 	for rows.Next() {
 		var comment structs.Comment
-		if err := rows.Scan(&comment.ID, &comment.Body); err != nil {
+		// Data scanning
+		if err := rows.Scan(&comment.ID, &comment.Body, &comment.UserID, &comment.CreatedAt); err != nil {
 			return nil, err
 		}
+
+		// Fetching username by userID
+		err = DB.QueryRow("SELECT username FROM users WHERE id = ?", comment.UserID).Scan(&comment.Poster)
+		if err != nil {
+			log.Printf("Error fetching poster for comment ID %d: %v", comment.ID, err)
+			return nil, err
+		}
+
+		// Likes/dislikes counting for comments
+		comment.LikeCount, comment.DislikeCount, err = FetchCommentLikesDislikes(comment.ID)
+		if err != nil {
+			log.Printf("Error fetching likes/dislikes for comment ID %d: %v", comment.ID, err)
+		}
+
 		comments = append(comments, comment)
 	}
-	return comments, nil
+
+	return comments, rows.Err()
 }
 
 func FetchLikedComments(userID int) ([]map[string]interface{}, error) { // FetchLikedComments retrieves comments liked by a user.
@@ -136,6 +170,24 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) { // Fetch
 	}
 
 	return comments, nil
+}
+
+func FetchCommentLikesDislikes(commentID int) (int, int, error) {
+	var likes, dislikes int
+
+	query := `
+		SELECT 
+			COALESCE(SUM(CASE WHEN like_type = 1 THEN 1 ELSE 0 END), 0), 
+			COALESCE(SUM(CASE WHEN like_type = -1 THEN 1 ELSE 0 END), 0)
+		FROM comment_likes 
+		WHERE comment_id = ?`
+
+	err := DB.QueryRow(query, commentID).Scan(&likes, &dislikes)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return likes, dislikes, nil
 }
 
 func FetchPostsByCategory(categoryID string) ([]map[string]interface{}, error) {
