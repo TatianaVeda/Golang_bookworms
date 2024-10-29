@@ -171,12 +171,51 @@ func createSchema() error {
 
 		`CREATE UNIQUE INDEX IF NOT EXISTS idx_user_comment_like ON comment_likes (user_id, comment_id);`, // inique index to prevent "likes" duplicate
 
+		`CREATE TABLE sessions (
+			session_id TEXT PRIMARY KEY,      -- Stores the unique session identifier
+			user_id INTEGER NOT NULL,         -- Links to the user associated with the session
+			expires_at DATETIME NOT NULL,     -- Defines the expiration time of the session
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		);`,
 	}
 
 	for _, query := range queries {
 		err := execSchemaQuery(query)
 		if err != nil {
 			return fmt.Errorf("error creating table: %w", err)
+		}
+	}
+
+	// Populate categories table after all tables have been created
+	log.Println("Populating categories table with default values...")
+	if err := populateCategories(); err != nil {
+		return fmt.Errorf("failed to populate categories: %w", err)
+	}
+
+	return nil
+}
+
+// Populate categories with default values
+func populateCategories() error {
+	// Check if 'categories' table exists before populating
+	var tableExists bool
+	err := DB.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='categories';").Scan(&tableExists)
+	if err != nil || !tableExists {
+		return fmt.Errorf("categories table does not exist or could not be verified: %w", err)
+	}
+
+	var count int
+	err = DB.QueryRow("SELECT COUNT(*) FROM categories").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("error checking categories count: %w", err)
+	}
+
+	if count == 0 {
+		categories := []string{"Literature", "Poetry", "Non-fiction", "Short Stories"}
+		for _, name := range categories {
+			if err := AddCategory(name); err != nil {
+				return fmt.Errorf("error populating categories: %w", err)
+			}
 		}
 	}
 	return nil

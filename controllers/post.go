@@ -162,7 +162,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 
 	// Add condition for category filtering if a category is selected
 	if categoryIDInt > 0 {
-		log.Printf("Executing query: %s with categoryID: %d", query, categoryIDInt)
+		//log.Printf("Executing query: %s with categoryID: %d", query, categoryIDInt)
 		query += " WHERE posts.category_id = ? ORDER BY posts.created_at DESC"
 		rows, err = database.DB.Query(query, categoryIDInt)
 	} else {
