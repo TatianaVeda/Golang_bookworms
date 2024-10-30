@@ -146,7 +146,8 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	query := `
     SELECT posts.id, posts.title, posts.body, users.username, categories.name, 
            IFNULL(likes_table.likes, 0) AS LikeCount, 
-           IFNULL(likes_table.dislikes, 0) AS DislikeCount
+           IFNULL(likes_table.dislikes, 0) AS DislikeCount,
+		   posts.created_at
 		    
 	FROM posts
     JOIN users ON posts.user_id = users.id
@@ -193,7 +194,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	var posts []structs.Post
 	for rows.Next() {
 		var post structs.Post
-		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserName, &post.CategoryName, &post.LikeCount, &post.DislikeCount) // 	Scan the rows into the post struct
+		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.UserName, &post.CategoryName, &post.LikeCount, &post.DislikeCount, &post.CreatedAt) //Scan the rows into the post struct
 		if err != nil {
 			log.Printf("Error scanning posts: %v", err)
 			continue
@@ -206,7 +207,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		for i := range post.Comments {
-			post.Comments[i].CreatedAtFormatted = post.Comments[i].CreatedAt.Format("2006-01-02 15:04:05 -0700")
+			post.Comments[i].CreatedAtFormatted = post.Comments[i].CreatedAt.Format("2006-01-02 15:04:05 +0200 UTC")
 		}
 
 		posts = append(posts, post)
@@ -325,9 +326,16 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			http.Error(w, "Error fetching comments", http.StatusInternalServerError)
 			return
 		}
+		/* // Format CreatedAt for each comment
+		for i := range comments {
+			if !comments[i].CreatedAt.IsZero() { // Only format if CreatedAt is not nil
+				comments[i].CreatedAtFormatted = comments[i].CreatedAt.Format("2006-01-02 15:04:05 -0700")
+			}
+		} */
 		profileData.Comments = comments
 
-		if profileUserID == userID { // 	If the user is viewing their own profile
+		//If the user is viewing their own profile
+		if profileUserID == userID {
 			likedPosts, err := database.FetchLikedPosts(userID)
 			if err != nil {
 				http.Error(w, "Error fetching liked posts", http.StatusInternalServerError)
@@ -335,34 +343,32 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			}
 
 			var likedPostsConverted []structs.Post
-			for _, postMap := range likedPosts { // 	Convert the map to a Post struct
+			for _, postMap := range likedPosts { //Convert the map to a Post struct
+				/* createdAt, ok := postMap["CreatedAt"].(time.Time)
+				if !ok {
+					createdAt = time.Now()
+				} */
 				post := structs.Post{
 					ID:        postMap["ID"].(int),
 					Title:     postMap["Title"].(string),
 					Body:      postMap["Body"].(string),
-					CreatedAt: postMap["CreatedAT"].(time.Time),
+					CreatedAt: postMap["CreatedAt"].(time.Time),
 					UserName:  postMap["UserName"].(string),
 				}
+				/* if createdAt, ok := postMap["CreatedAT"].(time.Time); ok && !createdAt.IsZero() {
+					post.CreatedAtFormatted = createdAt.Format("2006-01-02 15:04:05 -0700")
+				} */
 				likedPostsConverted = append(likedPostsConverted, post)
 			}
+			profileData.LikedPosts = likedPostsConverted
 
-			profileData.LikedPosts = likedPostsConverted // 	Add the liked posts to the profile data
+			//Add the liked posts to the profile data
 			likedComments, err := database.FetchLikedComments(userID)
 			if err != nil {
 				http.Error(w, "Error fetching liked comments", http.StatusInternalServerError)
 				return
 			}
-
-			var likedCommentsConverted []structs.Comment
-			for _, commentMap := range likedComments { // 	Convert the map to a Comment struct
-				comment := structs.Comment{
-					ID:     commentMap["ID"].(int),
-					Body:   commentMap["Body"].(string),
-					PostID: commentMap["PostID"].(int),
-				}
-				likedCommentsConverted = append(likedCommentsConverted, comment) // 	Convert the map to a Comment struct
-			}
-			profileData.LikedComments = likedCommentsConverted
+			profileData.LikedComments = likedComments //Converted
 		}
 
 		// Render the profile template
@@ -715,7 +721,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 	// Insert the comment into the database
 
-	result, err := database.DB.Exec("INSERT INTO comments (user_id, post_id, body, created_at) VALUES (?, ?, ?, ?)", userID, postIDInt, commentBody, time.Now())
+	result, err := database.DB.Exec("INSERT INTO comments (user_id, post_id, body) VALUES (?, ?, ?)", userID, postIDInt, commentBody)
 	if err != nil {
 		log.Printf("Error posting comment: %v, UserID: %d, PostID: %d, Body: %s", err, userID, postIDInt, commentBody)
 		http.Error(w, "Error posting comment.", http.StatusInternalServerError)

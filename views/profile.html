@@ -74,7 +74,10 @@
                 <h2>Your Comments</h2>
                 <ul>
                     {{range .ProfileData.Comments}}
-                    <li>{{.Body}}</li> <!-- Fixed .Comment to .Body -->
+                    <li>
+                        <p>{{.Body}}</p>
+                        <p>{{.CreatedAt}} by {{.UserName}}</p>
+                    </li>
                     {{end}}
                 </ul>
             </section>
@@ -83,7 +86,10 @@
                 <h2>Your Liked Comments</h2>
                 <ul>
                     {{range .ProfileData.LikedComments}}
-                    <li>{{.Body}}</li> <!-- Fixed .Comment to .Body -->
+                    <li>
+                        <p>{{.Body}}</p>
+                        <p>{{.CreatedAt}} by {{.UserName}}</p>
+                    </li>
                     {{end}}
                 </ul>
                 {{template "create_post" .}}

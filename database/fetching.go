@@ -81,7 +81,7 @@ func FetchLikedPosts(userID int) ([]map[string]interface{}, error) { // FetchLik
 			"ID":        id,
 			"Title":     title,
 			"Body":      body,
-			"CreatedAT": createdAt,
+			"CreatedAt": createdAt,
 			"UserName":  username,
 		}
 		posts = append(posts, post)
@@ -118,7 +118,7 @@ func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
 		}
 
 		// Fetching username by userID
-		err = DB.QueryRow("SELECT username FROM users WHERE id = ?", comment.UserID).Scan(&comment.Poster)
+		err = DB.QueryRow("SELECT username FROM users WHERE id = ?", comment.UserID).Scan(&comment.UserName)
 		if err != nil {
 			log.Printf("Error fetching poster for comment ID %d: %v", comment.ID, err)
 			return nil, err
@@ -136,7 +136,52 @@ func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
 	return comments, rows.Err()
 }
 
-func FetchLikedComments(userID int) ([]map[string]interface{}, error) { // FetchLikedComments retrieves comments liked by a user.
+func FetchLikedComments(userID int) ([]structs.Comment, error) {
+	// Query to retrieve liked comments with creation time
+	query := `
+		SELECT c.id, c.body, c.post_id, c.user_id, c.created_at
+		FROM comments c
+		JOIN comment_likes cl ON c.id = cl.comment_id
+		WHERE cl.user_id = ? AND cl.like = 1
+	`
+	rows, err := DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []structs.Comment
+	for rows.Next() {
+		var comment structs.Comment
+		// Scan data directly into the Comment struct fields
+		if err := rows.Scan(&comment.ID, &comment.Body, &comment.PostID, &comment.UserID, &comment.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		// Fetch username for each liked comment
+		err = DB.QueryRow("SELECT username FROM users WHERE id = ?", comment.UserID).Scan(&comment.UserName)
+		if err != nil {
+			log.Printf("Error fetching username for comment ID %d: %v", comment.ID, err)
+			return nil, err
+		}
+
+		// Fetch like counts for each comment,  no comment.DislikeCount
+		comment.LikeCount, _, err = FetchCommentLikesDislikes(comment.ID)
+		if err != nil {
+			log.Printf("Error fetching likes for comment ID %d: %v", comment.ID, err)
+		}
+
+		comments = append(comments, comment)
+	}
+
+	if err = rows.Err(); err != nil { // Check for any errors that occurred during the iteration
+		return nil, err
+	}
+
+	return comments, nil
+}
+
+/* func FetchLikedComments(userID int) ([]map[string]interface{}, error) { // FetchLikedComments retrieves comments liked by a user.
 	query := `
 		SELECT c.id, c.body, c.post_id
 		FROM comments c
@@ -170,7 +215,7 @@ func FetchLikedComments(userID int) ([]map[string]interface{}, error) { // Fetch
 	}
 
 	return comments, nil
-}
+} */
 
 func FetchCommentLikesDislikes(commentID int) (int, int, error) {
 	var likes, dislikes int
