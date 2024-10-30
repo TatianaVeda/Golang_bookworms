@@ -20,7 +20,7 @@
             <!-- Category Name -->
             <h1 class="category-name">All Posts in {{.CategoryName}}</h1>
 
-            <!-- Posts List -->
+            <div class="posts-grid">
             {{if .Posts}}
                 {{range .Posts}}
                 <div class="post">
@@ -29,7 +29,7 @@
                     <!-- Post Body -->
                     <p class="post-body">{{.Body}}</p>
                     <!-- User who posted -->
-                    <p class="post-user">Posted {{.CreatedAt}} by: {{.UserName}}</p>
+                    <p class="post-user">Posted by: {{.UserName}}</p>
                     <!-- Category Name -->
                     <p class="post-category">Category: {{.CategoryName}}</p>
                     <!-- Likes and Dislikes -->
@@ -62,8 +62,8 @@
                         <ul>
                             {{range .Comments}}
                              <li>
-                                <p>{{.Body}} - <strong> by: {{.UserName}}</strong></p> <!-- Display comment body and username -->
-                                        <small><p><em>Commented {{.CreatedAt}} </em></p></small>
+                                <p>{{.Body}} - <strong>{{.UserName}}</strong></p> <!-- Display comment body and username -->
+                                        <small><p><em>Commented by: {{.Poster}} at: {{.CreatedAtFormatted}}</em></p></small>
                                         <small><p>🤩 Likes: {{.LikeCount}} 👿 Dislikes: {{.DislikeCount}}</p></small>
                                         
                                         <!-- Interaction options for logged-in users -->
@@ -99,7 +99,8 @@
 
         <iframe name="hidden_iframe" style="display:none;"></iframe>
     </div>
-    
+</div>
+</div>
     <hr>
     <iframe name="hidden_iframe" style="display:none;"></iframe>
     <div class="footer">

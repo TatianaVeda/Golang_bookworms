@@ -248,10 +248,11 @@ html {
  } */
 
 
-.posts-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.posts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px; 
+    max-width: 1200px;
     width: 100%;
     margin: 0 auto;
 }
@@ -261,9 +262,6 @@ html {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-    width: calc(100% - 40px);     
-    margin: 20px 0; 
 }
 
 .post-title {
@@ -301,8 +299,8 @@ html {
 
 /* Responsive layout */
 @media (max-width: 768px) {
-    .post {
-        width: 100%;  
+    .post-grid {
+        grid-template-columns: 1fr;  
     }
 }
 
