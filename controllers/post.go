@@ -326,12 +326,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			http.Error(w, "Error fetching comments", http.StatusInternalServerError)
 			return
 		}
-		/* // Format CreatedAt for each comment
-		for i := range comments {
-			if !comments[i].CreatedAt.IsZero() { // Only format if CreatedAt is not nil
-				comments[i].CreatedAtFormatted = comments[i].CreatedAt.Format("2006-01-02 15:04:05 -0700")
-			}
-		} */
+
 		profileData.Comments = comments
 
 		//If the user is viewing their own profile
@@ -355,9 +350,6 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 					CreatedAt: postMap["CreatedAt"].(time.Time),
 					UserName:  postMap["UserName"].(string),
 				}
-				/* if createdAt, ok := postMap["CreatedAT"].(time.Time); ok && !createdAt.IsZero() {
-					post.CreatedAtFormatted = createdAt.Format("2006-01-02 15:04:05 -0700")
-				} */
 				likedPostsConverted = append(likedPostsConverted, post)
 			}
 			profileData.LikedPosts = likedPostsConverted
