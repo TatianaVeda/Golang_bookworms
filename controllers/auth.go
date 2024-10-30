@@ -238,7 +238,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
 			log.Println("Error parsing form:", err)
-			http.Error(w, "Unable to parse form", http.StatusBadRequest)
+			renderModalWithMessage(w, r, "Unable to parse form", false, false)
 			return
 		}
 
@@ -255,7 +255,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		userID, err := Authenticate(email, password)
 		if err != nil {
 			log.Println("Authentication failed:", err)
-			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			renderModalWithMessage(w, r, "Invalid email or password.", false, false)
 			return
 		}
 
