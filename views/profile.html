@@ -1,10 +1,10 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Profile</title>
-    <link rel="stylesheet" href="/static/home.css?v=1.0">
+    <link rel="stylesheet" href="/static/home.css">
     <link rel="stylesheet" href="/static/profile.css">
     <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
@@ -13,79 +13,87 @@
         <div class="header">
             <img src="/static/images/lion-icon.png" alt="Logo" class="logo">
             <h1>Feeling your inner-r-rr-rrr lion?</h1>
-        </div>
-        <div class="back-home">
             <a href="/" class="home-button">Home 🏠</a>
         </div>
-        
-        <!-- Profile Info -->
-        <div class="profile-container">
-            <div class="profile-picture">
-                <img src="/static/images/babylion.jpg" alt="User Profile Picture">
+
+        <!-- Profile Section with Two Columns -->
+        <div class="profile-page">
+            <!-- Left Column: Profile Card -->
+            <div class="profile-card">
+                <div class="profile-picture">
+                    <img src="/static/images/babylion.jpg" alt="User Profile Picture">
+                </div>
+                <div class="profile-info">
+                    <h2>{{.ProfileData.Username}}</h2>
+                    <p>@{{.ProfileData.Username}}</p>
+                </div>
             </div>
-            <div class="profile-info">
-                <h2 class="profile-name">{{.ProfileData.Username}}</h2>
-                <p class="profile-username">@{{.ProfileData.Username}}</p>
+
+            <!-- Right Column: Tabs and Content -->
+            <div class="content-card">
+                <!-- Radio Buttons for Tabs -->
+                <input type="radio" id="posts-tab" name="tab-control" checked>
+                <input type="radio" id="liked-posts-tab" name="tab-control">
+                <input type="radio" id="comments-tab" name="tab-control">
+                <input type="radio" id="liked-comments-tab" name="tab-control">
+
+                <!-- Tab Labels -->
+                <ul class="tab-container">
+                    <li><label for="posts-tab">My posts</label></li>
+                    <li><label for="liked-posts-tab">Liked posts</label></li>
+                    <li><label for="comments-tab">My comments</label></li>
+                    <li><label for="liked-comments-tab">Liked comments</label></li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <section id="posts-content">
+                        <h2>Your Posts</h2>
+                        <ul>
+                            {{range .ProfileData.Posts}}
+                                <li>
+                                    <h3>{{.Title}}</h3>
+                                    <p>{{.Body}}</p>
+                                    <p>{{.CreatedAt}} by {{.UserName}}</p>
+                                </li>
+                            {{end}}
+                        </ul>
+                    </section>
+
+                    <section id="liked-posts-content">
+                        <h2>Your Liked Posts</h2>
+                        <ul>
+                            {{range .ProfileData.LikedPosts}}
+                                <li>
+                                    <h3>{{.Title}}</h3>
+                                    <p>{{.Body}}</p>
+                                    <p>{{.CreatedAt}} by {{.UserName}}</p>
+                                </li>
+                            {{end}}
+                        </ul>
+                    </section>
+
+                    <section id="comments-content">
+                        <h2>Your Comments</h2>
+                        <ul>
+                            {{range .ProfileData.Comments}}
+                                <li>{{.Body}}</li>
+                            {{end}}
+                        </ul>
+                    </section>
+
+                    <section id="liked-comments-content">
+                        <h2>Your Liked Comments</h2>
+                        <ul>
+                            {{range .ProfileData.LikedComments}}
+                                <li>{{.Body}}</li>
+                            {{end}}
+                        </ul>
+                    </section>
+                </div>
             </div>
         </div>
 
-        <!-- Tabs for Profile Sections -->
-        <div class="tab-container">
-            <ul class="tab-labels">
-                <li><input type="radio" id="posts-tab" name="tab-control" checked><label for="posts-tab">My posts</label></li>
-                <li><input type="radio" id="liked-posts-tab" name="tab-control"><label for="liked-posts-tab">Liked posts</label></li>
-                <li><input type="radio" id="comments-tab" name="tab-control"><label for="comments-tab">My comments</label></li>
-                <li><input type="radio" id="liked-comments-tab" name="tab-control"><label for="liked-comments-tab">Liked comments</label></li>
-            </ul>
-
-            <!-- Tab Content -->
-            <div class="tab-content">
-                <section id="posts-content">
-                    <h2>Your Posts</h2>
-                    <ul>
-                        {{range .ProfileData.Posts}}
-                        <li>
-                            <h2>{{.Title}}</h2>
-                            <p>{{.Body}}</p>
-                            <p>{{.CreatedAt}} by {{.UserName}}</p>
-                        </li> 
-                        {{end}}
-                    </ul>
-                </section>
-
-                <section id="liked-posts-content">
-                    <h2>Your Liked Posts</h2>
-                    <ul>
-                        {{range .ProfileData.LikedPosts}}
-                        <li>
-                            <h2>{{.Title}}</h2>
-                            <p>{{.Body}}</p>
-                            <p>{{.CreatedAt}} by {{.UserName}}</p>
-                        </li> 
-                        {{end}}
-                    </ul>
-                </section>
-
-                <section id="comments-content">
-                    <h2>Your Comments</h2>
-                    <ul>
-                        {{range .ProfileData.Comments}}
-                        <li>{{.Body}}</li>
-                        {{end}}
-                    </ul>
-                </section>
-
-                <section id="liked-comments-content">
-                    <h2>Your Liked Comments</h2>
-                    <ul>
-                        {{range .ProfileData.LikedComments}}
-                        <li>{{.Body}}</li>
-                        {{end}}
-                    </ul>
-                </section>
-            </div>
-        </div>
-        
         <div class="footer">
             <p>&copy; 2024 Literary Lions Forum</p>
         </div>
