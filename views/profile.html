@@ -53,8 +53,8 @@
                             {{range .ProfileData.Posts}}
                                 <li>
                                     <h3>{{.Title}}</h3>
-                                    <p>{{.Body}}</p>
-                                    <p>{{.CreatedAt}} by {{.UserName}}</p>
+                                    <p class="message">{{.Body}}</p>
+                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p>
                                 </li>
                             {{end}}
                         </ul>
@@ -66,8 +66,8 @@
                             {{range .ProfileData.LikedPosts}}
                                 <li>
                                     <h3>{{.Title}}</h3>
-                                    <p>{{.Body}}</p>
-                                    <p>{{.CreatedAt}} by {{.UserName}}</p>
+                                    <p class="message">{{.Body}}</p>
+                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p>
                                 </li>
                             {{end}}
                         </ul>
@@ -77,7 +77,8 @@
                         <h2>Your Comments</h2>
                         <ul>
                             {{range .ProfileData.Comments}}
-                                <li>{{.Body}}</li>
+                                <li><p class="message">{{.Body}}</p>
+                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p></li>
                             {{end}}
                         </ul>
                     </section>
@@ -86,7 +87,8 @@
                         <h2>Your Liked Comments</h2>
                         <ul>
                             {{range .ProfileData.LikedComments}}
-                                <li>{{.Body}}</li>
+                                <li><p class="message">{{.Body}}</p>
+                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p></li>
                             {{end}}
                         </ul>
                     </section>
