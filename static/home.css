@@ -248,11 +248,10 @@ html {
  } */
 
 
-.posts-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px; 
-    max-width: 1200px;
+.posts-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
     margin: 0 auto;
 }
@@ -262,17 +261,20 @@ html {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    width: calc(100% - 40px);     
+    margin: 20px 0; 
 }
 
 .post-title {
     font-size: 24px;
     font-weight: bold;
-    color: #333333;
+    color: #046871;;
     margin-bottom: 10px;
 }
 
 .post-content {
-    color: #555;
+    color:  #046871;
     font-size: 18px;
     margin-top: 5px;
 }
@@ -286,21 +288,22 @@ html {
 
 .post-user {
     font-size: 16px;
-    color: #8B0000;
+    color:  #046871;
     font-style: italic;
 }
 
 .post-category {
     font-size: 16px;
     font-weight: bold;
-    color: #8B0000;
+    color:  #046871;
     margin-bottom: 15px;
 }
 
+
 /* Responsive layout */
 @media (max-width: 768px) {
-    .post-grid {
-        grid-template-columns: 1fr;  
+    .post {
+        width: 100%;  
     }
 }
 
@@ -322,12 +325,13 @@ html {
     width: 100%;  
     max-width: 100%;
     min-height: 120px; 
-    box-sizing: border-box; 
+    box-sizing: border-box;
+    color:  #046871; 
     padding: 10px; 
     margin-bottom: 10px; 
     padding: 10px;
     border-radius: 5px;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .comments-section button {
@@ -409,7 +413,7 @@ html {
 .create-post-link {
     display: inline-block;
     font-size: 18px;
-    color: #0066cc;
+    color:  #046871;
     text-decoration: underline;
     margin-bottom: 20px;
 }
