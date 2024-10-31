@@ -206,9 +206,9 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error fetching comments for post ID %d: %v", post.ID, err)
 			continue
 		}
-		/* for i := range post.Comments {
+		for i := range post.Comments {
 			post.Comments[i].CreatedAtFormatted = post.Comments[i].CreatedAt.Format("2006-01-02 15:04:05 +0200 UTC")
-		} */
+		}
 
 		posts = append(posts, post)
 	}
@@ -339,6 +339,10 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 
 			var likedPostsConverted []structs.Post
 			for _, postMap := range likedPosts { //Convert the map to a Post struct
+				/* createdAt, ok := postMap["CreatedAt"].(time.Time)
+				if !ok {
+					createdAt = time.Now()
+				} */
 				post := structs.Post{
 					ID:        postMap["ID"].(int),
 					Title:     postMap["Title"].(string),
