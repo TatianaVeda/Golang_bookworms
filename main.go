@@ -9,7 +9,6 @@ import (
 	"literary-lions/utils"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
@@ -30,16 +29,43 @@ func GenerateHash(password string) string {
 	return string(hash)
 }
 
-var templates *template.Template
+var tmpl *template.Template
+var tmpl404 *template.Template
 var DB *sql.DB
 
 func init() {
-	templates = template.Must(template.ParseGlob("views/*.html"))
+	tmpl = template.Must(template.ParseGlob("views/*.html"))
+	tmpl404 = template.Must(template.ParseFiles("views/404.html"))
+}
+
+func RequireSession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Checking for session cookie...")
+		cookie, err := r.Cookie("session_id")
+		if err != nil {
+			log.Printf("No session cookie found: %v", err)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		// Lock to prevent race conditions
+		controllers.SessionMutex.Lock()
+		userID, sessionExists := controllers.SessionStore[cookie.Value]
+		controllers.SessionMutex.Unlock()
+
+		if !sessionExists {
+			log.Println("Invalid session, redirecting to login.")
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		log.Printf("Valid session for user ID: %d", userID)
+		next.ServeHTTP(w, r)
+	}
 }
 
 func main() {
 	log.Println("Starting database initialization...")
-	templates = template.Must(template.ParseGlob("views/*.html"))
 	database.DB = database.ConnectDB()
 	defer database.DB.Close()
 
@@ -55,25 +81,23 @@ func main() {
 	}
 
 	http.Handle("/", StripTrailingSlash(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rootHandler(w, r, cfg.DB, cfg.Templates)
+		rootHandler(w, r, cfg.DB, tmpl) // Use tmpl here
 	})))
-	http.HandleFunc("/login", controllers.LoginUser)
-	http.HandleFunc("/register", controllers.RegisterUser)
+	http.Handle("/posts/create", controllers.RequireSession(EnforceMethod(controllers.CreatePostHandler, http.MethodPost)))
+	http.Handle("/posts/comment", controllers.RequireSession(EnforceMethod(controllers.CreateComment, http.MethodPost)))
+	http.Handle("/posts/like", EnforceMethod(controllers.LikePostHandler, http.MethodPost))
+	http.Handle("/posts/dislike", EnforceMethod(controllers.DislikePostHandler, http.MethodPost))
+	http.Handle("/posts/update_like_dislike", EnforceMethod(controllers.UpdateLikeDislikeHandler(database.DB), http.MethodPost))
 	http.Handle("/posts", StripTrailingSlash(http.HandlerFunc(controllers.ShowPosts)))
-	http.Handle("/posts/create", controllers.RequireSession(http.HandlerFunc(controllers.CreatePostHandler)))
+	http.HandleFunc("/login", RedirectToHomeIfDirectAccess(controllers.LoginUser))
+	http.HandleFunc("/register", RedirectToHomeIfDirectAccess(controllers.RegisterUser))
 	http.HandleFunc("/logout", controllers.LogoutHandler)
-	http.Handle("/posts/comment", controllers.RequireSession(http.HandlerFunc(controllers.CreateComment)))
-	http.Handle("/like_comment", controllers.RequireSession(http.HandlerFunc(controllers.LikeComment)))
+	http.Handle("/like_comment", controllers.RequireSession(EnforceMethod(controllers.LikeComment, http.MethodPost)))
+	http.HandleFunc("/search", controllers.SearchPosts)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.HandleFunc("/posts/like", controllers.LikePostHandler)
-	http.HandleFunc("/posts/dislike", controllers.DislikePostHandler)
-	http.HandleFunc("/posts/update_like_dislike", controllers.UpdateLikeDislikeHandler(database.DB))
 	http.HandleFunc("/404", NotFoundHandler)
 	http.HandleFunc("/500", InternalServerErrorHandler)
 	http.HandleFunc("/test-error", CauseInternalServerError)
-	http.HandleFunc("/search", controllers.SearchPosts)
-	http.HandleFunc("/posts/delete/", controllers.DeletePostHandler)
-	http.HandleFunc("/profile", controllers.ProfileHandler(templates))
 
 	file, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
@@ -85,6 +109,26 @@ func main() {
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatalf("Server failed to start: %v", err)
+	}
+}
+
+func EnforceMethod(handlerFunc http.HandlerFunc, method string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			NotFoundHandler(w, r)
+			return
+		}
+		handlerFunc(w, r)
+	}
+}
+
+func RedirectToHomeIfDirectAccess(handlerFunc http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		handlerFunc(w, r) // Proceed with handler function for POST requests
 	}
 }
 
@@ -127,8 +171,8 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 			return
 		}
 	} else if r.Method == http.MethodGet {
-		//Render home page for GET requests
-		cookie, err := r.Cookie("session_id")
+
+		cookie, err := r.Cookie("session_id") //Render home page for GET requests
 		isLoggedIn := false
 		if err == nil {
 			controllers.SessionMutex.Lock()
@@ -195,21 +239,10 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 	}
 }
 
-func newHTTPRequest(method, path string, form url.Values) *http.Request { // Helper function to create a new HTTP request for form data
-	body := strings.NewReader(form.Encode())
-	req, err := http.NewRequest(method, path, body)
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	return req
-}
-
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
-	tmpl := template.Must(template.ParseFiles("views/404.html"))
-	err := tmpl.Execute(w, nil)
-	if err != nil {
+	if err := tmpl404.Execute(w, nil); err != nil {
+		log.Printf("Error rendering 404 template: %v", err)
 		http.Error(w, "404 - Page Not Found", http.StatusNotFound)
 	}
 }

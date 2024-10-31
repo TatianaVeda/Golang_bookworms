@@ -251,7 +251,7 @@ html {
 .posts-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px; 
+    gap: 20px;
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
@@ -279,13 +279,15 @@ html {
 
 .post-body {
     font-size: 18px;
-    color: #555; 
+    color: #046871; 
     margin-bottom: 10px;
     max-width: 1200px;  
 }
 
+
+
 .post-user {
-    font-size: 16px;
+    font-size: 14px;
     color: #8B0000;
     font-style: italic;
 }
@@ -300,13 +302,13 @@ html {
 /* Responsive layout */
 @media (max-width: 768px) {
     .post-grid {
-        grid-template-columns: 1fr;  
+        grid-template-columns: 1fr;
     }
 }
 
 .comment {
     margin-bottom: 10px; 
-    font-size: 18px; 
+    font-size: 14px; 
     line-height: 1.5; 
 }
 
@@ -316,13 +318,15 @@ html {
     box-sizing: border-box; 
     padding: 20px; 
     margin-top: 20px;
+    font-size: 0.9em;
 }
 
 .comments-section textarea {
     width: 100%;  
     max-width: 100%;
     min-height: 120px; 
-    box-sizing: border-box; 
+    color: #046871; 
+    box-sizing: border-box;
     padding: 10px; 
     margin-bottom: 10px; 
     padding: 10px;
@@ -409,7 +413,7 @@ html {
 .create-post-link {
     display: inline-block;
     font-size: 18px;
-    color: #0066cc;
+    color: #046871;
     text-decoration: underline;
     margin-bottom: 20px;
 }

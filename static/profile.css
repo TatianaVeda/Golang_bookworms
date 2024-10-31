@@ -36,6 +36,23 @@ body {
     max-width: 100%;  
     margin-bottom: 10px;
 }
+.tab-content ul li p.message {
+    color: #046871;
+    font-size: 1em;
+    margin-bottom: 5px;
+}
+.tab-content ul li p.meta-info {
+    color: #8B0000;
+    font-size: 0.9em;
+    font-style: italic;
+    margin: 0;
+}
+
+
+.tab-content ul li p.meta-info .username {
+    color: #046871;
+    font-weight: bold;
+}
 
 .footer {
     text-align: center;

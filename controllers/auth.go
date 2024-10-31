@@ -77,15 +77,17 @@ func GetCSRFCookie(r *http.Request) (string, error) {
 
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
+		log.Println("RegisterUser: Handling POST request")
+
 		if err := r.ParseForm(); err != nil {
-			renderModalWithMessage(w, r, "Unable to parse form data", true, false)
+			renderModalWithMessage(w, r, "Unable to parse form data", "register")
 			return
 		}
 
-		formToken := r.FormValue("csrf_token") // Get the CSRF token from the form
+		formToken := r.FormValue("csrf_token")
 		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
-			renderModalWithMessage(w, r, "Invalid CSRF token.", true, false)
+			renderModalWithMessage(w, r, "Invalid CSRF token.", "register")
 			return
 		}
 
@@ -93,33 +95,47 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		if !isValidEmail(email) { // Check if the email is valid
-			renderModalWithMessage(w, r, "Invalid email format.", true, false)
+		if !isValidEmail(email) {
+			renderModalWithMessage(w, r, "Invalid email format.", "register")
 			return
 		}
 
 		if len(password) < 8 {
-			renderModalWithMessage(w, r, "Password must be at least 8 characters long.", true, false)
+			renderModalWithMessage(w, r, "Password must be at least 8 characters long.", "register")
 			return
 		}
 
 		hashedPassword, err := HashPassword(password)
 		if err != nil {
-			renderModalWithMessage(w, r, "Error hashing password.", true, false)
+			renderModalWithMessage(w, r, "Error hashing password.", "register")
 			return
 		}
 
+		// Attempt to insert user into the database
 		_, err = database.DB.Exec(`INSERT INTO users (email, username, password) VALUES (?, ?, ?)`, email, username, hashedPassword)
 		if err != nil {
-			if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.Code == sqlite3.ErrConstraint {
-				renderModalWithMessage(w, r, "Email or username already exists.", true, false)
-				return
+			if sqliteErr, ok := err.(sqlite3.Error); ok {
+				if sqliteErr.Code == sqlite3.ErrConstraint {
+					log.Printf("RegisterUser: Duplicate entry error - %v", sqliteErr)
+					renderModalWithMessage(w, r, "Email or username already exists.", "register")
+				} else {
+					log.Printf("RegisterUser: SQLite error - %v", sqliteErr)
+					renderModalWithMessage(w, r, "Database error during registration.", "register")
+				}
+			} else {
+				log.Printf("RegisterUser: General database error - %v", err)
+				renderModalWithMessage(w, r, "Error registering user.", "register")
 			}
-			renderModalWithMessage(w, r, "Error registering user.", true, false)
 			return
 		}
 
-		renderModalWithMessage(w, r, "Registration successful! Welcome!", true, true)
+		// Redirect to the homepage or success page after successful registration
+		log.Println("RegisterUser: Registration successful, redirecting to homepage")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	} else {
+		// Redirect if the request is not a POST (likely a direct URL access)
+		log.Println("RegisterUser: Received GET request; redirecting to homepage")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
@@ -129,37 +145,70 @@ func isValidEmail(email string) bool {
 	return re.MatchString(email)
 }
 
-func renderModalWithMessage(w http.ResponseWriter, r *http.Request, message string, isRegistering bool, isSuccess bool) {
-	csrfToken, _ := GenerateAndSetCSRFToken(w, r) // Generate and set the CSRF token
+func renderModalWithMessage(w http.ResponseWriter, r *http.Request, message string, modalType string) {
+	csrfToken, err := GenerateAndSetCSRFToken(w, r)
+	if err != nil {
+		log.Printf("CSRF token generation error: %v", err)
+		http.Error(w, "Error generating CSRF token", http.StatusInternalServerError)
+		return
+	}
 
-	tmpl := template.Must(template.ParseFiles(
+	// Parse the main template to render modal within the home page
+	tmpl, err := template.ParseFiles(
 		"views/home.html",
 		"views/auth.html",
 		"views/categories.html",
 		"views/create_post.html",
-	))
+	)
+	if err != nil {
+		log.Printf("Template parsing error: %v", err)
+		http.Error(w, "Error loading templates", http.StatusInternalServerError)
+		return
+	}
 
+	// Pass the data to the template with specific modal type and error messages
 	data := map[string]interface{}{
-		"ShowModal":         true, // Keeps the modal open
+		"ShowModal":         true,
 		"CsrfToken":         csrfToken,
-		"IsRegistering":     isRegistering,
-		"RegistrationError": "",
+		"IsRegistering":     modalType == "register",
 		"LoginError":        "",
+		"RegistrationError": "",
 		"SuccessMessage":    "",
 	}
 
-	if isSuccess { // Set the success message
-		data["SuccessMessage"] = message
-	} else if isRegistering {
+	switch modalType {
+	case "register":
 		data["RegistrationError"] = message
-	} else {
+	case "login":
 		data["LoginError"] = message
+	case "success":
+		data["SuccessMessage"] = message
 	}
 
-	log.Printf("Rendering modal with message: %s", message)
+	log.Printf("Rendering modal (type: %s) with message: %s", modalType, message)
+
+	// Execute the main template with data
 	if err := tmpl.Execute(w, data); err != nil {
-		log.Printf("Template rendering error: %v", err)
-		http.Error(w, "Error rendering page", http.StatusInternalServerError)
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
+}
+
+func RenderSimpleLoginPage(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("views/auth.html")
+	if err != nil {
+		http.Error(w, "Error loading login page", http.StatusInternalServerError)
+		return
+	}
+
+	csrfToken, _ := GenerateAndSetCSRFToken(w, r)
+	data := map[string]interface{}{
+		"CsrfToken": csrfToken,
+		"ShowModal": false,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Error rendering login page", http.StatusInternalServerError)
 	}
 }
 
@@ -199,9 +248,8 @@ func CheckPasswordHash(password, hashedPassword string) error {
 
 func CreateSession(userID int) (string, error) {
 	sessionID := uuid.New().String()
-	expirationTime := time.Now().Add(24 * time.Hour) // Set the expiration time to 24 hours from now
+	expirationTime := time.Now().Add(24 * time.Hour)
 
-	log.Printf("CreateSession: Inserting session for user ID %d with session ID %s", userID, sessionID)
 	_, err := database.DB.Exec("INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)", sessionID, userID, expirationTime)
 	if err != nil {
 		log.Printf("CreateSession: Error inserting session into database: %v", err)
@@ -212,7 +260,6 @@ func CreateSession(userID int) (string, error) {
 	SessionStore[sessionID] = userID
 	SessionMutex.Unlock()
 
-	log.Printf("CreateSession: Session created for user ID %d with session ID %s", userID, sessionID)
 	return sessionID, nil
 }
 
@@ -238,31 +285,28 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
 			log.Println("Error parsing form:", err)
-			renderModalWithMessage(w, r, "Unable to parse form", false, false)
+			renderModalWithMessage(w, r, "Unable to parse form", "login")
 			return
 		}
 
 		formToken := r.FormValue("csrf_token")
-		cookieToken, err := GetCSRFCookie(r) // Get the CSRF token from the cookie
+		cookieToken, err := GetCSRFCookie(r)
 		if err != nil || formToken != cookieToken {
-			log.Println("Invalid CSRF token")
-			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+			renderModalWithMessage(w, r, "Invalid CSRF token", "login")
 			return
 		}
 
-		email := r.FormValue("email") // 	Get the email and password from the form
+		email := r.FormValue("email")
 		password := r.FormValue("password")
 		userID, err := Authenticate(email, password)
 		if err != nil {
-			log.Println("Authentication failed:", err)
-			renderModalWithMessage(w, r, "Invalid email or password.", false, false)
+			renderModalWithMessage(w, r, "Invalid email or password.", "login")
 			return
 		}
 
-		sessionID, err := CreateSession(userID) // 	Create a new session for the user
+		sessionID, err := CreateSession(userID)
 		if err != nil {
-			log.Println("Error creating session:", err)
-			http.Error(w, "Error creating session", http.StatusInternalServerError)
+			renderModalWithMessage(w, r, "Error creating session", "login")
 			return
 		}
 
@@ -273,6 +317,8 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			Path:    "/",
 		})
 
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	} else {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
@@ -306,7 +352,7 @@ func Authenticate(email, password string) (int, error) {
 	var userID int
 	var storedPassword string
 
-	err := database.DB.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword) // Get the user ID and password from the database
+	err := database.DB.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, errors.New("invalid credentials")
@@ -317,7 +363,6 @@ func Authenticate(email, password string) (int, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)); err != nil {
 		return 0, errors.New("invalid credentials")
 	}
-
 	return userID, nil
 }
 
