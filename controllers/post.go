@@ -182,7 +182,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 	if categoryIDInt > 0 {
 		err = database.DB.QueryRow("SELECT name FROM categories WHERE id = ?", categoryIDInt).Scan(&categoryName)
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			utils.RenderErrorPage(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 	} else {

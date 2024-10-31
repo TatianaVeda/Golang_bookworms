@@ -57,7 +57,6 @@ func main() {
 	http.Handle("/", StripTrailingSlash(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rootHandler(w, r, cfg.DB, cfg.Templates)
 	})))
-
 	http.HandleFunc("/login", controllers.LoginUser)
 	http.HandleFunc("/register", controllers.RegisterUser)
 	http.Handle("/posts", StripTrailingSlash(http.HandlerFunc(controllers.ShowPosts)))
@@ -65,7 +64,6 @@ func main() {
 	http.HandleFunc("/logout", controllers.LogoutHandler)
 	http.Handle("/posts/comment", controllers.RequireSession(http.HandlerFunc(controllers.CreateComment)))
 	http.Handle("/like_comment", controllers.RequireSession(http.HandlerFunc(controllers.LikeComment)))
-	//http.HandleFunc("/myposts", controllers.MyPostsHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/posts/like", controllers.LikePostHandler)
 	http.HandleFunc("/posts/dislike", controllers.DislikePostHandler)
@@ -94,12 +92,18 @@ func rootHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates *
 	switch r.URL.Path {
 	case "/":
 		if r.Method == http.MethodGet || r.Method == http.MethodPost {
-			HomeHandler(w, r, db, templates) // Pass db and templates to HomeHandler
+			HomeHandler(w, r, db, templates)
 		} else {
-			http.NotFoundHandler().ServeHTTP(w, r) // Handle non-GET methods
+			NotFoundHandler(w, r) // Handle other methods on root
 		}
+	case "/posts":
+		controllers.ShowPosts(w, r)
+	case "/profile":
+		controllers.ProfileHandler(templates)(w, r)
+	case "/	search":
+		controllers.SearchPosts(w, r)
 	default:
-		http.NotFoundHandler().ServeHTTP(w, r) // Handle unmatched paths
+		NotFoundHandler(w, r) // Call the custom 404 handler for undefined paths
 	}
 }
 
@@ -202,8 +206,14 @@ func newHTTPRequest(method, path string, form url.Values) *http.Request { // Hel
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	utils.HandleError(w, http.StatusNotFound, "Page Not Found")
+	w.WriteHeader(http.StatusNotFound)
+	tmpl := template.Must(template.ParseFiles("views/404.html"))
+	err := tmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, "404 - Page Not Found", http.StatusNotFound)
+	}
 }
+
 func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request) {
 	utils.RenderErrorPage(w, http.StatusInternalServerError, "Internal Server Error")
 }
