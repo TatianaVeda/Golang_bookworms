@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Posts in {{.CategoryName}}</title>
-    <!--<link rel="stylesheet" href="/static/posts.css">-->
-    <link rel="stylesheet" href="/static/home.css"> 
+    <!-- <link rel="stylesheet" href="/static/posts.css"> -->
+    <link rel="stylesheet" href="/static/home.css">
     <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
@@ -21,12 +21,13 @@
         <div class="posts-section">
             <!-- Category Name -->
             <h1 class="category-name">All Posts in {{.CategoryName}}</h1>
-
-            <ul class="posts-grid">
+            <div class="posts-grid">
+            <!-- <ul class="posts-grid"> -->
             {{if .Posts}}
                 {{range .Posts}}
-                <li id="post-{{.ID}}" class="post-item">
-                <div class="post">
+                <!-- <li id="post-{{.ID}}" class="post-item"> -->
+                <div id="post-{{.ID}}" class="post">
+                <!-- <div class="post"> -->
                     <!-- Post Title -->
                     <h2 class="post-title">{{.Title}}</h2>
                     <!-- Post Body -->
@@ -71,7 +72,7 @@
                                         
                                         <!-- Interaction options for logged-in users -->
                                         {{if $.IsLoggedIn}}
-                                        <form action="/like_comment" method="POST" style="display:inline;">
+                                        <form action="/like_comment#comment-{{.ID}}" method="POST" style="display:inline;">
                                             <input type="hidden" name="comment_id" value="{{ .ID }}">
                                             <button type="submit" name="like_type" value="1">Like 🤩</button>
                                             <button type="submit" name="like_type" value="-1">Dislike 👿</button>
@@ -86,27 +87,25 @@
 
                     <!-- Comment Form for Logged-In Users -->                     
                     {{if $.IsLoggedIn}}
-                    <form action="/posts/comment" method="POST">
+                    <form action="/posts/comment#post-{{.ID}}" method="POST">
                         <input type="hidden" name="post_id" value="{{ .ID }}">
                         <textarea name="body" placeholder="Leave a comment..." required></textarea>
-                        <button type="submit">Add Comment</button>
+                        <button type="submit" class="submit-comment-button">Add Comment</button>
                     </form>
                     {{end}}
                 </div>
             </div>
-        </div>
-        </li>
+       <!-- </li> -->
             {{end}} 
                   
         {{else}}
             <p>No posts found in this category. Please create a new post to get started!</p>
         {{end}}
-    </ul>
-        <!--  <iframe name="hidden_iframe" style="display:none;"></iframe> -->
+    <!-- </ul> -->
+         </div>
     </div>
 </div>
-
-    <hr>
+    <!-- <hr> -->
    <iframe name="hidden_iframe" style="display:none;"></iframe>
     <div class="footer">
         <p>&copy; 2024 Literary Lions Forum</p>

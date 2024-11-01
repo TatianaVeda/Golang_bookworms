@@ -20,10 +20,12 @@ body {
 
 .posts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Автоматически распределяет по двум колонкам */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     padding: 0;
     list-style-type: none;
+    width: 100%; 
+    margin: 0 auto;
 }
 
 .posts-grid li {
@@ -44,6 +46,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     list-style-type: none;
+    width: 100%;
 }
 
 .post-title {
@@ -89,6 +92,7 @@ body {
     margin-bottom: 10px;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    list-style-type: none;
 }
 button, .like-button, .dislike-button {
     background-color: #046871;
@@ -118,4 +122,39 @@ button:hover, .like-button:hover, .dislike-button:hover {
     .posts-grid {
         grid-template-columns: 1fr; /* 1 column for small screens */
     }
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.comment-form textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.submit-comment-button {
+    align-self: flex-start;
+    background-color: #046871;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-comment-button:hover {
+    background-color: #AA2D2D;
 }
