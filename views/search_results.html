@@ -37,9 +37,8 @@
                 <ul class="post-list">
                     {{range .Results}}
                     <li class="post-item">
-                        <a href="/posts/{{.ID}}" class="post-link">
-                            <h3>{{.Title}}</h3>
-                        </a>
+                        <a href="/posts#post-{{.ID}}"class="post-link"><h3>{{.Title}}</h3></a>
+                        <!-- <a href="/posts#post-{{.PostID}}"class="post-link"><h3>{{.Title}}</h3></a> -->
                         <p>By <strong>{{.Author}}</strong> on <em>{{.CreatedAt}}</em></p>
                         <div class="post-content">{{.Body}}</div>
                     </li>

@@ -338,11 +338,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 			}
 
 			var likedPostsConverted []structs.Post
-			for _, postMap := range likedPosts { //Convert the map to a Post struct
-				/* createdAt, ok := postMap["CreatedAt"].(time.Time)
-				if !ok {
-					createdAt = time.Now()
-				} */
+			for _, postMap := range likedPosts {
 				post := structs.Post{
 					ID:        postMap["ID"].(int),
 					Title:     postMap["Title"].(string),

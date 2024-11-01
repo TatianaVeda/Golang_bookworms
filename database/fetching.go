@@ -95,10 +95,10 @@ func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
 
 	// query based on postID or userID
 	if postID > 0 {
-		query := `SELECT id, body, user_id, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC`
+		query := `SELECT id, body, user_id, post_id, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC`
 		rows, err = DB.Query(query, postID)
 	} else if userID > 0 {
-		query := `SELECT id, body, user_id, created_at FROM comments WHERE user_id = ? ORDER BY created_at ASC`
+		query := `SELECT id, body, user_id, post_id, created_at FROM comments WHERE user_id = ? ORDER BY created_at ASC`
 		rows, err = DB.Query(query, userID)
 	} else {
 		return nil, fmt.Errorf("either postID or userID must be provided")
@@ -113,7 +113,7 @@ func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
 	for rows.Next() {
 		var comment structs.Comment
 		// Data scanning
-		if err := rows.Scan(&comment.ID, &comment.Body, &comment.UserID, &comment.CreatedAt); err != nil {
+		if err := rows.Scan(&comment.ID, &comment.Body, &comment.UserID, &comment.PostID, &comment.CreatedAt); err != nil {
 			return nil, err
 		}
 
