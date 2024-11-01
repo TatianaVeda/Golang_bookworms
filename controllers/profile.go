@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"literary-lions/database"
-	"literary-lions/structs"
 	"log"
 	"net/http"
-	"time"
 )
 
 func ProfileHandler(templates *template.Template) http.HandlerFunc {
@@ -66,19 +64,7 @@ func ProfileHandler(templates *template.Template) http.HandlerFunc {
 				http.Error(w, "Error fetching liked posts", http.StatusInternalServerError)
 				return
 			}
-
-			var likedPostsConverted []structs.Post
-			for _, postMap := range likedPosts {
-				post := structs.Post{
-					ID:        postMap["ID"].(int),
-					Title:     postMap["Title"].(string),
-					Body:      postMap["Body"].(string),
-					CreatedAt: postMap["CreatedAt"].(time.Time),
-					UserName:  postMap["UserName"].(string),
-				}
-				likedPostsConverted = append(likedPostsConverted, post)
-			}
-			profileData.LikedPosts = likedPostsConverted
+			profileData.LikedPosts = likedPosts
 
 			//Add the liked posts to the profile data
 			likedComments, err := database.FetchLikedComments(userID)
