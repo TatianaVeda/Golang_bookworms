@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"literary-lions/structs"
 	"log"
-	"time"
 )
 
 //var db *sql.DB
@@ -53,7 +52,7 @@ func FetchUserPosts(userID int) ([]structs.Post, error) { // FetchUserPosts retr
 	return posts, nil
 }
 
-func FetchLikedPosts(userID int) ([]map[string]interface{}, error) { // FetchLikedPosts retrieves posts liked by a user.
+func FetchLikedPosts(userID int) ([]structs.Post, error) {
 	query := `
 		SELECT p.id, p.title, p.body, p.created_at, u.username
 		FROM posts p
@@ -68,25 +67,20 @@ func FetchLikedPosts(userID int) ([]map[string]interface{}, error) { // FetchLik
 	}
 	defer rows.Close()
 
-	var posts []map[string]interface{}
+	var likedPosts []structs.Post
 	for rows.Next() {
-		var id int
-		var title, body, username string
-		var createdAt time.Time
-		err := rows.Scan(&id, &title, &body, &createdAt, &username)
+		var post structs.Post
+		err := rows.Scan(&post.ID, &post.Title, &post.Body, &post.CreatedAt, &post.UserName)
 		if err != nil {
 			return nil, err
 		}
-		post := map[string]interface{}{
-			"ID":        id,
-			"Title":     title,
-			"Body":      body,
-			"CreatedAt": createdAt,
-			"UserName":  username,
-		}
-		posts = append(posts, post)
+		likedPosts = append(likedPosts, post)
 	}
-	return posts, nil
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return likedPosts, nil
 }
 
 func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
