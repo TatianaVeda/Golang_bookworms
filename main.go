@@ -257,12 +257,11 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request) {
-	utils.RenderErrorPage(w, http.StatusInternalServerError, "Internal Server Error")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func CauseInternalServerError(w http.ResponseWriter, r *http.Request) {
-	// Force an error
-	err := fmt.Errorf("deliberate error for testing")
+	err := fmt.Errorf("deliberate error for testing") // Force an error
 	log.Printf("Forced error: %v", err)
 	http.Error(w, "Something went wrong. Please try again later.", http.StatusInternalServerError)
 }
