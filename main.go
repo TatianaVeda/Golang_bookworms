@@ -94,7 +94,16 @@ func main() {
 	http.HandleFunc("/logout", controllers.LogoutHandler)
 	http.Handle("/like_comment", controllers.RequireSession(EnforceMethod(controllers.LikeComment, http.MethodPost)))
 	http.HandleFunc("/search", controllers.SearchPosts)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.HandleFunc("/static", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	})
+	http.Handle("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/static/" { // Redirect `/static/` directly to `/`
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP(w, r) // Otherwise, serve the static files
+	}))
 	http.HandleFunc("/404", NotFoundHandler)
 	http.HandleFunc("/500", InternalServerErrorHandler)
 	http.HandleFunc("/test-error", CauseInternalServerError)
