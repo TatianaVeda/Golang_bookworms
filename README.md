@@ -15,7 +15,7 @@ The Literary Lions Forum is designed to help book club enthusiasts to engage in 
 #### Passwords are stored securely using encryption.
 
 ### Database interaction:
-You can find an ERD Diagram with relationships between entities of the database at: static/images/ERD.jpg
+You can find an ERD structure with relationships between entities of the database at ![ERD Diagram](/static/images/ERD.jpg "Entity Relationship Diagram") 
 User registration data is stored in forum.db.
 Interaction with the database is out of using SQL queries SELECT, CREATE and INSERT.
 #### Database Schema
