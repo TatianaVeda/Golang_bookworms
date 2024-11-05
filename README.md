@@ -15,7 +15,7 @@ The Literary Lions Forum is designed to help book club enthusiasts to engage in 
 #### Passwords are stored securely using encryption.
 
 ### Database interaction:
-You can find an ERD structure with relationships between entities of the database at ![ERD Diagram](/static/images/ERD.jpg "Entity Relationship Diagram") 
+You can find an ERD structure with relationships between entities of the database at [ERD Diagram](/static/images/ERD.jpg "Entity Relationship Diagram") 
 User registration data is stored in forum.db.
 Interaction with the database is out of using SQL queries SELECT, CREATE and INSERT.
 #### Database Schema
@@ -114,10 +114,12 @@ systemctl status docker
 2. Navigate to the project directory and build the Docker image:
 ```
 docker build -t lions-forum-image .
+
+```
 or
 
+```
 DOCKER_BUILDKIT=0 docker build --no-cache -t lions-forum-image . 
-
 ```
 If you got "ERROR: BuildKit is enabled but the buildx component is missing or broken."
 
