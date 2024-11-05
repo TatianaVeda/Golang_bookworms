@@ -9,15 +9,18 @@ The Literary Lions Forum is designed to help book club enthusiasts to engage in 
 
 ### User Registration and Authentication:
 
-- Users can register with a unique email, username, and password.
+- Users can register with an email, username, and password.
 - Login is based on email and password.
-- Session management is handled using cookies.
+- Session management is handled using cookies with expiration time.
+
 #### Passwords are stored securely using encryption.
 
 ### Database interaction:
-You can find an ERD structure with relationships between entities of the database at [ERD Diagram](/static/images/ERD.jpg "Entity Relationship Diagram") 
+You can find a database schema with relationships between entities of the structure in the ERD Diagram ![ERD Diagram](/static/images/ERD.jpg "Entity Relationship Diagram") 
+
 User registration data is stored in forum.db.
-Interaction with the database is out of using SQL queries SELECT, CREATE and INSERT.
+Interaction with the database is carried out through SQL queries SELECT, CREATE and INSERT.
+
 #### Database Schema
 consists of the following tables:
 - Users: Stores user information (email, username, password hash).
@@ -30,46 +33,19 @@ consists of the following tables:
 
 ### Post and Comment System:
 
-Registered users can create posts and comments.
+Only registered users can create posts and comments.
 Posts can be associated with specific categories (Literature, Poetry, Non-fiction, Short Stories).
 Only registered users can create, like or dislike posts and comments.
-The number of likes/dislikes is visible to users.
+The number of likes/dislikes, posts and comments are visible to all users.
 
-## Project Structure
-![pic of structure](/image.png "Picture of structure")
+### Liking/Disliking system
 
-literary-lions-forum/
-│
-├── main.go                      # Application entry point
-│                
-├── controllers/                 # Application logic
-│   ├── auth.go/                 # Authentication and session management
-│   ├── post.go/                 # Post, comment and categories management
-│ 
-│── database/                    # Database models (Users, Posts, Categories, Comments)
-│   ├── db.go                    # SQLite interaction and schema
-│
-│── forum.db                     # Database storage
-│
-├── static/                      # Static style files (CSS, images)
-│   ├── images/lion-icon.png 
-│   ├── home.css
-│   ├── modal.css     
-│
-├── views/                       # HTML templates
-│
-├── Dockerfile                   # Dockerfile for containerizing the app
-├── .dockerignore                # File for ignoring while containerizing the app
-│
-├── .gitignore                   # File for ignoring while git actions
-│
-├── cookies.txt                  ???  
-│
-├── .idea/                       ??? 
-│
-├── go.sum                      # Go modules file for dependencies
-├── go.mod                  
-└── README.md                   # Project documentation
+Registered users can like or dislike posts and comments.
+Likes and dislikes are visible to all users, providing instant feedback on the popularity of discussions.
+
+
+#### Password Encryption using BCrypt stored in the database. Sessions are managed using UUIDs, providing secure and unique identification for user sessions.
+
 
 ### Technologies & Prerequisites
 - Backend: Go (Golang 1.20 or later)
@@ -190,14 +166,17 @@ to get a general idea of ​​how much space images, containers, networks, and 
 
 Once the forum is up and running:
 
+1. Go to the homepage: http://localhost:8080
 1. Register a new account.
 1. Log in to create posts or comments, like or dislike.
 1. Browse the forum by posts and interact with other users by likes and comments.
-1. Filter posts by different categories and participate in discussions.
-1. Search posts for specific content or topic.
+1. Filter posts by different categories on the homepage.
+1. Search posts on the homepage for specific content or topic.
 1. Explore user profile and see your posts, comments, liked content. 
 
-#### Future Enhancements
+### Extra Features
+* A search bar allows user to search for specific posts or topics
+* The profile panel allows the user to view posts and comments they have created or liked, with links to the full content of all posts listed.
 
 ### Contributors:
 
