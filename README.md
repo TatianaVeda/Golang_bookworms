@@ -111,7 +111,13 @@ systemctl status docker
 2. Navigate to the project directory and build the Docker image:
 ```
 docker build -t lions-forum-image .
+or
+
+DOCKER_BUILDKIT=0 docker build --no-cache -t lions-forum-image . 
+
 ```
+If you got "ERROR: BuildKit is enabled but the buildx component is missing or broken."
+
 3. Start the container using the built image:
 ```
 docker run -d -p 8080:8080 -v lions_volume:/literary-lions/ --name lions-forum lions-forum-image
@@ -162,6 +168,11 @@ Full system cleanup (optional):
 docker system prune -a --volumes -f
 ```
 This command removes all unused containers, images, volumes, and networks, providing a comprehensive cleanup.
+
+```
+docker-compose down --rmi all
+```
+For deleting all images related to project.
 
 6. Check Disk Usage:
 ```
