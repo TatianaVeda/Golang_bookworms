@@ -263,7 +263,7 @@ func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request) {
 func CauseInternalServerError(w http.ResponseWriter, r *http.Request) {
 	err := fmt.Errorf("deliberate error for testing") // Force an error
 	log.Printf("Forced error: %v", err)
-	http.Error(w, "Something went wrong. Please try again later.", http.StatusInternalServerError)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func CategoriesHandler(w http.ResponseWriter, r *http.Request) {
