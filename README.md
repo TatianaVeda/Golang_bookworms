@@ -15,6 +15,7 @@ The Literary Lions Forum is designed to help book club enthusiasts to engage in 
 #### Passwords are stored securely using encryption.
 
 ### Database interaction:
+You can find an ERD Diagram with relationships between entities of the database at: static/images/ERD.jpg
 User registration data is stored in forum.db.
 Interaction with the database is out of using SQL queries SELECT, CREATE and INSERT.
 #### Database Schema
@@ -23,6 +24,9 @@ consists of the following tables:
 - Posts: Contains posts made by users.
 - Comments: Stores comments on posts.
 - Categories: Defines categories for posts (Literature, Poetry, Non-fiction, Short Stories).
+- Likes_dislikes: Stores likes/dislikes on posts.
+- Comment_likes: Stores likes/dislikes on comments.
+- Sessions: Stores unique session identifier, user_id associated with the session and the session expiration time.
 
 ### Post and Comment System:
 
@@ -30,8 +34,6 @@ Registered users can create posts and comments.
 Posts can be associated with specific categories (Literature, Poetry, Non-fiction, Short Stories).
 Only registered users can create, like or dislike posts and comments.
 The number of likes/dislikes is visible to users.
-
-
 
 ## Project Structure
 ![pic of structure](/image.png "Picture of structure")
@@ -59,6 +61,7 @@ literary-lions-forum/
 ├── Dockerfile                   # Dockerfile for containerizing the app
 ├── .dockerignore                # File for ignoring while containerizing the app
 │
+├── .gitignore                   # File for ignoring while git actions
 │
 ├── cookies.txt                  ???  
 │
@@ -186,14 +189,13 @@ to get a general idea of ​​how much space images, containers, networks, and 
 Once the forum is up and running:
 
 1. Register a new account.
-1. Log in to create posts and comments.
+1. Log in to create posts or comments, like or dislike.
 1. Browse the forum by posts and interact with other users by likes and comments.
 1. Filter posts by different categories and participate in discussions.
+1. Search posts for specific content or topic.
+1. Explore user profile and see your posts, comments, liked content. 
 
 #### Future Enhancements
-- Search functionality: Add a search bar to allow users to search for specific posts or comments.
-- User profile page: Add a page where users can view their posts, liked posts, and personal information.
-- File uploads: Allow users to upload images or other files in their posts and comments.
 
 ### Contributors:
 

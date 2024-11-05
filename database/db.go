@@ -130,14 +130,6 @@ func createSchema() error {
 			name TEXT NOT NULL UNIQUE
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS post_categories (
-			post_id INTEGER,
-			category_id INTEGER,
-			FOREIGN KEY(post_id) REFERENCES posts(id),
-			FOREIGN KEY(category_id) REFERENCES categories(id),
-			PRIMARY KEY(post_id, category_id)
-		);`,
-
 		`CREATE TABLE IF NOT EXISTS comments (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			body TEXT NOT NULL,
