@@ -1,6 +1,4 @@
-forum.db
-forum.db-shm
-forum.db-wal
+
 forum_backup.db
 test.db
 
