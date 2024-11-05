@@ -136,7 +136,7 @@ func FetchLikedComments(userID int) ([]structs.Comment, error) {
 		SELECT c.id, c.body, c.post_id, c.user_id, c.created_at
 		FROM comments c
 		JOIN comment_likes cl ON c.id = cl.comment_id
-		WHERE cl.user_id = ? AND cl.like = 1
+		WHERE cl.user_id = ? AND cl.like_type = 1
 	`
 	rows, err := DB.Query(query, userID)
 	if err != nil {
