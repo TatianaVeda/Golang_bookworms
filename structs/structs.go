@@ -5,19 +5,20 @@ import (
 )
 
 type Post struct {
-	ID           int
-	Title        string
-	Body         string
-	CreatedAt    time.Time
-	Categories   []Category
-	UserID       int
-	UserName     string
-	LikeCount    int
-	DislikeCount int
-	CategoryName string
-	CategoryID   int
-	PostID       int
-	Comments     []Comment
+	ID                 int
+	Title              string
+	Body               string
+	CreatedAt          time.Time
+	CreatedAtFormatted string
+	Categories         []Category
+	UserID             int
+	UserName           string
+	LikeCount          int
+	DislikeCount       int
+	CategoryName       string
+	CategoryID         int
+	PostID             int
+	Comments           []Comment
 }
 
 // Comment represents a comment in the system

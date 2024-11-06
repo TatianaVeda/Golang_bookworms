@@ -47,6 +47,9 @@ func FetchUserPosts(userID int) ([]structs.Post, error) { // FetchUserPosts retr
 		if err != nil {
 			return nil, err
 		}
+
+		post.CreatedAtFormatted = post.CreatedAt.Format("Jan 2, 2006 at 03:04pm")
+
 		posts = append(posts, post)
 	}
 	return posts, nil
@@ -74,6 +77,8 @@ func FetchLikedPosts(userID int) ([]structs.Post, error) {
 		if err != nil {
 			return nil, err
 		}
+		post.CreatedAtFormatted = post.CreatedAt.Format("Jan 2, 2006 at 03:04pm")
+
 		likedPosts = append(likedPosts, post)
 	}
 	if err = rows.Err(); err != nil {
@@ -89,10 +94,10 @@ func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
 
 	// query based on postID or userID
 	if postID > 0 {
-		query := `SELECT id, body, user_id, post_id, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC`
+		query := `SELECT id, body, user_id, post_id, created_at FROM comments WHERE post_id = ? ORDER BY created_at DESC`
 		rows, err = DB.Query(query, postID)
 	} else if userID > 0 {
-		query := `SELECT id, body, user_id, post_id, created_at FROM comments WHERE user_id = ? ORDER BY created_at ASC`
+		query := `SELECT id, body, user_id, post_id, created_at FROM comments WHERE user_id = ? ORDER BY created_at DESC`
 		rows, err = DB.Query(query, userID)
 	} else {
 		return nil, fmt.Errorf("either postID or userID must be provided")
@@ -123,6 +128,7 @@ func FetchUserComments(postID int, userID int) ([]structs.Comment, error) {
 		if err != nil {
 			log.Printf("Error fetching likes/dislikes for comment ID %d: %v", comment.ID, err)
 		}
+		comment.CreatedAtFormatted = comment.CreatedAt.Format("Jan 2, 2006 at 03:04pm")
 
 		comments = append(comments, comment)
 	}
@@ -137,6 +143,7 @@ func FetchLikedComments(userID int) ([]structs.Comment, error) {
 		FROM comments c
 		JOIN comment_likes cl ON c.id = cl.comment_id
 		WHERE cl.user_id = ? AND cl.like_type = 1
+		ORDER BY c.created_at DESC
 	`
 	rows, err := DB.Query(query, userID)
 	if err != nil {
@@ -164,6 +171,7 @@ func FetchLikedComments(userID int) ([]structs.Comment, error) {
 		if err != nil {
 			log.Printf("Error fetching likes for comment ID %d: %v", comment.ID, err)
 		}
+		comment.CreatedAtFormatted = comment.CreatedAt.Format("Jan 2, 2006 at 03:04pm")
 
 		comments = append(comments, comment)
 	}
@@ -259,6 +267,7 @@ func FetchPostsByCategory(categoryID string) ([]map[string]interface{}, error) {
 			"UserID":    userID,
 			"CreatedAt": createdAt,
 		}
+
 		posts = append(posts, post)
 	}
 
@@ -318,6 +327,7 @@ func FetchAllPosts() ([]structs.Post, error) {
 			log.Printf("Error scanning post row: %v", err)
 			return nil, err
 		}
+		post.CreatedAtFormatted = post.CreatedAt.Format("Jan 2, 2006 at 03:04pm")
 
 		posts = append(posts, post)
 	}

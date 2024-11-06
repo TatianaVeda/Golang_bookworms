@@ -198,6 +198,9 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		// Format CreatedAt for posts
+		post.CreatedAtFormatted = post.CreatedAt.Format("Jan 2, 2006 at 03:04pm")
+
 		// Fetch comments for the post
 		post.Comments, err = database.FetchUserComments(post.ID, 0)
 		if err != nil {
@@ -205,7 +208,7 @@ func ShowPosts(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		for i := range post.Comments {
-			post.Comments[i].CreatedAtFormatted = post.Comments[i].CreatedAt.Format("2006-01-02 15:04:05 +0200 UTC")
+			post.Comments[i].CreatedAtFormatted = post.Comments[i].CreatedAt.Format("Jan 2, 2006 at 03:04pm")
 		}
 
 		posts = append(posts, post)

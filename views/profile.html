@@ -54,7 +54,7 @@
                                 <li>
                                     <a href="/posts#post-{{.ID}}">{{.Title}}</a>
                                     <p class="message">{{.Body}}</p>
-                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p>
+                                    <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
                                 </li>
                             {{end}}
                         </ul>
@@ -67,7 +67,7 @@
                                 <li>
                                     <a href="/posts#post-{{.ID}}">{{.Title}}</a>
                                     <p class="message">{{.Body}}</p>
-                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p>
+                                    <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
                                 </li>
                             {{end}}
                         </ul>
@@ -79,7 +79,7 @@
                             {{range .ProfileData.Comments}}
                                 <li>
                                     <p class="message">{{.Body}}</p>
-                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p>
+                                    <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
                                     <p><a href="/posts#post-{{.PostID}}">View full post</a></p>
                                    
                                 </li>
@@ -93,7 +93,7 @@
                             {{range .ProfileData.LikedComments}}
                                 <li>
                                     <p class="message">{{.Body}}</p>                                      
-                                    <p class="meta-info">{{.CreatedAt}} by <span class="username">{{.UserName}}</span></p>
+                                    <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
                                     <p><a href="/posts#post-{{.PostID}}">View full post</a></p>
                                 </li>
                             {{end}}

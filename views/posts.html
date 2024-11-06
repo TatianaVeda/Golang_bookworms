@@ -33,7 +33,7 @@
                     <!-- Post Body -->
                     <p class="post-body">{{.Body}}</p>
                     <!-- User who posted -->
-                    <p class="post-user">Posted by: {{.UserName}} at {{.CreatedAt}}</p>
+                    <p class="post-user">Posted by: {{.UserName}} {{.CreatedAtFormatted}}</p>
                     <!-- Category Name -->
                     <p class="post-category">Category: {{.CategoryName}}</p>
                     <!-- Likes and Dislikes -->
@@ -66,8 +66,8 @@
                         <ul class="comments-list">
                             {{range .Comments}}
                              <li id="comment-{{.ID}}">
-                                <p class="message">{{.Body}} - <strong>{{.UserName}}</strong></p> <!-- Display comment body and username -->
-                                    <small><p class="meta-info"><em>Commented by: {{.Poster}} at: {{.CreatedAtFormatted}}</em></p></small>
+                                <p class="message">{{.Body}} - </p> <!-- Display comment body and username -->
+                                    <small><p class="meta-info"><em>Commented by: {{.UserName}} {{.CreatedAtFormatted}}</em></p></small>
                                     <small><p class="meta-info">🤩 Likes: {{.LikeCount}} 👿 Dislikes: {{.DislikeCount}}</p></small>
                                         
                                         <!-- Interaction options for logged-in users -->
@@ -87,9 +87,9 @@
 
                     <!-- Comment Form for Logged-In Users -->                     
                     {{if $.IsLoggedIn}}
-                    <form action="/posts/comment#post-{{.ID}}" method="POST">
+                    <form action="/posts/comment#post-{{.ID}}" method="POST" class="comment-form">
                         <input type="hidden" name="post_id" value="{{ .ID }}">
-                        <textarea name="body" placeholder="Leave a comment..." required></textarea>
+                        <textarea name="body" class="textarea" placeholder="Leave a comment..." required></textarea>
                         <button type="submit" class="submit-comment-button">Add Comment</button>
                     </form>
                     {{end}}
