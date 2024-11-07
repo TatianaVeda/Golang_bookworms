@@ -76,8 +76,8 @@
                                         {{if $.IsLoggedIn}}
                                         <form action="/like_comment#comment-{{.ID}}" method="POST" style="display:inline;">
                                             <input type="hidden" name="comment_id" value="{{ .ID }}">
-                                            <button type="submit" class="button like-button">Like 🤩</button>
-                                            <button type="submit" class="button dislike-button">Dislike 👿</button>
+                                            <button type="submit" name="like_type" value="1">Like 🤩</button>
+                                            <button type="submit" name="like_type" value="-1">Dislike 👿</button>
                                         </form>
                                         {{end}}                                   
                                     </li>
