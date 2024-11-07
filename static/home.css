@@ -216,12 +216,6 @@ button {
     gap: 10px; 
 }
 
-.categories h2 {
-    color: #444;
-    text-align: center;
-    margin-bottom: 15px;
-}
-
 .categories ul {
     list-style: none; 
     padding: 0;
@@ -238,11 +232,23 @@ button {
     text-align: justify;
     width: calc(50% - 10px); /* Two items per row with spacing */
     box-sizing: border-box; /* Ensures padding is within width */
-    max-width: 100%; 
+    max-width: 100%;
+    display: flex; /* Enables centering of content */
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically */
+    height: 100px;
 }
 
 .categories li:hover {
     background-color: #ddd;
+}
+
+.categories a {
+    text-decoration: none;
+    color: inherit;
+    font-size: 20px;
+    font-weight: bold;
+    color: #8B0000;
 }
 
 .category-name {
