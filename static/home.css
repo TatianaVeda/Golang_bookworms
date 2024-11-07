@@ -13,13 +13,13 @@ h2, h3, h4, h5, h6, input, button,
 .modal-content input,
 .modal-content label,
 .modal-content button {  
-    font-family: 'Playfair Display', serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 20px;  
     color: #8B0000; 
     letter-spacing: 1px;
 }
  body, p {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 16px;  
     color: #8B0000; 
     letter-spacing: 1px;
@@ -127,7 +127,7 @@ button:hover,
 
 /* Welcome Message */
 .welcome-message, .message {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Roboto', sans-serif;
     color: #8B0000;
     font-size: 24px;
     font-weight: bold;
@@ -167,7 +167,7 @@ button:hover,
 }
 
 input, textarea, select {
-    font-family: 'Playfair Display', serif;  
+    font-family: 'Roboto', sans-serif; 
     color: #046871; 
     border: 1px solid #ccc; 
     padding: 10px; 
@@ -186,7 +186,7 @@ select {
 }
 
 select option {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 18px;
     color: #8B0000;
 }
@@ -196,9 +196,8 @@ textarea {
     min-height: 100px; 
 }
 
-/* Modify button styling to match the theme */
 button {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Roboto', sans-serif;
 }
 
 /* Categories Section */
@@ -221,23 +220,20 @@ button {
 }
 
 .categories ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-
-.categories ul {
-    list-style-type: none;
+    list-style: none; 
     padding: 0;
+    margin: 0;
 }
 
 .categories li {
+    list-style-type: none; 
     background-color: #eee;
     margin: 10px 0;
     padding: 15px 10px;
     border-radius: 4px;
     cursor: pointer;
     text-align: justify;
-    margin-bottom: 10px
+    padding-left: 0; 
 }
 
 .categories li:hover {
@@ -250,11 +246,6 @@ button {
     font-weight: bold;
     margin-bottom: 10px;
 }
-/* 
-html {
-    scroll-behavior: smooth;  
- } */
-
 
 .posts-grid {
     display: grid;
@@ -370,50 +361,50 @@ html {
 
 
 /* General Container Styling for Forms */
-    .create-post-section {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
-        width: 100%;
-        max-width: 600px;
-        margin: 20px auto;
-    }
+.create-post-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+}
     
-    .create-post-section input, 
-    .create-post-section textarea, 
-    .create-post-section select {
-        padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        width: 100%;
-        box-sizing: border-box;
-        font-size: 16px;
-    }
+.create-post-section input, 
+.create-post-section textarea, 
+.create-post-section select {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 16px;
+}
     
-    .create-post-section label {
-        font-size: 18px;
-        color: #8B0000;
-        margin-bottom: 10px;
-    }
+.create-post-section label {
+    font-size: 18px;
+    color: #8B0000;
+    margin-bottom: 10px;
+}
     
-    .create-post-section button {
-        padding: 12px 20px;
-        background-color: #046871;
-        color: white;
-        font-size: 16px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-        width: fit-content;
-        margin: 10px 0;
-    }
+.create-post-section button {
+    padding: 12px 20px;
+   background-color: #046871;
+    color: white;
+    font-size: 16px;
+   border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: fit-content;
+    margin: 10px 0;
+}
     
-    .create-post-section button:hover {
-        background-color: #AA2D2D;
-    }    
+.create-post-section button:hover {
+    background-color: #AA2D2D;
+}    
 
 .like-button, .dislike-button {
     background-color: #046871;
@@ -463,49 +454,62 @@ html {
     padding: 0;
 }
 
+.search-bar input,
+.search-bar button {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 .search-bar {
-    background-color: #f5f5f5;
-    padding: 10px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
-    margin: 20px auto;
-    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
     max-width: 600px;
-}
-
-.search-form {
-    display: flex;
-    align-items: center;
     width: 100%;
-    max-width: 500px;
-}
-
-.search-input {
-    padding: 10px;
-    font-size: 16px;
+    margin: 20px auto;
+    background-color: white;
     border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-right: 10px;
-    height: 44px;
-    flex-grow: 1;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    box-sizing: border-box;
+    height: 48px; 
 }
 
-.search-button {
-    width: 200px;
-    padding: 10px 20px;
+.search-bar .search-input {
+    width: 100%;
+    padding: 0 12px; 
+    font-size: 16px;
+    border: none;
+    height: 100%; 
+    box-sizing: border-box;
+    outline: none;
+    background-color: white;
+}
+
+.search-bar .search-button {
+    padding: 0 20px;
     font-size: 16px;
     background-color: #046871;
     color: white;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    height: 44px;
+    height: 100%; 
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
+.search-bar .search-button:hover {
+    background-color: #AA2D2D;
+}
+
+.search-form {
+    display: contents; 
+}
 
 .results-container {
     text-align: left;
