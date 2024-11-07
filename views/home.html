@@ -24,6 +24,9 @@
         </div>                                             
 
         {{if not .IsLoggedIn}}
+
+        <br><p class="message">Feel free to сheck out the <a href="/posts">posts</a> in the forum.</p>
+
         {{template "auth" .}}
         {{else}}
             {{if .LoginSuccessMessage}}

@@ -210,13 +210,10 @@ button {
     max-width: 400px;
     width: 100%; 
     max-width: 100%;
-    text-align: justify;
-}
-
-.categories h2 {
-    color: #444;
     text-align: center;
-    margin-bottom: 15px;
+    display: flex; /* Allows layout control of child elements */
+    flex-wrap: wrap; /* Enables wrapping of items */
+    gap: 10px; 
 }
 
 .categories ul {
@@ -233,11 +230,25 @@ button {
     border-radius: 4px;
     cursor: pointer;
     text-align: justify;
-    padding-left: 0; 
+    width: calc(50% - 10px); /* Two items per row with spacing */
+    box-sizing: border-box; /* Ensures padding is within width */
+    max-width: 100%;
+    display: flex; /* Enables centering of content */
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically */
+    height: 100px;
 }
 
 .categories li:hover {
     background-color: #ddd;
+}
+
+.categories a {
+    text-decoration: none;
+    color: inherit;
+    font-size: 20px;
+    font-weight: bold;
+    color: #8B0000;
 }
 
 .category-name {
@@ -245,6 +256,13 @@ button {
     color: #8B0000; 
     font-weight: bold;
     margin-bottom: 10px;
+}
+
+/* Responsive Design: Stacks items vertically on smaller screens */
+@media (max-width: 600px) {
+    .categories li {
+        width: 100%; /* Full width for small screens */
+    }
 }
 
 .posts-grid {
