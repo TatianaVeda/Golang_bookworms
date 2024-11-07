@@ -44,17 +44,26 @@ body {
     margin-bottom: 10px;
 }
 
-.header .logo {
-    width: 250px;  
-    height: auto;
-    max-width: 100%;  
+.post-title { 
+    font-size: 24px;
+    font-weight: bold;
+    color: #333333;
     margin-bottom: 10px;
 }
+
+.post-title:hover {
+    color: #046871; 
+    text-decoration: underline; 
+}
+
 .tab-content ul li p.message {
     color: #046871;
-    font-size: 1em;
+    font-size: 18px;
     margin-bottom: 5px;
+    font-weight: normal;
+    margin-bottom: 10px;
 }
+
 .tab-content ul li p.meta-info {
     color: #8B0000;
     font-size: 0.9em;

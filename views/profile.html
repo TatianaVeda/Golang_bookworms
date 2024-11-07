@@ -52,7 +52,7 @@
                         <ul>
                             {{range .ProfileData.Posts}}
                                 <li>
-                                    <a href="/posts#post-{{.ID}}">{{.Title}}</a>
+                                    <a href="/posts#post-{{.ID}}" class="post-title">{{.Title}}</a>
                                     <p class="message">{{.Body}}</p>
                                     <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
                                 </li>
@@ -65,7 +65,7 @@
                         <ul>
                             {{range .ProfileData.LikedPosts}}
                                 <li>
-                                    <a href="/posts#post-{{.ID}}">{{.Title}}</a>
+                                    <a href="/posts#post-{{.ID}}"  class="post-title">{{.Title}}</a>
                                     <p class="message">{{.Body}}</p>
                                     <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
                                 </li>
@@ -80,7 +80,7 @@
                                 <li>
                                     <p class="message">{{.Body}}</p>
                                     <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
-                                    <p><a href="/posts#post-{{.PostID}}">View full post</a></p>
+                                    <p><a href="/posts#post-{{.PostID}}"  class="post-title">View full post</a></p>
                                    
                                 </li>
                             {{end}}
@@ -94,7 +94,7 @@
                                 <li>
                                     <p class="message">{{.Body}}</p>                                      
                                     <p class="meta-info">{{.CreatedAtFormatted}} by <span class="username">{{.UserName}}</span></p>
-                                    <p><a href="/posts#post-{{.PostID}}">View full post</a></p>
+                                    <p><a href="/posts#post-{{.PostID}}" class="post-title">View full post</a></p>
                                 </li>
                             {{end}}
                         </ul>
