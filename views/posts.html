@@ -90,7 +90,7 @@
                     {{if $.IsLoggedIn}}
                     <form action="/posts/comment#post-{{.ID}}" method="POST" class="comment-form">
                         <input type="hidden" name="post_id" value="{{ .ID }}">
-                        <textarea name="body" class="textarea" placeholder="Leave a comment..." required></textarea>
+                        <textarea name="body" class="textarea" maxlength="300" placeholder="Leave a comment..." required></textarea>
                         <button type="submit" class="button submit-comment-button">Add Comment</button>
                     </form>
                     {{end}}

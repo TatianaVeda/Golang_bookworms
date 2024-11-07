@@ -5,12 +5,12 @@
         <form action="posts/create" method="POST">           
             
                 <label for="post-title" class="form-label">Title:</label><br>
-                <input type="text" id="title" name="title" class="form-input" required><br><br>
+                <input type="text" id="title" name="title" maxlength="100"class="form-input" required><br><br>
 
                 <label for="post-content" class="form-label">Body:</label><br>
-                <textarea type="text" id="body" name="body" class="form-textarea" required></textarea><br><br>
+                <textarea type="text" id="body" name="body" maxlength="600" class="form-textarea" required></textarea><br><br>
             
-                <label for="category">Category:</label>
+                <label for="category">Category:</label> 
                 <select id="category" name="category_id" required>
                     <option value="">Select a Category</option>
                     {{range .Categories}}

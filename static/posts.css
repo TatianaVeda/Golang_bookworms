@@ -60,7 +60,7 @@ body, p {
 /* Posts Grid */
 .posts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); 
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); 
     max-width: 1200px;
     gap: 20px;
     padding: 0;
@@ -69,18 +69,18 @@ body, p {
     margin: 0 auto;
 }
 /* Responsive Layout */
-@media (max-width: 768px) {
+ @media (max-width: 768px) {
     .posts-grid {
         grid-template-columns: 1fr; /* Single column on smaller screens */
     }
 }
-/* 
+
  @media (min-width: 769px) {
     .posts-grid {
         grid-template-columns: repeat(2, 1fr); 
     }
 }  
-*/
+
 
 /* Post Styles */
 .post {
@@ -103,12 +103,14 @@ body, p {
     font-size: 24px;
     font-weight: bold;
     color: #333333;
+    max-width: 420px;
     margin-bottom: 10px;
     word-wrap: break-word; 
 }
 
 .post-body {
     font-size: 18px;
+    max-width: 440px;
     color: #046871;
     margin-bottom: 10px;
     word-wrap: break-word; /* Breaks long words */
@@ -138,7 +140,8 @@ body, p {
     word-wrap: break-word;
     overflow-wrap: break-word; /* Альтернатива для других браузеров */
     white-space: normal;
-    max-width: 100%;
+    max-width: 440px;
+    
 }
 
 
@@ -252,7 +255,9 @@ button:hover,
 
 .message {
     color: #046871;
-    word-wrap: break-word; 
+    word-wrap: break-word;
+    max-width: 390px;
+
 }
 
 .meta-info {
