@@ -1,4 +1,4 @@
-body {
+body { 
     font-family: 'Roboto', sans-serif;
     background-color: #f5f5f5;
     margin: 0;
@@ -6,7 +6,6 @@ body {
     color: #8B0000;
 }
 
-/* 2 columns rendering */
 .posts-section {
     display: flex;
     flex-direction: column;
@@ -94,18 +93,40 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     list-style-type: none;
 }
-button, .like-button, .dislike-button {
-    background-color: #046871;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+
+.like-dislike-container {
+    display: flex;
+    gap: 7px;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 10px;
 }
 
-button:hover, .like-button:hover, .dislike-button:hover {
-    background-color: #AA2D2D;
+.button, .like-button, .dislike-button, .submit-comment-button {
+    background-color: #046871 !important;
+    color: white !important;
+    padding: 10px 10px !important;
+    font-size: 16px !important;
+    border: none !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    transition: background-color 0.3s ease !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    width: 140px !important;
+    height: 45px !important; 
+    margin-right: 15px;
+}
+
+.button:hover, .like-button:hover, .dislike-button:hover, .submit-comment-button:hover {
+    background-color: #AA2D2D !important;
+}
+
+.form-inline {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
 }
 
 .message {
