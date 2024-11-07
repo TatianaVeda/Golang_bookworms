@@ -2,10 +2,11 @@
 body {
     background-color: #f5f5f5;
     font-family: 'Roboto', sans-serif;
-    font-size: 20px;  
+    font-size: 16px;  
     color: #8B0000; 
     letter-spacing: 1px;
 }
+
 .home-button {
     display: block;
     text-align: center;
@@ -17,6 +18,11 @@ body {
     width: fit-content;
     margin: 20px auto; 
     transition: background-color 0.3s ease;
+}
+
+.home-button:hover {
+    background-color: #AA2D2D;   
+    color: white; 
 }
 
 /* Container Styling */
@@ -74,25 +80,6 @@ body {
     font-size: 2.5rem; 
     color: #8B0000;
     margin: 20px 0 30px;
-}
-
-/* Button styling to match theme */
-.home-button {
-    background-color: #046871;  
-    color: white; 
-    padding: 10px 20px;  
-    font-size: 16px; 
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 15px;
-    box-shadow: none;
-}
-
-.home-button:hover {
-    background-color: #AA2D2D;   
-    color: white; 
 }
 
 /* Footer Styling */
