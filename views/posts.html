@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Posts in {{.CategoryName}}</title>
-    <link rel="stylesheet" href="/static/posts.css">
-    <link rel="stylesheet" href="/static/home.css">
-    <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
+  <link rel="stylesheet" href="/static/posts.css">
+  <link rel="icon" href="/static/images/lion-icon.png" type="image/png">
 </head>
 <body>
     <div class="header">
@@ -37,7 +36,7 @@
                     <!-- Category Name -->
                     <p class="post-category">Category: {{.CategoryName}}</p>
                     <!-- Likes and Dislikes -->
-                    <p>Likes: {{.LikeCount}} | Dislikes: {{.DislikeCount}}</p>
+                    <p>🤩Likes: {{.LikeCount}} | 👿Dislikes: {{.DislikeCount}}</p>
                 
                 
                 <!-- Interaction options for logged-in users -->
@@ -47,14 +46,14 @@
                         <input type="hidden" name="post_id" value="{{.ID}}">
                         <input type="hidden" name="category_id" value="{{$.CategoryID}}">
                         <input type="hidden" name="like_type" value="1">
-                        <button type="submit" class="button like-button">Like 🤩</button>
+                        <button type="submit" class="like-button">Like 🤩</button>
                     </form>
                 
                     <form action="/posts/update_like_dislike" method="POST">
                         <input type="hidden" name="post_id" value="{{.ID}}">
                         <input type="hidden" name="category_id" value="{{$.CategoryID}}">
                         <input type="hidden" name="like_type" value="-1">
-                        <button type="submit" class="button dislike-button">Dislike 👿</button>
+                        <button type="submit" class="dislike-button">Dislike 👿</button>
                     </form>
                 </div>                                                    
                 {{else}}
@@ -68,7 +67,7 @@
                         <ul class="comments-list">
                             {{range .Comments}}
                              <li id="comment-{{.ID}}">
-                                <p class="message">{{.Body}} - </p> <!-- Display comment body and username -->
+                                <p class="message">{{.Body}} </p> <!-- Display comment body and username -->
                                     <small><p class="meta-info"><em>Commented by: {{.UserName}} {{.CreatedAtFormatted}}</em></p></small>
                                     <small><p class="meta-info">🤩 Likes: {{.LikeCount}} 👿 Dislikes: {{.DislikeCount}}</p></small>
                                         

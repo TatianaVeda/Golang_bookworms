@@ -1,11 +1,43 @@
-body { 
+
+
+/* Importing Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+
+/* General Styles */
+body, p {
     font-family: 'Roboto', sans-serif;
-    background-color: #f5f5f5;
-    margin: 0;
-    padding: 0;
+    margin: 5px;
+    padding: 5px;
+    font-size: 16px;
     color: #8B0000;
+    letter-spacing: 1px;
 }
 
+/* Container Styling */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+.header {
+    color: #ff4500;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.logo {
+    max-width: 250px;
+    height: auto;
+}
+
+
+/* Posts Section */
 .posts-section {
     display: flex;
     flex-direction: column;
@@ -17,28 +49,47 @@ body {
     box-sizing: border-box;
 }
 
-.posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 0;
-    list-style-type: none;
-    width: 100%; 
-    margin: 0 auto;
-}
-
 .posts-grid li {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    word-wrap: break-word; 
 }
+
+/* Posts Grid */
+.posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); 
+    max-width: 1200px;
+    gap: 20px;
+    padding: 0;
+    list-style-type: none;
+    width: 100%;
+    margin: 0 auto;
+}
+/* Responsive Layout */
+@media (max-width: 768px) {
+    .posts-grid {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
+    }
+}
+/* 
+ @media (min-width: 769px) {
+    .posts-grid {
+        grid-template-columns: repeat(2, 1fr); 
+    }
+}  
+*/
+
+/* Post Styles */
 .post {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 .post-item {
     background-color: #ffffff;
     padding: 20px;
@@ -53,12 +104,16 @@ body {
     font-weight: bold;
     color: #333333;
     margin-bottom: 10px;
+    word-wrap: break-word; 
 }
 
 .post-body {
     font-size: 18px;
-    color: #046871; 
+    color: #046871;
     margin-bottom: 10px;
+    word-wrap: break-word; /* Breaks long words */
+    overflow-wrap: break-word; /* Alternative for other browsers */
+    white-space: pre-wrap;
 }
 
 .post-user, .post-category {
@@ -67,18 +122,25 @@ body {
     font-style: italic;
 }
 
+/* Comments Section */
 .comments-section {
     grid-column: span 2;
     width: 100%;
     margin-top: 15px;
+    /*padding: 10px;  Add padding for better appearance */
+    border-radius: 8px; /* Rounded corners */
 }
 
-/* Комментарии и кнопки */
 .comments-section p.message, 
 .comments-section p.meta-info {
     font-size: 14px;
     color: #046871;
+    word-wrap: break-word;
+    overflow-wrap: break-word; /* Альтернатива для других браузеров */
+    white-space: normal;
+    max-width: 100%;
 }
+
 
 .comments-list {
     list-style-type: none;
@@ -91,60 +153,13 @@ body {
     margin-bottom: 10px;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    list-style-type: none;
+    white-space: normal;
+    max-width: 100%;
+    overflow: hidden;
+    word-wrap: break-word; /* Breaks long words */
+    overflow-wrap: break-word; /* Alternative for other browsers */
 }
-
-.like-dislike-container {
-    display: flex;
-    gap: 7px;
-    justify-content: flex-start;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.button, .like-button, .dislike-button, .submit-comment-button {
-    background-color: #046871 !important;
-    color: white !important;
-    padding: 10px 10px !important;
-    font-size: 16px !important;
-    border: none !important;
-    border-radius: 5px !important;
-    cursor: pointer !important;
-    transition: background-color 0.3s ease !important;
-    text-align: center !important;
-    box-sizing: border-box !important;
-    width: 140px !important;
-    height: 45px !important; 
-    margin-right: 15px;
-}
-
-.button:hover, .like-button:hover, .dislike-button:hover, .submit-comment-button:hover {
-    background-color: #AA2D2D !important;
-}
-
-.form-inline {
-    display: flex;
-    align-items: center;
-    margin: 0;
-    padding: 0;
-}
-
-.message {
-    color: #046871;
-}
-
-.meta-info {
-    color: #8B0000;
-    font-size: 14px;
-}
-
-/* Adaptive */
-@media (max-width: 768px) {
-    .posts-grid {
-        grid-template-columns: 1fr; /* 1 column for small screens */
-    }
-}
-
+/* Comment Form */
 .comment-form {
     display: flex;
     flex-direction: column;
@@ -162,20 +177,108 @@ body {
     border: 1px solid #ccc;
     resize: vertical;
     box-sizing: border-box;
+    word-wrap: break-word; /* Breaks long words */
+    
 }
 
-.submit-comment-button {
-    align-self: flex-start;
-    background-color: #046871;
+.home-button {
+    display: block;
+    text-align: center;
+    padding: 15px 20px;
+    background-color: #046871; 
     color: white;
-    padding: 10px 20px;
-    font-size: 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    width: fit-content;
+    margin: 20px auto; 
+    transition: background-color 0.3s ease;
+}
+
+button,
+.buttons {  
+    background-color: #046871;  
+    color: white; 
+    padding: 10px 20px;  
+    font-size: 16px; 
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 15px;
+    box-shadow: none;
+    font-family: 'Roboto', sans-serif;
+}
+
+button:hover, 
+.buttons:hover,
+.home-button:hover
+{
+    background-color: #AA2D2D;   
+    color: white; 
+} 
+
+.like-dislike-container {
+    display: flex;
+    gap: 7px;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* Buttons */
+
+
+.comments-section button {
+    width: auto;  
+    padding: 10px 20px; 
+    background-color: #046871; 
+    color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
-.submit-comment-button:hover {
-    background-color: #AA2D2D;
+.comments-section button:hover {
+    background-color: #AA2D2D; 
+}
+
+.form-inline {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.message {
+    color: #046871;
+    word-wrap: break-word; 
+}
+
+.meta-info {
+    color: #8B0000;
+    font-size: 14px;
+}
+
+
+/* Footer Styling */
+.footer{
+    text-align: center;
+    padding: 10px;
+    background-color: #046871;
+    color: white !important;
+    width: 100%;  
+    max-width: 1200px;
+    margin: 20px auto; 
+    box-sizing: border-box; 
+    border-radius: 8px;   
+}
+
+.footer * {
+    color: white !important;
+}
+
+.footer p {
+    margin: 0; 
+    padding: 0;
 }
