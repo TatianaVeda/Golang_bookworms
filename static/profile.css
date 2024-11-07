@@ -15,6 +15,20 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    word-wrap: break-word; /* break long words */
+}
+
+.textarea {
+    width: 100%; 
+    max-width: 100%; 
+    height: 100px; 
+    overflow-y: auto; 
+    resize: none; 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    word-wrap: break-word;
 }
 
 /* Header and Footer */
@@ -160,10 +174,12 @@ input[type="radio"]:checked + label {
 #comments-tab:checked ~ .tab-content #comments-content,
 #liked-comments-tab:checked ~ .tab-content #liked-comments-content {
     display: block;
+   
 }
 
 .tab-content section {
     display: none;
+    word-wrap: break-word;
 }
 
 .tab-content h2 {
