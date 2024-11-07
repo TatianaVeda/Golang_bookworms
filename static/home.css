@@ -210,7 +210,10 @@ button {
     max-width: 400px;
     width: 100%; 
     max-width: 100%;
-    text-align: justify;
+    text-align: center;
+    display: flex; /* Allows layout control of child elements */
+    flex-wrap: wrap; /* Enables wrapping of items */
+    gap: 10px; 
 }
 
 .categories h2 {
@@ -233,7 +236,9 @@ button {
     border-radius: 4px;
     cursor: pointer;
     text-align: justify;
-    padding-left: 0; 
+    width: calc(50% - 10px); /* Two items per row with spacing */
+    box-sizing: border-box; /* Ensures padding is within width */
+    max-width: 100%; 
 }
 
 .categories li:hover {
@@ -245,6 +250,13 @@ button {
     color: #8B0000; 
     font-weight: bold;
     margin-bottom: 10px;
+}
+
+/* Responsive Design: Stacks items vertically on smaller screens */
+@media (max-width: 600px) {
+    .categories li {
+        width: 100%; /* Full width for small screens */
+    }
 }
 
 .posts-grid {
