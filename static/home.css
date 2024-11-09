@@ -265,6 +265,7 @@ button {
     }
 }
 
+/* Grid for posts with two columns by default and gap for spacing */
 .posts-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -274,39 +275,58 @@ button {
     margin: 0 auto;
 }
 
+/* Individual post styling */
 .post {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Aligns all content to the left */
     background-color: #ffffff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-wrap: break-word; /* Ensures long words wrap within the container */
+    word-wrap: break-word;
 }
 
+/* Post title with consistent alignment and max-width */
 .post-title {
     font-size: 24px;
     font-weight: bold;
     color: #333333;
     margin-bottom: 10px;
+    max-width: 100%; /* Ensures the title doesn’t overflow */
+    text-align: left;
+    overflow-wrap: break-word;
 }
 
-.post-content {
-    color: #555;
+/* Post content/body styling */
+.post-content, .post-body {
     font-size: 18px;
+    color: #046871;
     margin-top: 5px;
+    max-width: 100%; /* Ensures content doesn’t overflow */
+    text-align: left;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    white-space: normal; /* Allows wrapping of text */
 }
 
-.post-body {
-    font-size: 18px;
-    color: #046871; 
-    margin-bottom: 10px;
-    max-width: 1200px;  
+/* Ensure wrapping for post titles and content */
+.post-title, .post-content, .post-body {
+    max-width: 100%;             /* Make sure content stays within the container */
+    overflow-wrap: break-word;   /* Break long words */
+    word-break: break-all;       /* Force break if needed */
+    white-space: normal;         /* Allow text to wrap normally */
+    text-align: left;            /* Align text to the left for consistency */
+    margin-top: 8px;
 }
 
-
-
+/* Additional details for the post user and category */
 .post-user {
     font-size: 14px;
     color: #8B0000;
     font-style: italic;
+    text-align: left;
 }
 
 .post-category {
@@ -314,12 +334,13 @@ button {
     font-weight: bold;
     color: #8B0000;
     margin-bottom: 15px;
+    text-align: left;
 }
 
-/* Responsive layout */
+/* Responsive layout for smaller screens */
 @media (max-width: 768px) {
-    .post-grid {
-        grid-template-columns: 1fr;
+    .posts-grid {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
     }
 }
 

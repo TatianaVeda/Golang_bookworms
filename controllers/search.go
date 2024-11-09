@@ -28,16 +28,14 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := r.FormValue("keywords") // Retrieve search parameters from the form (POST) or query string (GET)
+	keywords := r.FormValue("keywords")
 	category := r.FormValue("category")
 	author := r.FormValue("author")
 	startDate := r.FormValue("start_date")
 	endDate := r.FormValue("end_date")
 
-	log.Printf("Received search query: keywords=%s, category=%s, author=%s, startDate=%s, endDate=%s", query, category, author, startDate, endDate)
-
-	if query == "" { // Redirect to homepage if the search query is empty
-		log.Println("Empty search query; redirecting to homepage.")
+	if keywords == "" && category == "" {
+		log.Println("Empty search query and category; redirecting to homepage.")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -46,13 +44,14 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
         SELECT posts.id, posts.title, posts.body, users.username, posts.created_at
         FROM posts
         JOIN users ON posts.user_id = users.id
-        WHERE (posts.title LIKE ? OR posts.body LIKE ?)
+        LEFT JOIN categories ON posts.category_id = categories.id
+        WHERE (posts.title LIKE ? OR posts.body LIKE ? OR categories.name LIKE ?)
     `
-	params := []interface{}{"%" + query + "%", "%" + query + "%"}
+	params := []interface{}{"%" + keywords + "%", "%" + keywords + "%", "%" + keywords + "%"}
 
-	if category != "" { // Apply filters if they exist
-		queryStr += " AND posts.category = ?"
-		params = append(params, category)
+	if category != "" {
+		queryStr += " AND categories.name LIKE ?"
+		params = append(params, "%"+category+"%")
 	}
 	if author != "" {
 		queryStr += " AND users.username LIKE ?"
@@ -69,7 +68,6 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 		params = append(params, endDateParsed)
 	}
 
-	log.Printf("Executing SQL query: %s with params: %v", queryStr, params)
 	rows, err := database.DB.Query(queryStr, params...)
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
@@ -97,9 +95,14 @@ func SearchPosts(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	if len(results) == 0 {
+		log.Println("No results found for the specified query and filters.")
+	}
+
 	data := map[string]interface{}{
-		"Query":   query,
-		"Results": results,
+		"Query":    keywords,
+		"Category": category,
+		"Results":  results,
 	}
 
 	tmpl := template.Must(template.ParseFiles("views/search_results.html"))
