@@ -5,6 +5,9 @@
 ## Introduction
 The Literary Lions Forum is designed to help book club enthusiasts to engage in meaningful discussions, share insights, and explore deeper literary themes. Users can create posts, leave comments, categorize discussions, like/dislike content, and filter posts. The forum utilized SQLite as the database, and is containerized using Docker.
 
+<img width="1696" height="814" alt="image" src="https://github.com/user-attachments/assets/7406c980-fa90-48b8-a35a-9c41be8f18bc" />
+
+
 ## Features
 
 ### User Registration and Authentication:
