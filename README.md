@@ -55,7 +55,7 @@ The number of likes/dislikes, posts and comments are visible to all users, provi
 ### Installation
 Clone the repository:
 ```
-git clone https://gitea.koodsisu.fi/juliageorgieva/literary-lions
+git clone https://[repo link]
 cd literary-lions
 ```
 
