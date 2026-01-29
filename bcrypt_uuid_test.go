@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -35,27 +36,36 @@ func TestPasswordHashing(t *testing.T) {
 }
 
 func setupTestDB() (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", ":memory:") // In-memory SQLite database
+	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		return nil, err
 	}
 
-	// Create the users table
-	createTableQuery := `
-    CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT NOT NULL,
-        password TEXT NOT NULL
-    );`
-	_, err = db.Exec(createTableQuery)
+	_, err = db.Exec("PRAGMA foreign_keys = ON;")
 	if err != nil {
 		return nil, err
 	}
 
-	// Insert a test user into the database
+	_, err = db.Exec(`
+		CREATE TABLE users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			email TEXT NOT NULL UNIQUE,
+			username TEXT NOT NULL,
+			password TEXT NOT NULL
+		);
+		CREATE TABLE sessions (
+			session_id TEXT PRIMARY KEY,
+			user_id INTEGER NOT NULL,
+			expires_at DATETIME NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		);
+	`)
+	if err != nil {
+		return nil, err
+	}
+
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.DefaultCost)
-	insertUserQuery := `INSERT INTO users (email, password) VALUES ('testuser@example.com', ?);`
-	_, err = db.Exec(insertUserQuery, hashedPassword)
+	_, err = db.Exec(`INSERT INTO users (email, username, password) VALUES ('testuser@example.com', 'testuser', ?)`, hashedPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -120,29 +130,25 @@ func TestSessionCreation(t *testing.T) {
 }
 
 func TestSessionRetrieval(t *testing.T) {
-	// Mock HTTP request with a session ID
+	database.DB, _ = setupTestDB()
+
 	sessionID := uuid.New().String()
+	expiresAt := time.Now().Add(24 * time.Hour)
+	_, err := database.DB.Exec("INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, 1, ?)", sessionID, expiresAt)
+	if err != nil {
+		t.Fatalf("Failed to insert test session: %v", err)
+	}
+
 	req := httptest.NewRequest("GET", "/myposts", nil)
-	req.AddCookie(&http.Cookie{
-		Name:  "session_id",
-		Value: sessionID,
-	})
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: sessionID})
 
-	// Simulate storing the session in SessionStore
-	controllers.SessionMutex.Lock()
-	controllers.SessionStore[sessionID] = 123 // Mock user ID
-	controllers.SessionMutex.Unlock()
-
-	// Simulate checking session
 	userID, err := controllers.GetUserIDFromSession(req)
 	if err != nil {
 		t.Fatalf("Error retrieving session: %v", err)
 	}
-
-	if userID != 123 {
-		t.Fatalf("Expected user ID 123, got %d", userID)
+	if userID != 1 {
+		t.Fatalf("Expected user ID 1, got %d", userID)
 	}
-
 	t.Logf("Session ID: %v, User ID: %d", sessionID, userID)
 }
 
